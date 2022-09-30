@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AAXSupport.cmake" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddAAXLibrary.cmake" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddVST3AuV3.cmake" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddVST3Library.cmake" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddVST3Options.cmake" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_CoreAudioSupport.cmake" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_ExportedSymbols.cmake" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_FindJack.cmake" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_SetupVST3LibraryDefaultPath.cmake" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_VST3_SDK.cmake" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_VstGuiSupport.cmake" />
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+</Project>

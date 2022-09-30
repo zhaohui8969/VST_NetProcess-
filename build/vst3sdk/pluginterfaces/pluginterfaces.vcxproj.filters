@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\conststringtable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\coreiids.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\funknown.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\ustring.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\conststringtable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\falignpop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\falignpush.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\fplatform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\fstrdefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\ftypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\funknown.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\funknownimpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\futils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\fvariant.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\geoconstants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\ibstream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\icloneable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\ierrorcontext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\ipersistent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\ipluginbase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\istringresult.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\iupdatehandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\keycodes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\pluginbasefwd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\smartpointer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\typesizecheck.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\ucolorspec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\base\ustring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\gui\iplugview.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\gui\iplugviewcontentscalesupport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstattributes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstaudioprocessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstautomationstate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstchannelcontextinfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstcomponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstcontextmenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivsteditcontroller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstevents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivsthostapplication.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstinterappaudio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstmessage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstmidicontrollers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstmidilearn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstnoteexpression.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstparameterchanges.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstparameterfunctionname.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstphysicalui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstpluginterfacesupport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstplugview.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstprefetchablesupport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstprocesscontext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstrepresentation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\ivstunits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\vstpresetkeys.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\vstpshpack4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\vstspeaker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\vst\vsttypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{D1DB1C18-BFDD-3F9F-91E2-466B4C9A39B2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{98D8E4CD-1311-39D9-B312-A0E3FEF32AE2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

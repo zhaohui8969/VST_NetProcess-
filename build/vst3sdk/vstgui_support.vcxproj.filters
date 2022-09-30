@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3groupcontroller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3padcontroller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3editor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\public.sdk\source\vst\vstguieditor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\public.sdk\source\vst\vstgui_win32_bundle_support.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3groupcontroller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3padcontroller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3editor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\public.sdk\source\vst\vstgui_win32_bundle_support.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{D1DB1C18-BFDD-3F9F-91E2-466B4C9A39B2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{98D8E4CD-1311-39D9-B312-A0E3FEF32AE2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

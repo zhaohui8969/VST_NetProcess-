@@ -1,0 +1,398 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseLTO|x64">
+      <Configuration>ReleaseLTO</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{351219A3-F7F5-3CCB-9E18-3B0749F59793}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>vstgui_uidescription</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\lib\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vstgui_uidescription.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vstgui_uidescription</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\lib\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vstgui_uidescription.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vstgui_uidescription</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\lib\ReleaseLTO\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">vstgui_uidescription.dir\ReleaseLTO\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">vstgui_uidescription</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalOptions>%(AdditionalOptions) /utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DisableSpecificWarnings>6031;6308;6330;6385;6386;28125;28251</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;SMTG_RENAME_ASSERT=1;_CRT_SECURE_NO_WARNINGS;VSTGUI_LIVE_EDITING;DEBUG;VSTGUI_ENABLE_DEPRECATED_METHODS=1;VSTGUI_ENABLE_XML_PARSER=1;VSTGUI_OPENGL_SUPPORT=1;_UNICODE;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;SMTG_RENAME_ASSERT=1;_CRT_SECURE_NO_WARNINGS;VSTGUI_LIVE_EDITING;DEBUG;VSTGUI_ENABLE_DEPRECATED_METHODS=1;VSTGUI_ENABLE_XML_PARSER=1;VSTGUI_OPENGL_SUPPORT=1;_UNICODE;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64 /IGNORE:4221</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalOptions>%(AdditionalOptions) /utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>6031;6308;6330;6385;6386;28125;28251</DisableSpecificWarnings>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OmitFramePointers>true</OmitFramePointers>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <StringPooling>true</StringPooling>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;SMTG_RENAME_ASSERT=1;_CRT_SECURE_NO_WARNINGS;RELEASE;VSTGUI_ENABLE_DEPRECATED_METHODS=1;VSTGUI_ENABLE_XML_PARSER=1;VSTGUI_OPENGL_SUPPORT=1;_UNICODE;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;SMTG_RENAME_ASSERT=1;_CRT_SECURE_NO_WARNINGS;RELEASE;VSTGUI_ENABLE_DEPRECATED_METHODS=1;VSTGUI_ENABLE_XML_PARSER=1;VSTGUI_OPENGL_SUPPORT=1;_UNICODE;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64 /IGNORE:4221</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">
+    <ClCompile>
+      <AdditionalOptions>%(AdditionalOptions) /utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>6031;6308;6330;6385;6386;28125;28251</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;SMTG_RENAME_ASSERT=1;_CRT_SECURE_NO_WARNINGS;RELEASE;VSTGUI_ENABLE_DEPRECATED_METHODS=1;VSTGUI_ENABLE_XML_PARSER=1;VSTGUI_OPENGL_SUPPORT=1;_UNICODE;CMAKE_INTDIR="ReleaseLTO"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;SMTG_RENAME_ASSERT=1;_CRT_SECURE_NO_WARNINGS;RELEASE;VSTGUI_ENABLE_DEPRECATED_METHODS=1;VSTGUI_ENABLE_XML_PARSER=1;VSTGUI_OPENGL_SUPPORT=1;_UNICODE;CMAKE_INTDIR=\"ReleaseLTO\"</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64 /IGNORE:4221</AdditionalOptions>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/codes/vst-sdk_3.7.6_build-18_2022-09-05/VST_SDK/vst3sdk/vstgui4/vstgui/uidescription/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/codes/vscode/vst3_demo/my_plugins/NetProcess -BD:/codes/vscode/vst3_demo/my_plugins/NetProcess/build --check-stamp-file D:/codes/vscode/vst3_demo/my_plugins/NetProcess/build/vst3sdk/VSTGUI.build/vstgui/uidescription/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindEXPAT.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindPackageMessage.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindPkgConfig.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\vst3sdk\VSTGUI.build\vstgui\uidescription\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/codes/vst-sdk_3.7.6_build-18_2022-09-05/VST_SDK/vst3sdk/vstgui4/vstgui/uidescription/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/codes/vscode/vst3_demo/my_plugins/NetProcess -BD:/codes/vscode/vst3_demo/my_plugins/NetProcess/build --check-stamp-file D:/codes/vscode/vst3_demo/my_plugins/NetProcess/build/vst3sdk/VSTGUI.build/vstgui/uidescription/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindEXPAT.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindPackageMessage.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindPkgConfig.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\vst3sdk\VSTGUI.build\vstgui\uidescription\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">Building Custom Rule D:/codes/vst-sdk_3.7.6_build-18_2022-09-05/VST_SDK/vst3sdk/vstgui4/vstgui/uidescription/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/codes/vscode/vst3_demo/my_plugins/NetProcess -BD:/codes/vscode/vst3_demo/my_plugins/NetProcess/build --check-stamp-file D:/codes/vscode/vst3_demo/my_plugins/NetProcess/build/vst3sdk/VSTGUI.build/vstgui/uidescription/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindEXPAT.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindPackageMessage.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\FindPkgConfig.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\vst3sdk\VSTGUI.build\vstgui\uidescription\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\base64codec.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\compresseduidescription.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\compresseduidescription.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\cstream.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\cstream.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\delegationcontroller.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\doc.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\icontentprovider.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\icontroller.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\iuidescription.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\iviewcreator.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\iviewfactory.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiattributes.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiattributes.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uicontentprovider.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uicontentprovider.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uidescription.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uidescription.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uidescriptionlistener.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uidescriptionfwd.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewfactory.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewfactory.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewswitchcontainer.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewswitchcontainer.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\xmlparser.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\xmlparser.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\locale.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\parsecolor.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\scalefactorutils.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uidesclist.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uidesclist.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uijsonpersistence.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uijsonpersistence.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uinode.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uinode.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uiviewcreatorattributes.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uixmlpersistence.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uixmlpersistence.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\doc.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\iaction.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\igridprocessor.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiactions.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiactions.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiattributescontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiattributescontroller.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uibasedatasource.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uibitmapscontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uibitmapscontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolor.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolor.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorchoosercontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorchoosercontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorscontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorscontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorslider.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorslider.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicrosslines.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicrosslines.h" />
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uidescriptioneditor.uidesc">
+    </None>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uidialogcontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uidialogcontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditcontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditcontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditmenucontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditmenucontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditview.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditview.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uifocussettingscontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uifocussettingscontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uifontscontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uifontscontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uigradientscontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uigradientscontroller.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uigrid.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uigridcontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uigridcontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uioverlayview.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uioverlayview.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiselection.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiselection.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitagscontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitagscontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitemplatecontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitemplatecontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitemplatesettingscontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitemplatesettingscontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiundomanager.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiundomanager.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiviewcreatecontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiviewcreatecontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\animationsplashscreencreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\animationsplashscreencreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\animknobcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\animknobcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\checkboxcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\checkboxcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\controlcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\controlcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\gradientviewcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\gradientviewcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\kickbuttoncreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\kickbuttoncreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\knobcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\knobcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\layeredviewcontainercreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\layeredviewcontainercreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\moviebitmapcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\moviebitmapcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\moviebuttoncreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\moviebuttoncreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\multibitmapcontrolcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\multibitmapcontrolcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\multilinetextlabelcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\multilinetextlabelcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\onoffbuttoncreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\onoffbuttoncreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\optionmenucreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\optionmenucreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\paramdisplaycreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\paramdisplaycreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\rockerswitchcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\rockerswitchcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\rowcolumnviewcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\rowcolumnviewcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\scrollviewcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\scrollviewcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\searchtexteditcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\searchtexteditcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\segmentbuttoncreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\segmentbuttoncreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\shadowviewcontainercreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\shadowviewcontainercreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\sliderviewcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\sliderviewcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\splitviewcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\splitviewcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\stringlistcontrolcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\stringlistcontrolcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\switchcreators.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\switchcreators.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\textbuttoncreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\textbuttoncreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\texteditcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\texteditcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\textlabelcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\textlabelcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\uiviewswitchcontainercreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\uiviewswitchcontainercreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\viewcontainercreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\viewcontainercreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\viewcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\viewcreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\vumetercreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\vumetercreator.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\xypadcreator.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\xypadcreator.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\ZERO_CHECK.vcxproj">
+      <Project>{C3BA0990-BD52-35F6-9530-34CE4A42A0C9}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\vst3sdk\VSTGUI.build\vstgui\lib\vstgui.vcxproj">
+      <Project>{FE76EE53-B3D6-381E-82E0-4F59C00A352F}</Project>
+      <Name>vstgui</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,196 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F62885BD-5B62-317F-96B9-153D9D289269}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>vstgui_support</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\lib\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vstgui_support.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vstgui_support</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\lib\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vstgui_support.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vstgui_support</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\base\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DisableSpecificWarnings>6031;6308;6330;6385;6386;28125;28251</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;SMTG_RENAME_ASSERT=1;DEVELOPMENT=1;VSTGUI_LIVE_EDITING;VSTGUI_ENABLE_DEPRECATED_METHODS=1;SMTG_MODULE_IS_BUNDLE=1;_UNICODE;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;SMTG_RENAME_ASSERT=1;DEVELOPMENT=1;VSTGUI_LIVE_EDITING;VSTGUI_ENABLE_DEPRECATED_METHODS=1;SMTG_MODULE_IS_BUNDLE=1;_UNICODE;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\base\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\base\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\base\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DisableSpecificWarnings>6031;6308;6330;6385;6386;28125;28251</DisableSpecificWarnings>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OmitFramePointers>true</OmitFramePointers>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <StringPooling>true</StringPooling>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;SMTG_RENAME_ASSERT=1;RELEASE=1;VSTGUI_ENABLE_DEPRECATED_METHODS=1;SMTG_MODULE_IS_BUNDLE=1;_UNICODE;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;SMTG_RENAME_ASSERT=1;RELEASE=1;VSTGUI_ENABLE_DEPRECATED_METHODS=1;SMTG_MODULE_IS_BUNDLE=1;_UNICODE;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\base\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\base\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/codes/vst-sdk_3.7.6_build-18_2022-09-05/VST_SDK/vst3sdk/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/codes/vscode/vst3_demo/my_plugins/NetProcess -BD:/codes/vscode/vst3_demo/my_plugins/NetProcess/build --check-stamp-file D:/codes/vscode/vst3_demo/my_plugins/NetProcess/build/vst3sdk/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\CMakeParseArguments.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\CMakePrintHelpers.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\CheckLanguage.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AAXSupport.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddCommonOptions.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddSMTGLibrary.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddVST3Library.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddVST3Options.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_Bundle.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_CodeSign.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_ConfigureCmakeGenerator.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_CoreAudioSupport.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_CustomModuleTarget.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_DetectPlatform.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_ExportedSymbols.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_Global.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_PlatformIOS.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_PlatformToolset.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_Platform_Windows.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_PrefixHeader.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_SetDebugExecutable.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_SetupVST3LibraryDefaultPath.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_UniversalBinary.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_VST3_SDK.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_VstGuiSupport.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\vst3sdk\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/codes/vst-sdk_3.7.6_build-18_2022-09-05/VST_SDK/vst3sdk/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/codes/vscode/vst3_demo/my_plugins/NetProcess -BD:/codes/vscode/vst3_demo/my_plugins/NetProcess/build --check-stamp-file D:/codes/vscode/vst3_demo/my_plugins/NetProcess/build/vst3sdk/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\CMakeParseArguments.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\CMakePrintHelpers.cmake;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-3.23\Modules\CheckLanguage.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AAXSupport.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddCommonOptions.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddSMTGLibrary.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddVST3Library.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_AddVST3Options.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_Bundle.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_CodeSign.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_ConfigureCmakeGenerator.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_CoreAudioSupport.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_CustomModuleTarget.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_DetectPlatform.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_ExportedSymbols.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_Global.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_PlatformIOS.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_PlatformToolset.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_Platform_Windows.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_PrefixHeader.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_SetDebugExecutable.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_SetupVST3LibraryDefaultPath.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_UniversalBinary.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_VST3_SDK.cmake;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\cmake\modules\SMTG_VstGuiSupport.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\vst3sdk\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3groupcontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3groupcontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3padcontroller.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3padcontroller.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3editor.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\plugin-bindings\vst3editor.h" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\public.sdk\source\vst\vstguieditor.cpp" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\public.sdk\source\vst\vstgui_win32_bundle_support.cpp" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\public.sdk\source\vst\vstgui_win32_bundle_support.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\ZERO_CHECK.vcxproj">
+      <Project>{C3BA0990-BD52-35F6-9530-34CE4A42A0C9}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\vst3sdk\base\base.vcxproj">
+      <Project>{FFEA5A72-84F7-3998-A1D7-8A4BE1176CA9}</Project>
+      <Name>base</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\vst3sdk\VSTGUI.build\vstgui\lib\vstgui.vcxproj">
+      <Project>{FE76EE53-B3D6-381E-82E0-4F59C00A352F}</Project>
+      <Name>vstgui</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\vst3sdk\VSTGUI.build\vstgui\uidescription\vstgui_uidescription.vcxproj">
+      <Project>{351219A3-F7F5-3CCB-9E18-3B0749F59793}</Project>
+      <Name>vstgui_uidescription</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

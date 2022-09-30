@@ -1,0 +1,441 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\compresseduidescription.cpp" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\cstream.cpp" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiattributes.cpp" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uicontentprovider.cpp" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uidescription.cpp" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewcreator.cpp" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewfactory.cpp" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewswitchcontainer.cpp" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\xmlparser.cpp" />
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uidesclist.cpp">
+      <Filter>detail</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uijsonpersistence.cpp">
+      <Filter>detail</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uinode.cpp">
+      <Filter>detail</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uixmlpersistence.cpp">
+      <Filter>detail</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiactions.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiattributescontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uibitmapscontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolor.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorchoosercontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorscontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorslider.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicrosslines.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uidialogcontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditcontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditmenucontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditview.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uifocussettingscontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uifontscontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uigradientscontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uigridcontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uioverlayview.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiselection.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitagscontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitemplatecontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitemplatesettingscontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiundomanager.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiviewcreatecontroller.cpp">
+      <Filter>editing</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\animationsplashscreencreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\animknobcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\checkboxcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\controlcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\gradientviewcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\kickbuttoncreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\knobcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\layeredviewcontainercreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\moviebitmapcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\moviebuttoncreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\multibitmapcontrolcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\multilinetextlabelcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\onoffbuttoncreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\optionmenucreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\paramdisplaycreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\rockerswitchcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\rowcolumnviewcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\scrollviewcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\searchtexteditcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\segmentbuttoncreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\shadowviewcontainercreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\sliderviewcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\splitviewcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\stringlistcontrolcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\switchcreators.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\textbuttoncreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\texteditcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\textlabelcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\uiviewswitchcontainercreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\viewcontainercreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\viewcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\vumetercreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\xypadcreator.cpp">
+      <Filter>viewcreator</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\base64codec.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\compresseduidescription.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\cstream.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\delegationcontroller.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\doc.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\icontentprovider.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\icontroller.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\iuidescription.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\iviewcreator.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\iviewfactory.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiattributes.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uicontentprovider.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uidescription.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uidescriptionlistener.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uidescriptionfwd.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewcreator.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewfactory.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\uiviewswitchcontainer.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\xmlparser.h" />
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\locale.h">
+      <Filter>detail</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\parsecolor.h">
+      <Filter>detail</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\scalefactorutils.h">
+      <Filter>detail</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uidesclist.h">
+      <Filter>detail</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uijsonpersistence.h">
+      <Filter>detail</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uinode.h">
+      <Filter>detail</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uiviewcreatorattributes.h">
+      <Filter>detail</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\detail\uixmlpersistence.h">
+      <Filter>detail</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\doc.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\iaction.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\igridprocessor.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiactions.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiattributescontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uibasedatasource.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uibitmapscontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolor.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorchoosercontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorscontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicolorslider.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uicrosslines.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uidialogcontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditcontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditmenucontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uieditview.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uifocussettingscontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uifontscontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uigradientscontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uigrid.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uigridcontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uioverlayview.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiselection.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitagscontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitemplatecontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uitemplatesettingscontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiundomanager.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uiviewcreatecontroller.h">
+      <Filter>editing</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\animationsplashscreencreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\animknobcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\checkboxcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\controlcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\gradientviewcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\kickbuttoncreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\knobcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\layeredviewcontainercreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\moviebitmapcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\moviebuttoncreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\multibitmapcontrolcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\multilinetextlabelcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\onoffbuttoncreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\optionmenucreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\paramdisplaycreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\rockerswitchcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\rowcolumnviewcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\scrollviewcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\searchtexteditcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\segmentbuttoncreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\shadowviewcontainercreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\sliderviewcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\splitviewcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\stringlistcontrolcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\switchcreators.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\textbuttoncreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\texteditcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\textlabelcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\uiviewswitchcontainercreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\viewcontainercreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\viewcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\vumetercreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\viewcreator\xypadcreator.h">
+      <Filter>viewcreator</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4\vstgui\uidescription\editing\uidescriptioneditor.uidesc">
+      <Filter>editing</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="detail">
+      <UniqueIdentifier>{79B059B9-0F17-35B0-BEF2-A5C33C37346C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="editing">
+      <UniqueIdentifier>{3F7C778D-E468-37C9-8B6F-448A5ADCC955}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="viewcreator">
+      <UniqueIdentifier>{34FA6BB5-347C-3816-AF6F-AA17653BD5A5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

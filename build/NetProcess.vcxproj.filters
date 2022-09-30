@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_processor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_controller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_entry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\public.sdk\source\main\dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_cids.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_processor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_controller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\AudioFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\resource\ss_editor.uidesc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\resource\win32resource.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{D1DB1C18-BFDD-3F9F-91E2-466B4C9A39B2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{98D8E4CD-1311-39D9-B312-A0E3FEF32AE2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
