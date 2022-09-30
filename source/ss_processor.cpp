@@ -192,7 +192,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			// 保存音频数据到文件
 			bool ok = audioFile.setAudioBuffer(audioBuffer);
 
-			audioFile.setAudioBufferSize(iNumberOfChanel, maxOutBufferSize);
+			audioFile.setAudioBufferSize(iNumberOfChanel, lAudioBufferPos);
 			audioFile.setBitDepth(24);
 			audioFile.setSampleRate(this->processSetup.sampleRate);
 			audioFile.save(sDefaultSaveWaveFileName, AudioFileFormat::Wave);
