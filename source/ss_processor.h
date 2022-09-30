@@ -53,7 +53,8 @@ public:
 
 //------------------------------------------------------------------------
 protected:
-	std::string sDefaultSaveWaveFileName = "D:\\tmp\\vst_save_wave.wav";
+	//std::string sDefaultSaveWaveFileName = "D:\\tmp\\vst_save_wave.wav";
+	std::string sDefaultSaveWaveFileName = "C:/temp/vst/vst_save_wave.wav";
 	float** mBuffer;
 	long mBufferPos;
 	//AudioFile<double>::AudioBuffer audioBuffer;
@@ -61,8 +62,6 @@ protected:
 	AudioFile<double>::AudioBuffer audioBuffer;
 	AudioFile<double> audioFile;
 	long maxOutBufferSize;
-	float sampleRate;
-	float frenqence;
 };
 
 //------------------------------------------------------------------------

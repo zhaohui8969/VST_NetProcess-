@@ -10,6 +10,8 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "AudioFile.h"
+#include "httplib.h"
+
 using namespace Steinberg;
 
 namespace MyCompanyName {
@@ -22,9 +24,9 @@ NetProcessProcessor::NetProcessProcessor ()
 	,audioFile(sDefaultSaveWaveFileName)
 	,audioBuffer(0)
 	//1000000约20秒
-	,maxOutBufferSize(1000000)
-	,sampleRate(44100.f)
-	,frenqence(440.f)
+	//500000约10秒
+	//200000约5秒
+	,maxOutBufferSize(500000)
 {
 	//--- set the wanted controller for our processor
 	setControllerClass (kNetProcessControllerUID);
@@ -39,6 +41,8 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 {
 	// Here the Plug-in will be instanciated
 	// 初始化音频输出文件所用的缓存，双声道
+	printf_s("初始化AI输入缓存");
+	OutputDebugStringA("初始化AI输入缓存");
 	audioFile.shouldLogErrorsToConsole(true);
 	audioBuffer.resize(2);
 	audioBuffer[0].resize(maxOutBufferSize);
@@ -106,7 +110,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 	for (int32 i = 0; i < data.numSamples; i++) {
 		// 将输入端的信号复制一遍
 		audioBuffer[0][mBufferPos + i] = inputL[i];
-		audioBuffer[1][mBufferPos + i] = inputL[i];
+		audioBuffer[1][mBufferPos + i] = inputR[i];
 	}
 	mBufferPos += data.numSamples;
 	// 当缓冲区不足以支持下一次写入的时候，写一次文件
@@ -115,12 +119,43 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		// Set both the number of channels and number of samples per channel
 		audioFile.setAudioBufferSize(2, maxOutBufferSize);
 		audioFile.setBitDepth(24);
-		audioFile.setSampleRate(44100);
+		audioFile.setSampleRate(this->processSetup.sampleRate);
 
 		// Wave file (explicit)
 		audioFile.save(sDefaultSaveWaveFileName, AudioFileFormat::Wave);
 
 		mBufferPos = 0;
+		
+		// 调用AI模型进行声音处理
+		// httplib::Client cli("http://localhost", 6842);
+		httplib::Client cli("http://192.168.3.253:6842");
+
+		cli.set_connection_timeout(0, 1000000); // 300 milliseconds
+		cli.set_read_timeout(5, 0); // 5 seconds
+		cli.set_write_timeout(5, 0); // 5 seconds
+
+		std::ifstream t_pc_file(sDefaultSaveWaveFileName, std::ios::binary);
+		std::stringstream buffer_pc_file;
+		buffer_pc_file << t_pc_file.rdbuf();
+		auto sBuffer = buffer_pc_file.str();
+		auto sBufferSize = sBuffer.size();
+		char buff[100];
+		snprintf(buff, sizeof(buff), "发送文件大小:%d\n", sBufferSize);
+		std::string buffAsStdStr = buff;
+		OutputDebugStringA(buff);
+
+		httplib::MultipartFormDataItems items = {
+		  { "sample", sBuffer, "sample.wav", "application/octet-stream"},
+		};
+
+		OutputDebugStringA("调用AI算法模型\n");
+		auto res = cli.Post("/voiceChangeModel", items);
+		if (res.error() == httplib::Error::Success && res->status == 200) {
+
+		} else {
+			auto err = res.error();
+			printf("算法服务错误:%d", err);
+		}
 	}
 
 	return kResultOk;
