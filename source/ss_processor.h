@@ -11,6 +11,10 @@
 
 namespace MyCompanyName {
 
+	enum RECORD_STATE
+	{
+		IDLE, WORK
+	};
 //------------------------------------------------------------------------
 //  NetProcessProcessor
 //------------------------------------------------------------------------
@@ -60,8 +64,12 @@ protected:
 	//AudioFile<double>::AudioBuffer audioBuffer;
 	//AudioFile<double> audioFile;
 	AudioFile<double>::AudioBuffer audioBuffer;
+	long lAudioBufferPos;
 	AudioFile<double> audioFile;
 	long maxOutBufferSize;
+	RECORD_STATE kRecordState;
+	double fRecordIdleTime;
+	int iNumberOfChanel;
 };
 
 //------------------------------------------------------------------------
