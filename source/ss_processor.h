@@ -57,19 +57,24 @@ public:
 
 //------------------------------------------------------------------------
 protected:
-	//std::string sDefaultSaveWaveFileName = "D:\\tmp\\vst_save_wave.wav";
-	std::string sDefaultSaveWaveFileName = "C:/temp/vst/vst_save_wave.wav";
+	// 默认将模型的入参保存在这个文件中
+	std::string sDefaultSaveModelInputWaveFileName = "C:/temp/vst/vst_model_input_wave.wav";
 	float** mBuffer;
 	long mBufferPos;
-	//AudioFile<double>::AudioBuffer audioBuffer;
-	//AudioFile<double> audioFile;
-	AudioFile<double>::AudioBuffer audioBuffer;
-	long lAudioBufferPos;
+	AudioFile<double>::AudioBuffer modelInputAudioBuffer;
+	long lModelInputAudioBufferPos;
 	AudioFile<double> audioFile;
 	long maxOutBufferSize;
 	RECORD_STATE kRecordState;
 	double fRecordIdleTime;
 	int iNumberOfChanel;
+
+	// 默认将模型的返回结果保存在这个文件中
+	std::string sDefaultSaveModelOutputWaveFileName = "C:/temp/vst/vst_model_output_wave.wav";
+	std::vector<std::vector<double>> modelOutputAudioBuffer;
+	long lModelOutputAudioBufferPos;
+	// 是否还有更多的输出数据待处理
+	bool bHasMoreOutputData;
 };
 
 //------------------------------------------------------------------------
