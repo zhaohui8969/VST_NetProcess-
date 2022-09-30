@@ -5,6 +5,10 @@
 #include "ss_controller.h"
 #include "ss_cids.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
+// 引入必要的头文件
+#include "pluginterfaces/vst/ivstparameterchanges.h"
+#include "public.sdk/source/vst/hosting/eventlist.h"
+#include "AudioFile.h"
 
 using namespace Steinberg;
 

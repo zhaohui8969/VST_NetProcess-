@@ -6,8 +6,10 @@
 #include "ss_cids.h"
 
 #include "base/source/fstreamer.h"
+// 引入必要的头文件
 #include "pluginterfaces/vst/ivstparameterchanges.h"
-
+#include "public.sdk/source/vst/hosting/eventlist.h"
+#include "AudioFile.h"
 using namespace Steinberg;
 
 namespace MyCompanyName {
@@ -15,6 +17,14 @@ namespace MyCompanyName {
 // NetProcessProcessor
 //------------------------------------------------------------------------
 NetProcessProcessor::NetProcessProcessor ()
+	:mBuffer(nullptr)
+	,mBufferPos(0)
+	,audioFile(sDefaultSaveWaveFileName)
+	,audioBuffer(0)
+	//1000000约20秒
+	,maxOutBufferSize(1000000)
+	,sampleRate(44100.f)
+	,frenqence(440.f)
 {
 	//--- set the wanted controller for our processor
 	setControllerClass (kNetProcessControllerUID);
@@ -28,7 +38,12 @@ NetProcessProcessor::~NetProcessProcessor ()
 tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 {
 	// Here the Plug-in will be instanciated
-	
+	// 初始化音频输出文件所用的缓存，双声道
+	audioFile.shouldLogErrorsToConsole(true);
+	audioBuffer.resize(2);
+	audioBuffer[0].resize(maxOutBufferSize);
+	audioBuffer[1].resize(maxOutBufferSize);
+		
 	//---always initialize the parent-------
 	tresult result = AudioEffect::initialize (context);
 	// if everything Ok, continue
@@ -86,6 +101,27 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 	}*/
 	
 	//--- Here you have to implement your processing
+	Vst::Sample32* inputL = data.inputs[0].channelBuffers32[0];
+	Vst::Sample32* inputR = data.inputs[0].channelBuffers32[1];
+	for (int32 i = 0; i < data.numSamples; i++) {
+		// 将输入端的信号复制一遍
+		audioBuffer[0][mBufferPos + i] = inputL[i];
+		audioBuffer[1][mBufferPos + i] = inputL[i];
+	}
+	mBufferPos += data.numSamples;
+	// 当缓冲区不足以支持下一次写入的时候，写一次文件
+	if (mBufferPos + data.numSamples > maxOutBufferSize){
+		bool ok = audioFile.setAudioBuffer(audioBuffer);
+		// Set both the number of channels and number of samples per channel
+		audioFile.setAudioBufferSize(2, maxOutBufferSize);
+		audioFile.setBitDepth(24);
+		audioFile.setSampleRate(44100);
+
+		// Wave file (explicit)
+		audioFile.save(sDefaultSaveWaveFileName, AudioFileFormat::Wave);
+
+		mBufferPos = 0;
+	}
 
 	return kResultOk;
 }

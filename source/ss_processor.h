@@ -5,6 +5,9 @@
 #pragma once
 
 #include "public.sdk/source/vst/vstaudioeffect.h"
+#include <iostream>
+#include <cstring>
+#include "AudioFile.h"
 
 namespace MyCompanyName {
 
@@ -50,7 +53,16 @@ public:
 
 //------------------------------------------------------------------------
 protected:
-
+	std::string sDefaultSaveWaveFileName = "D:\\tmp\\vst_save_wave.wav";
+	float** mBuffer;
+	long mBufferPos;
+	//AudioFile<double>::AudioBuffer audioBuffer;
+	//AudioFile<double> audioFile;
+	AudioFile<double>::AudioBuffer audioBuffer;
+	AudioFile<double> audioFile;
+	long maxOutBufferSize;
+	float sampleRate;
+	float frenqence;
 };
 
 //------------------------------------------------------------------------
