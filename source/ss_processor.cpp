@@ -292,8 +292,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		if (bExitWorkState) {
 			// 需要退出工作状态
 			kRecordState = IDLE;
-
-			func_do_voice_transfer(
+			std::thread (func_do_voice_transfer,
 				iNumberOfChanel,
 				this->processSetup.sampleRate,
 				modelInputAudioBuffer,
@@ -303,7 +302,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				&lModelOutputAudioBufferPos,
 				sDefaultSaveModelInputWaveFileName,
 				sDefaultSaveModelOutputWaveFileName,
-				&bHasMoreOutputData);
+				&bHasMoreOutputData).detach();
 		}
 	}
 
