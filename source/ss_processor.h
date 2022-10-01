@@ -63,8 +63,8 @@ protected:
 	long mBufferPos;
 	AudioFile<double>::AudioBuffer modelInputAudioBuffer;
 	long lModelInputAudioBufferPos;
-	AudioFile<double> audioFile;
-	long maxOutBufferSize;
+	//AudioFile<double> audioFile;
+	long maxInputBufferSize;
 	RECORD_STATE kRecordState;
 	double fRecordIdleTime;
 	int iNumberOfChanel;
