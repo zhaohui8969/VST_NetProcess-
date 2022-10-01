@@ -119,14 +119,17 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 	//Vst::Sample32* inputR = data.inputs[0].channelBuffers32[1];
 	Vst::Sample32* outputL = data.outputs[0].channelBuffers32[0];
 	//Vst::Sample32* outputR = data.outputs[0].channelBuffers32[1];
-	double fSampleSum = 0;
+	double fSampleMax = -9999;
 	for (int32 i = 0; i < data.numSamples; i++) {
 		// 将输入端的信号复制一遍
 		// modelInputAudioBuffer[0][lModelInputAudioBufferPos + i] = inputL[i];
 		// modelInputAudioBuffer[1][lModelInputAudioBufferPos + i] = inputR[i];
 
-		// 计算当前音频数据的平均音量
-		fSampleSum += inputL[i];
+		// 获取当前块的最大音量
+		double fCurrentSample = inputL[i];
+		if (fCurrentSample > fSampleMax) {
+			fSampleMax = fCurrentSample;
+		}
 		//fSampleSum += inputL[i] + inputR[i];
 
 		// 在输出端对信号进行放大
@@ -138,15 +141,13 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		//outputR[i] = 0;
 	}
 
-	// 计算当前音频数据的平均音量
-	double fSampleAverageVolume = fSampleSum / data.numSamples / 2.f;
 	char buff[100];
-	snprintf(buff, sizeof(buff), "当前音频数据的平均音量:%f\n", fSampleAverageVolume);
+	snprintf(buff, sizeof(buff), "当前音频数据的最大音量:%f\n", fSampleMax);
 	std::string buffAsStdStr = buff;
 	OutputDebugStringA(buff);
 
 	double fSampleVolumeWorkActiveVal = 0.05;
-	bool bVolumeDetectFine = fSampleAverageVolume >= fSampleVolumeWorkActiveVal;
+	bool bVolumeDetectFine = fSampleMax >= fSampleVolumeWorkActiveVal;
 
 	if (bVolumeDetectFine) {
 		fRecordIdleTime = 0.f;
