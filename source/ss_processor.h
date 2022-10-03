@@ -7,7 +7,9 @@
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include <iostream>
 #include <cstring>
+#include <queue>
 #include "AudioFile.h"
+#include <mutex>
 
 namespace MyCompanyName {
 
@@ -61,20 +63,26 @@ protected:
 	std::string sDefaultSaveModelInputWaveFileName = "C:/temp/vst/vst_model_input_wave.wav";
 	float** mBuffer;
 	long mBufferPos;
-	AudioFile<double>::AudioBuffer modelInputAudioBuffer;
-	long lModelInputAudioBufferPos;
-	//AudioFile<double> audioFile;
-	long maxInputBufferSize;
+	// AudioFile<double>::AudioBuffer modelInputAudioBuffer;
+	// long lModelInputAudioBufferPos;
+	// AudioFile<double> audioFile;
+	std::queue<double> qModelInputSampleQueue;
+	// long maxInputBufferSize;
 	RECORD_STATE kRecordState;
 	double fRecordIdleTime;
 	int iNumberOfChanel;
 
 	// 默认将模型的返回结果保存在这个文件中
 	std::string sDefaultSaveModelOutputWaveFileName = "C:/temp/vst/vst_model_output_wave.wav";
-	std::vector<std::vector<double>> modelOutputAudioBuffer;
-	long lModelOutputAudioBufferPos;
+	// std::vector<std::vector<double>> modelOutputAudioBuffer;
+	// long lModelOutputAudioBufferPos;
+	std::queue<double> qModelOutputSampleQueue;
+	// std::queue<double> qModelInputSampleQueue;
 	// 是否还有更多的输出数据待处理
-	bool bHasMoreOutputData;
+	// bool bHasMoreOutputData;
+
+	std::mutex mInputQueueMutex;
+	std::mutex mOutputQueueMutex;
 };
 
 //------------------------------------------------------------------------

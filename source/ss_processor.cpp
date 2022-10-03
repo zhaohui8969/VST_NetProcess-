@@ -12,6 +12,8 @@
 #include "AudioFile.h"
 #include "httplib.h"
 #include <numeric>
+#include <Query.h>
+#include <mutex>
 
 using namespace Steinberg;
 
@@ -26,31 +28,42 @@ namespace MyCompanyName {
 void func_do_voice_transfer(
 	int iNumberOfChanel,									// 通道数量
 	double dProjectSampleRate,								// 项目采样率
-	AudioFile<double>::AudioBuffer modelInputAudioBuffer,	// AI模型入参缓冲区
-	long maxInputBufferSize,								// 模型入参缓冲区大小
-	long* lModelInputAudioBufferPos,						// 模型入参缓冲区读写位置指针
-	AudioFile<double>::AudioBuffer* modelOutputAudioBuffer,  // AI模型出参缓冲区
-	long* lModelOutputAudioBufferPos,						// 模型出参缓冲区读写位置指针
+	//AudioFile<double>::AudioBuffer modelInputAudioBuffer,	// AI模型入参缓冲区
+	//long maxInputBufferSize,								// 模型入参缓冲区大小
+	//long* lModelInputAudioBufferPos,						// 模型入参缓冲区读写位置指针
+	//AudioFile<double>::AudioBuffer* modelOutputAudioBuffer,  // AI模型出参缓冲区
+	//long* lModelOutputAudioBufferPos,						// 模型出参缓冲区读写位置指针
 	std::string sSaveModelInputWaveFileName,				// 模型的入参保存在这个文件中
 	std::string sSaveModelOutputWaveFileName,				// 模型的返回结果保存在这个文件中
-	bool* bHasMoreOutputData								// 开关标记，表示当前有模型返回
+	//bool* bHasMoreOutputData								// 开关标记，表示当前有模型返回
+	std::queue<double>* qModelInputSampleQueue,				// 模型入参队列
+	std::queue<double>* qModelOutputSampleQueue,				// 模型返回队列
+	std::mutex* mIntputQueueMutex,
+	std::mutex* mOutputQueueMutex
 ) {
 	// 保存音频数据到文件
+	(*mIntputQueueMutex).lock();
+	size_t inputQueueSize = (*qModelInputSampleQueue).size();
+
+	AudioFile<double>::AudioBuffer modelInputAudioBuffer;
+	modelInputAudioBuffer.resize(iNumberOfChanel);
+	modelInputAudioBuffer[0].resize(inputQueueSize);
+
+	// 从队列中取出所需的音频数据
+	for (int i = 0; i < inputQueueSize; i++) {
+		modelInputAudioBuffer[0][i] = (*qModelInputSampleQueue).front();
+		(*qModelInputSampleQueue).pop();
+	}
+	(*mIntputQueueMutex).unlock();
+
 	AudioFile<double> audioFile;
 	audioFile.shouldLogErrorsToConsole(true);
 	audioFile.setAudioBuffer(modelInputAudioBuffer);
-	audioFile.setAudioBufferSize(iNumberOfChanel, *lModelInputAudioBufferPos);
+	audioFile.setAudioBufferSize(iNumberOfChanel, inputQueueSize);
 	audioFile.setBitDepth(24);
 	audioFile.setSampleRate(dProjectSampleRate);
 	audioFile.save(sSaveModelInputWaveFileName, AudioFileFormat::Wave);
 
-	// 重置缓冲区指针以及缓冲区数据
-	// 注意指针
-	*lModelInputAudioBufferPos = 0;
-	for (int i = 0; i < maxInputBufferSize; i++) {
-		modelInputAudioBuffer[0][i] = 0;
-		//modelInputAudioBuffer[1][i] = 0;
-	}
 
 	// 调用AI模型进行声音处理
 	httplib::Client cli("http://192.168.3.253:6842");
@@ -100,10 +113,12 @@ void func_do_voice_transfer(
 		bool isMono = tmpAudioFile.isMono();
 		bool isStereo = tmpAudioFile.isStereo();
 
-		// 注意指针
-		*modelOutputAudioBuffer = tmpAudioFile.samples;
-		*bHasMoreOutputData = true;
-		*lModelOutputAudioBufferPos = 0;
+
+		(*mOutputQueueMutex).lock();
+		for (int i = 0; i < numSamples; i++) {
+			(*qModelOutputSampleQueue).push(tmpAudioFile.samples[0][i]);
+		}
+		(*mOutputQueueMutex).unlock();
 	}
 	else {
 		auto err = res.error();
@@ -117,20 +132,23 @@ void func_do_voice_transfer(
 NetProcessProcessor::NetProcessProcessor ()
 	: mBuffer(nullptr)
 	, mBufferPos(0)
-	, modelInputAudioBuffer(0)
-	, lModelInputAudioBufferPos(0)
+	//, modelInputAudioBuffer(0)
+	//, lModelInputAudioBufferPos(0)
 	//1000000约20秒
 	//500000约10秒
 	//200000约5秒
-	, maxInputBufferSize(1000000)
+	//100000约2秒
+	//, maxInputBufferSize(100000)
 	, kRecordState(IDLE)
 	, fRecordIdleTime(0.f)
 	// 默认只处理单声道
 	, iNumberOfChanel(1)
 	// 模型输出文件相关参数
-	, modelOutputAudioBuffer(0)
-	, lModelOutputAudioBufferPos(0)
-	, bHasMoreOutputData(false)
+	//, modelOutputAudioBuffer(0)
+	//, lModelOutputAudioBufferPos(0)
+	//, bHasMoreOutputData(false)
+	//, qModelInputSampleQueue(0)
+	//, qModelOutputSampleQueue(0)
 {
 	//--- set the wanted controller for our processor
 	setControllerClass (kNetProcessControllerUID);
@@ -147,8 +165,8 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	// 初始化音频输出文件所用的缓存，双声道
 	printf_s("初始化AI输入缓存");
 	OutputDebugStringA("初始化AI输入缓存");
-	modelInputAudioBuffer.resize(iNumberOfChanel);
-	modelInputAudioBuffer[0].resize(maxInputBufferSize);
+	//modelInputAudioBuffer.resize(iNumberOfChanel);
+	//modelInputAudioBuffer[0].resize(maxInputBufferSize);
 	//modelInputAudioBuffer[1].resize(maxOutBufferSize);
 	
 	//---always initialize the parent-------
@@ -259,28 +277,34 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			OutputDebugStringA("切换到工作状态");
 			kRecordState = WORK;
 			// 将当前的音频数据写入到模型入参缓冲区中
+			mInputQueueMutex.lock();
 			for (int32 i = 0; i < data.numSamples; i++) {
-				modelInputAudioBuffer[0][lModelInputAudioBufferPos + i] = inputL[i];
+				qModelInputSampleQueue.push(inputL[i]);
+				//modelInputAudioBuffer[0][lModelInputAudioBufferPos + i] = inputL[i];
 				//modelInputAudioBuffer[1][lModelInputAudioBufferPos + i] = inputR[i];
 			}
-			lModelInputAudioBufferPos += data.numSamples;
+			mInputQueueMutex.unlock();
+			//lModelInputAudioBufferPos += data.numSamples;
 		}
 	}
 	else {
 		// 当前是工作状态
 		// 将当前的音频数据写入到模型入参缓冲区中
+		mInputQueueMutex.lock();
 		for (int32 i = 0; i < data.numSamples; i++) {
-			modelInputAudioBuffer[0][lModelInputAudioBufferPos + i] = inputL[i];
+			qModelInputSampleQueue.push(inputL[i]);
+			// modelInputAudioBuffer[0][lModelInputAudioBufferPos + i] = inputL[i];
 			//modelInputAudioBuffer[1][lModelInputAudioBufferPos + i] = inputR[i];
 		}
-		lModelInputAudioBufferPos += data.numSamples;
+		mInputQueueMutex.unlock();
+		// lModelInputAudioBufferPos += data.numSamples;
 		// 判断是否需要退出工作状态
 		bool bExitWorkState = false;
 		// 退出条件1：当缓冲区不足以支持下一次写入的时候
-		if (lModelInputAudioBufferPos + data.numSamples > maxInputBufferSize) {
+		/*if (lModelInputAudioBufferPos + data.numSamples > maxInputBufferSize) {
 			bExitWorkState = true;
 			OutputDebugStringA("当缓冲区不足以支持下一次写入的时候，直接调用模型\n");
-		}
+		}*/
 
 		// 退出条件2：音量过小且持续超过一定时间
 		float fLowVolumeDetectTime = 1.f; // 1s
@@ -289,31 +313,46 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			OutputDebugStringA("音量过小且持续超过一定时间，直接调用模型\n");
 		}
 
+		// 退出条件3：队列达到一定的大小
+		//1000000约20秒
+		//500000约10秒
+		//200000约5秒
+		//100000约2秒
+		if (qModelInputSampleQueue.size() > 100000) {
+			bExitWorkState = true;
+			OutputDebugStringA("队列大小达到预期，直接调用模型\n");
+		}
+
+
 		if (bExitWorkState) {
 			// 需要退出工作状态
 			kRecordState = IDLE;
 			std::thread (func_do_voice_transfer,
 				iNumberOfChanel,
 				this->processSetup.sampleRate,
-				modelInputAudioBuffer,
-				maxInputBufferSize,
-				&lModelInputAudioBufferPos,
-				&modelOutputAudioBuffer,
-				&lModelOutputAudioBufferPos,
+				//modelInputAudioBuffer,
+				//maxInputBufferSize,
+				//&lModelInputAudioBufferPos,
+				//&modelOutputAudioBuffer,
+				//&lModelOutputAudioBufferPos,
 				sDefaultSaveModelInputWaveFileName,
 				sDefaultSaveModelOutputWaveFileName,
-				&bHasMoreOutputData).detach();
+				&qModelInputSampleQueue,
+				&qModelOutputSampleQueue,
+				&mInputQueueMutex,
+				&mOutputQueueMutex).detach();
 		}
 	}
 
 	// 如果模型输出缓冲区还有数据的话，写入到输出信号中去
 	int channel = 0;
-	if (bHasMoreOutputData) {
+	if (!qModelOutputSampleQueue.empty()) {
 		OutputDebugStringA("模型输出缓冲区还有数据的话，写入到输出信号中去\n");
 		bool bFinish = false;
+		mOutputQueueMutex.lock();
 		for (int i = 0; i < data.numSamples; i++)
 		{
-			int index = lModelOutputAudioBufferPos + i / 2;
+			/*int index = lModelOutputAudioBufferPos + i / 2;
 			bFinish = index >= modelOutputAudioBuffer[channel].size();
 			if (!bFinish) {
 				double currentSample = modelOutputAudioBuffer[channel][index];
@@ -321,17 +360,31 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			}
 			else {
 				outputL[i] = 0.f;
+			}*/
+
+			bFinish = qModelOutputSampleQueue.empty();
+			if (bFinish) {
+				outputL[i] = 0.f;
 			}
+			else {
+				double currentSample = qModelOutputSampleQueue.front();
+				if (i % 2 == 1) {
+					qModelOutputSampleQueue.pop();
+				}
+				outputL[i] = currentSample;
+			}
+
 		}
+		mOutputQueueMutex.unlock();
 		if (bFinish) {
 			// 数据取完了
 			OutputDebugStringA("数据取完了\n");
-			bHasMoreOutputData = false;
-			lModelOutputAudioBufferPos = 0;
+			//bHasMoreOutputData = false;
+			//lModelOutputAudioBufferPos = 0;
 		}
-		else {
-			lModelOutputAudioBufferPos += data.numSamples / 2;
-		}
+		//else {
+		//	lModelOutputAudioBufferPos += data.numSamples / 2;
+		//}
 	}
 	else {
 		for (int32 i = 0; i < data.numSamples; i++) {
