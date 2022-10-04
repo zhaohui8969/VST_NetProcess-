@@ -378,6 +378,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClInclude Include="..\source\AudioFile.h" />
     <ClInclude Include="..\source\httplib.h" />
+    <ClInclude Include="..\source\params.h" />
     <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\version.h" />
     <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_cids.h" />
     <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_processor.h" />
@@ -437,4 +438,9 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties _1_1_4resource_4ss_3editor_1uidesc__JsonSchema="vst" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

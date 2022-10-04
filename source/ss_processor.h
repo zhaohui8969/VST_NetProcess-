@@ -83,6 +83,12 @@ protected:
 
 	std::mutex mInputQueueMutex;
 	std::mutex mOutputQueueMutex;
+	
+	bool bRepeat;
+	float fRepeatTime;
+	float fMaxSliceLength;
+	long lMaxSliceLengthSampleNumber;
+	float fPitchChange;
 };
 
 //------------------------------------------------------------------------

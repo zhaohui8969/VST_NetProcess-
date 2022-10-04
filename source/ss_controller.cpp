@@ -9,6 +9,9 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "AudioFile.h"
+#include "params.h"
+#include "pluginterfaces/base/ibstream.h"
+#include "base/source/fstreamer.h"
 
 using namespace Steinberg;
 
@@ -29,7 +32,11 @@ tresult PLUGIN_API NetProcessController::initialize (FUnknown* context)
 	}
 
 	// Here you could register some parameters
-
+	setKnobMode(Vst::kLinearMode);
+	parameters.addParameter(STR16("OSC_kEnableTwiceRepeat"), nullptr, 0, defaultEnableTwiceRepeat, Vst::ParameterInfo::kCanAutomate, kEnableTwiceRepeat);
+	parameters.addParameter(STR16("OSC_kTwiceRepeatIntvalTime"), nullptr, 0, defaultTwiceRepeatIntvalTime, Vst::ParameterInfo::kCanAutomate, kTwiceRepeatIntvalTime);
+	parameters.addParameter(STR16("OSC_kMaxSliceLength"), nullptr, 0, defaultMaxSliceLength, Vst::ParameterInfo::kCanAutomate, kMaxSliceLength);
+	parameters.addParameter(STR16("OSC_kPitchChange"), nullptr, 0, defaultPitchChange, Vst::ParameterInfo::kCanAutomate, kPitchChange);
 	return result;
 }
 
@@ -48,6 +55,20 @@ tresult PLUGIN_API NetProcessController::setComponentState (IBStream* state)
 	// Here you get the state of the component (Processor part)
 	if (!state)
 		return kResultFalse;
+
+	// 反序列化，读取配置
+	IBStreamer streamer(state, kLittleEndian);
+
+	bool bVal;
+	float fVal;
+	if (streamer.readBool(bVal) == false) return kResultFalse;
+	setParamNormalized(kEnableTwiceRepeat, bVal);
+	if (streamer.readFloat(fVal) == false) return kResultFalse;
+	setParamNormalized(kTwiceRepeatIntvalTime, fVal);
+	if (streamer.readFloat(fVal) == false) return kResultFalse;
+	setParamNormalized(kMaxSliceLength, fVal);
+	if (streamer.readFloat(fVal) == false) return kResultFalse;
+	setParamNormalized(kPitchChange, fVal);
 
 	return kResultOk;
 }

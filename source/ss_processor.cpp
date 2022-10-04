@@ -14,6 +14,7 @@
 #include <numeric>
 #include <Query.h>
 #include <mutex>
+#include "params.h"
 
 using namespace Steinberg;
 
@@ -39,7 +40,10 @@ void func_do_voice_transfer(
 	std::queue<double>* qModelInputSampleQueue,				// 模型入参队列
 	std::queue<double>* qModelOutputSampleQueue,				// 模型返回队列
 	std::mutex* mIntputQueueMutex,
-	std::mutex* mOutputQueueMutex
+	std::mutex* mOutputQueueMutex,
+	bool bRepeat,
+	float fRepeatTime,
+	float fPitchChange
 ) {
 	// 保存音频数据到文件
 	(*mIntputQueueMutex).lock();
@@ -83,8 +87,10 @@ void func_do_voice_transfer(
 	std::string buffAsStdStr = buff;
 	OutputDebugStringA(buff);
 
+	snprintf(buff, sizeof(buff), "%f", fPitchChange);
 	httplib::MultipartFormDataItems items = {
-	  { "sample", sBuffer, "sample.wav", "application/octet-stream"},
+		{ "fPitchChange", buff, "", ""},
+		{ "sample", sBuffer, "sample.wav", "application/octet-stream"},
 	};
 
 	OutputDebugStringA("调用AI算法模型\n");
@@ -114,10 +120,19 @@ void func_do_voice_transfer(
 		bool isMono = tmpAudioFile.isMono();
 		bool isStereo = tmpAudioFile.isStereo();
 
-
+		// 为了便于监听，加一个重复
+		int iRepeatSampleNumber = dProjectSampleRate * fRepeatTime;
 		(*mOutputQueueMutex).lock();
 		for (int i = 0; i < numSamples; i++) {
 			(*qModelOutputSampleQueue).push(tmpAudioFile.samples[0][i]);
+		}
+		if (bRepeat) {
+			for (int i = 0; i < iRepeatSampleNumber; i++) {
+				(*qModelOutputSampleQueue).push(0.00001f);
+			}
+			for (int i = 0; i < numSamples; i++) {
+				(*qModelOutputSampleQueue).push(tmpAudioFile.samples[0][i]);
+			}
 		}
 		(*mOutputQueueMutex).unlock();
 	}
@@ -130,7 +145,7 @@ void func_do_voice_transfer(
 	}
 }
 
-NetProcessProcessor::NetProcessProcessor ()
+NetProcessProcessor::NetProcessProcessor()
 	: mBuffer(nullptr)
 	, mBufferPos(0)
 	//, modelInputAudioBuffer(0)
@@ -150,6 +165,10 @@ NetProcessProcessor::NetProcessProcessor ()
 	//, bHasMoreOutputData(false)
 	//, qModelInputSampleQueue(0)
 	//, qModelOutputSampleQueue(0)
+	, bRepeat(defaultEnableTwiceRepeat)
+	, fRepeatTime(0.f)
+	, fMaxSliceLength(2.f)
+	, fPitchChange(0.f)
 {
 	//--- set the wanted controller for our processor
 	setControllerClass (kNetProcessControllerUID);
@@ -163,13 +182,7 @@ NetProcessProcessor::~NetProcessProcessor ()
 tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 {
 	// Here the Plug-in will be instanciated
-	// 初始化音频输出文件所用的缓存，双声道
-	printf_s("初始化AI输入缓存");
-	OutputDebugStringA("初始化AI输入缓存");
-	//modelInputAudioBuffer.resize(iNumberOfChanel);
-	//modelInputAudioBuffer[0].resize(maxInputBufferSize);
-	//modelInputAudioBuffer[1].resize(maxOutBufferSize);
-	
+
 	//---always initialize the parent-------
 	tresult result = AudioEffect::initialize (context);
 	// if everything Ok, continue
@@ -209,28 +222,48 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 {
 	//--- First : Read inputs parameter changes-----------
 
-    /*if (data.inputParameterChanges)
-    {
-        int32 numParamsChanged = data.inputParameterChanges->getParameterCount ();
-        for (int32 index = 0; index < numParamsChanged; index++)
-        {
-            if (auto* paramQueue = data.inputParameterChanges->getParameterData (index))
-            {
-                Vst::ParamValue value;
-                int32 sampleOffset;
-                int32 numPoints = paramQueue->getPointCount ();
-                switch (paramQueue->getParameterId ())
-                {
+	
+	// 处理参数变化
+	if (data.inputParameterChanges)
+	{
+		int32 numParamsChanged = data.inputParameterChanges->getParameterCount();
+		for (int32 index = 0; index < numParamsChanged; index++)
+		{
+			if (auto* paramQueue = data.inputParameterChanges->getParameterData(index))
+			{
+				Vst::ParamValue value;
+				int32 sampleOffset;
+				int32 numPoints = paramQueue->getPointCount();
+				paramQueue->getPoint(numPoints - 1, sampleOffset, value);
+				switch (paramQueue->getParameterId())
+				{
+				case kEnableTwiceRepeat:
+					OutputDebugStringA("kEnableTwiceRepeat\n");
+					bRepeat = (bool)value;
+					break;
+				case kTwiceRepeatIntvalTime:
+					OutputDebugStringA("kTwiceRepeatIntvalTime\n");
+					fRepeatTime = value * maxTwiceRepeatIntvalTime;
+					break;
+				case kMaxSliceLength:
+					OutputDebugStringA("kMaxSliceLength\n");
+					fMaxSliceLength = value * maxMaxSliceLength + 1.f;
+					lMaxSliceLengthSampleNumber = this->processSetup.sampleRate * fMaxSliceLength;
+					break;
+				case kPitchChange:
+					OutputDebugStringA("kPitchChange\n");
+					fPitchChange = value * maxPitchChange;
+					break;
 				}
 			}
 		}
-	}*/
-	
+	}
+
 	//--- Here you have to implement your processing
 	Vst::Sample32* inputL = data.inputs[0].channelBuffers32[0];
 	//Vst::Sample32* inputR = data.inputs[0].channelBuffers32[1];
 	Vst::Sample32* outputL = data.outputs[0].channelBuffers32[0];
-	//Vst::Sample32* outputR = data.outputs[0].channelBuffers32[1];
+	Vst::Sample32* outputR = data.outputs[0].channelBuffers32[1];
 	double fSampleMax = -9999;
 	for (int32 i = 0; i < data.numSamples; i++) {
 		// 将输入端的信号复制一遍
@@ -319,7 +352,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		//500000约10秒
 		//200000约5秒
 		//100000约2秒
-		if (qModelInputSampleQueue.size() > 100000) {
+		if (qModelInputSampleQueue.size() > lMaxSliceLengthSampleNumber) {
 			bExitWorkState = true;
 			OutputDebugStringA("队列大小达到预期，直接调用模型\n");
 		}
@@ -341,12 +374,17 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				&qModelInputSampleQueue,
 				&qModelOutputSampleQueue,
 				&mInputQueueMutex,
-				&mOutputQueueMutex).detach();
+				&mOutputQueueMutex,
+				bRepeat,
+				fRepeatTime,
+				fPitchChange).detach();
 		}
 	}
 
 	// 如果模型输出缓冲区还有数据的话，写入到输出信号中去
 	int channel = 0;
+	bool bHasRightChanel = true;
+	if (outputR == outputL || outputR == NULL) bHasRightChanel = false;
 	if (!qModelOutputSampleQueue.empty()) {
 		OutputDebugStringA("模型输出缓冲区还有数据的话，写入到输出信号中去\n");
 		bool bFinish = false;
@@ -373,6 +411,9 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 					qModelOutputSampleQueue.pop();
 				}
 				outputL[i] = currentSample;
+				if (bHasRightChanel) {
+					outputR[i] = currentSample;
+				}
 			}
 
 		}
@@ -391,7 +432,9 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		for (int32 i = 0; i < data.numSamples; i++) {
 			// 对输出静音
 			outputL[i] = 0.0000000001f;
-			//outputR[i] = 0;
+			if (bHasRightChanel) {
+				outputR[i] = 0.0000000001f;
+			}
 		}
 	}
 	return kResultOk;
@@ -423,7 +466,25 @@ tresult PLUGIN_API NetProcessProcessor::setState (IBStream* state)
 {
 	// called when we load a preset, the model has to be reloaded
 	IBStreamer streamer (state, kLittleEndian);
-	
+	bool bVal;
+	float fVal;
+	if (streamer.readBool(bVal) == false) {
+		return kResultFalse;
+	}
+	bRepeat = bVal;
+	if (streamer.readFloat(fVal) == false) {
+		return kResultFalse;
+	}
+	fRepeatTime = fVal * maxTwiceRepeatIntvalTime;
+	if (streamer.readFloat(fVal) == false) {
+		return kResultFalse;
+	}
+	fMaxSliceLength = fVal * maxMaxSliceLength + 1.f;
+	if (streamer.readFloat(fVal) == false) {
+		return kResultFalse;
+	}
+	fPitchChange = fVal * maxPitchChange;
+
 	return kResultOk;
 }
 
@@ -431,8 +492,13 @@ tresult PLUGIN_API NetProcessProcessor::setState (IBStream* state)
 tresult PLUGIN_API NetProcessProcessor::getState (IBStream* state)
 {
 	// here we need to save the model
-	IBStreamer streamer (state, kLittleEndian);
+	// 保存设置到持久化文件中
+	IBStreamer streamer(state, kLittleEndian);
 
+	streamer.writeBool(bRepeat);
+	streamer.writeFloat(fRepeatTime / maxTwiceRepeatIntvalTime);
+	streamer.writeFloat((fMaxSliceLength - 1.f) / maxMaxSliceLength);
+	streamer.writeFloat(fPitchChange / maxPitchChange);
 	return kResultOk;
 }
 
