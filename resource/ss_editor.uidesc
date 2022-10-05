@@ -10,14 +10,17 @@
 		<view class="CKnob" control-tag="OSC_kTwiceRepeatIntvalTime" origin="34, 30" size="70, 70" max-value="2" min-value="0" default-value="0"></view>
 		<view class="CTextLabel" origin="120, 90" size="80, 20" title="最长音频切片"></view>
 		<view class="CKnob" control-tag="OSC_kMaxSliceLength" origin="124, 30" size="70, 70" max-value="10" min-value="0" default-value="2"></view>
-		<view class="CTextLabel" origin="220, 90" size="40, 20" title="变调"></view>
-		<view class="CKnob" control-tag="OSC_kPitchChange" origin="205, 30" size="70, 70" max-value="12" min-value="0" default-value="0"></view>
+		<view class="CTextLabel" origin="220, 90" size="80, 20" title="前导音频长度"></view>
+		<view class="CKnob" control-tag="OSC_kPrefixBufferLength" origin="205, 30" size="70, 70" max-value="10" min-value="0" default-value="2"></view>
+		<view class="CTextLabel" origin="320, 90" size="40, 20" title="变调"></view>
+		<view class="CKnob" control-tag="OSC_kPitchChange" origin="295, 30" size="70, 70" max-value="12" min-value="0" default-value="0"></view>
 	</template>
 	<control-tags>
 		<control-tag name="OSC_kEnableTwiceRepeat" tag="100"></control-tag>
 		<control-tag name="OSC_kTwiceRepeatIntvalTime" tag="101"></control-tag>
 		<control-tag name="OSC_kMaxSliceLength" tag="102"></control-tag>
 		<control-tag name="OSC_kPitchChange" tag="103"></control-tag>
+		<control-tag name="OSC_kPrefixBufferLength" tag="104"></control-tag>
 	</control-tags>
 	<bitmaps/>
 </vstgui-ui-description>

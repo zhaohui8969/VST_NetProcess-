@@ -43,7 +43,8 @@ void func_do_voice_transfer(
 	std::mutex* mOutputQueueMutex,
 	bool bRepeat,
 	float fRepeatTime,
-	float fPitchChange
+	float fPitchChange,
+	float fPrefixLength
 ) {
 	// 保存音频数据到文件
 	(*mIntputQueueMutex).lock();
@@ -122,15 +123,18 @@ void func_do_voice_transfer(
 
 		// 为了便于监听，加一个重复
 		int iRepeatSampleNumber = dProjectSampleRate * fRepeatTime;
+		// 跳过前导音频信号
+		int iSkipSamplePos = fPrefixLength * sampleRate;
+		iSkipSamplePos = 0;
 		(*mOutputQueueMutex).lock();
-		for (int i = 0; i < numSamples; i++) {
+		for (int i = iSkipSamplePos; i < numSamples; i++) {
 			(*qModelOutputSampleQueue).push(tmpAudioFile.samples[0][i]);
 		}
 		if (bRepeat) {
 			for (int i = 0; i < iRepeatSampleNumber; i++) {
 				(*qModelOutputSampleQueue).push(0.00001f);
 			}
-			for (int i = 0; i < numSamples; i++) {
+			for (int i = iSkipSamplePos; i < numSamples; i++) {
 				(*qModelOutputSampleQueue).push(tmpAudioFile.samples[0][i]);
 			}
 		}
@@ -169,6 +173,9 @@ NetProcessProcessor::NetProcessProcessor()
 	, fRepeatTime(0.f)
 	, fMaxSliceLength(2.f)
 	, fPitchChange(0.f)
+	, fPrefixLength(0.01f)
+	, lPrefixBufferPos(0)
+	, fPrefixBuffer(nullptr)
 {
 	//--- set the wanted controller for our processor
 	setControllerClass (kNetProcessControllerUID);
@@ -182,7 +189,11 @@ NetProcessProcessor::~NetProcessProcessor ()
 tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 {
 	// Here the Plug-in will be instanciated
-
+	lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
+	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixLengthSampleNumber);
+	if (fPrefixBuffer) {
+		memset(fPrefixBuffer, 0.f, lPrefixLengthSampleNumber);
+	}
 	//---always initialize the parent-------
 	tresult result = AudioEffect::initialize (context);
 	// if everything Ok, continue
@@ -254,6 +265,19 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 					OutputDebugStringA("kPitchChange\n");
 					fPitchChange = value * maxPitchChange;
 					break;
+				case kPrefixBufferLength:
+					OutputDebugStringA("kPrefixBufferLength\n");
+					fPrefixLength = value * maxPrefixBufferLength + minPrefixBufferLength;
+					lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
+					if (fPrefixBuffer) {
+						std::free(fPrefixBuffer);
+					}
+					fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixLengthSampleNumber);
+					if (fPrefixBuffer) {
+						memset(fPrefixBuffer, 0.f, lPrefixLengthSampleNumber);
+					}
+					lPrefixBufferPos = 0;
+					break;
 				}
 			}
 		}
@@ -284,7 +308,11 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		// 对输出静音
 		//outputL[i] = 0.0000000001f;
 		//outputR[i] = 0;
+
+		// 将当前信号复制到前导信号缓冲区中
+		fPrefixBuffer[(lPrefixBufferPos + i) % lPrefixLengthSampleNumber] = fCurrentSample;
 	}
+	lPrefixBufferPos = (lPrefixBufferPos + data.numSamples) % lPrefixLengthSampleNumber;
 
 	char buff[100];
 	snprintf(buff, sizeof(buff), "当前音频数据的最大音量:%f\n", fSampleMax);
@@ -312,10 +340,18 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			kRecordState = WORK;
 			// 将当前的音频数据写入到模型入参缓冲区中
 			mInputQueueMutex.lock();
-			for (int32 i = 0; i < data.numSamples; i++) {
+			/*for (int32 i = 0; i < data.numSamples; i++) {
 				qModelInputSampleQueue.push(inputL[i]);
 				//modelInputAudioBuffer[0][lModelInputAudioBufferPos + i] = inputL[i];
 				//modelInputAudioBuffer[1][lModelInputAudioBufferPos + i] = inputR[i];
+			}*/
+			// 因为我们有前导缓存，所以这里直接从前导缓存里取音频数据，前导缓存的大小应当能包含下当前的缓冲区数据
+			// 相当于在开始采样的时候会直接带上前导缓存的数据
+			for (int i = lPrefixBufferPos; i < lPrefixLengthSampleNumber; i++) {
+				qModelInputSampleQueue.push(fPrefixBuffer[i]);
+			}
+			for (int i = 0; i < lPrefixBufferPos; i++) {
+				qModelInputSampleQueue.push(fPrefixBuffer[i]);
 			}
 			mInputQueueMutex.unlock();
 			//lModelInputAudioBufferPos += data.numSamples;
@@ -352,7 +388,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		//500000约10秒
 		//200000约5秒
 		//100000约2秒
-		if (qModelInputSampleQueue.size() > lMaxSliceLengthSampleNumber) {
+		if (qModelInputSampleQueue.size() > lMaxSliceLengthSampleNumber + lPrefixLengthSampleNumber) {
 			bExitWorkState = true;
 			OutputDebugStringA("队列大小达到预期，直接调用模型\n");
 		}
@@ -377,7 +413,8 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				&mOutputQueueMutex,
 				bRepeat,
 				fRepeatTime,
-				fPitchChange).detach();
+				fPitchChange,
+				fPrefixLength - data.numSamples / this->processSetup.sampleRate).detach();
 		}
 	}
 
@@ -480,10 +517,18 @@ tresult PLUGIN_API NetProcessProcessor::setState (IBStream* state)
 		return kResultFalse;
 	}
 	fMaxSliceLength = fVal * maxMaxSliceLength + 1.f;
+	lMaxSliceLengthSampleNumber = this->processSetup.sampleRate * fMaxSliceLength;
 	if (streamer.readFloat(fVal) == false) {
 		return kResultFalse;
 	}
 	fPitchChange = fVal * maxPitchChange;
+	if (streamer.readFloat(fVal) == false) {
+		return kResultFalse;
+	}
+	fPrefixLength = fVal * maxPrefixBufferLength + minPrefixBufferLength;
+	lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
+	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixLengthSampleNumber);
+	lPrefixBufferPos = 0;
 
 	return kResultOk;
 }
@@ -499,6 +544,7 @@ tresult PLUGIN_API NetProcessProcessor::getState (IBStream* state)
 	streamer.writeFloat(fRepeatTime / maxTwiceRepeatIntvalTime);
 	streamer.writeFloat((fMaxSliceLength - 1.f) / maxMaxSliceLength);
 	streamer.writeFloat(fPitchChange / maxPitchChange);
+	streamer.writeFloat((fPrefixLength - minPrefixBufferLength) / maxPrefixBufferLength);
 	return kResultOk;
 }
 

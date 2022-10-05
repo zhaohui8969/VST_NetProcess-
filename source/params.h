@@ -5,7 +5,8 @@ enum
 	kEnableTwiceRepeat = 100,
 	kTwiceRepeatIntvalTime = 101,
 	kMaxSliceLength = 102,
-	kPitchChange = 103
+	kPitchChange = 103,
+	kPrefixBufferLength = 104
 };
 
 #define defaultEnableTwiceRepeat false
@@ -15,4 +16,7 @@ enum
 #define maxMaxSliceLength 10.f
 #define defaultPitchChange 0.f
 #define maxPitchChange 12.f
+#define defaultPrefixBufferLength 0.01f
+#define maxPrefixBufferLength 5.f
+#define minPrefixBufferLength 1.f
 

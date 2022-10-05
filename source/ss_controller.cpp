@@ -37,6 +37,7 @@ tresult PLUGIN_API NetProcessController::initialize (FUnknown* context)
 	parameters.addParameter(STR16("OSC_kTwiceRepeatIntvalTime"), nullptr, 0, defaultTwiceRepeatIntvalTime, Vst::ParameterInfo::kCanAutomate, kTwiceRepeatIntvalTime);
 	parameters.addParameter(STR16("OSC_kMaxSliceLength"), nullptr, 0, defaultMaxSliceLength, Vst::ParameterInfo::kCanAutomate, kMaxSliceLength);
 	parameters.addParameter(STR16("OSC_kPitchChange"), nullptr, 0, defaultPitchChange, Vst::ParameterInfo::kCanAutomate, kPitchChange);
+	parameters.addParameter(STR16("OSC_kPrefixBufferLength"), nullptr, 0, defaultPrefixBufferLength, Vst::ParameterInfo::kCanAutomate, kPrefixBufferLength);
 	return result;
 }
 
@@ -69,6 +70,8 @@ tresult PLUGIN_API NetProcessController::setComponentState (IBStream* state)
 	setParamNormalized(kMaxSliceLength, fVal);
 	if (streamer.readFloat(fVal) == false) return kResultFalse;
 	setParamNormalized(kPitchChange, fVal);
+	if (streamer.readFloat(fVal) == false) return kResultFalse;
+	setParamNormalized(kPrefixBufferLength, fVal);
 
 	return kResultOk;
 }
