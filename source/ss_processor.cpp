@@ -441,6 +441,9 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			bFinish = qModelOutputSampleQueue.empty();
 			if (bFinish) {
 				outputL[i] = 0.f;
+				if (bHasRightChanel) {
+					outputR[i] = 0.f;
+				}
 			}
 			else {
 				double currentSample = qModelOutputSampleQueue.front();
