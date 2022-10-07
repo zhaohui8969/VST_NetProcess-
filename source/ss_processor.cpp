@@ -340,19 +340,19 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			kRecordState = WORK;
 			// 将当前的音频数据写入到模型入参缓冲区中
 			mInputQueueMutex.lock();
-			/*for (int32 i = 0; i < data.numSamples; i++) {
+			for (int32 i = 0; i < data.numSamples; i++) {
 				qModelInputSampleQueue.push(inputL[i]);
 				//modelInputAudioBuffer[0][lModelInputAudioBufferPos + i] = inputL[i];
 				//modelInputAudioBuffer[1][lModelInputAudioBufferPos + i] = inputR[i];
-			}*/
+			}
 			// 因为我们有前导缓存，所以这里直接从前导缓存里取音频数据，前导缓存的大小应当能包含下当前的缓冲区数据
 			// 相当于在开始采样的时候会直接带上前导缓存的数据
-			for (int i = lPrefixBufferPos; i < lPrefixLengthSampleNumber; i++) {
+			/*for (int i = lPrefixBufferPos; i < lPrefixLengthSampleNumber; i++) {
 				qModelInputSampleQueue.push(fPrefixBuffer[i]);
 			}
 			for (int i = 0; i < lPrefixBufferPos; i++) {
 				qModelInputSampleQueue.push(fPrefixBuffer[i]);
-			}
+			}*/
 			mInputQueueMutex.unlock();
 			//lModelInputAudioBufferPos += data.numSamples;
 		}
