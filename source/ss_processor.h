@@ -83,18 +83,19 @@ protected:
 
 	std::mutex mInputQueueMutex;
 	std::mutex mOutputQueueMutex;
-	
+
 	bool bRepeat;
+	bool bCalcPitchError;
 	float fRepeatTime;
 	float fMaxSliceLength;
 	long lMaxSliceLengthSampleNumber;
 	float fPitchChange;
 	
 	// 前导信号缓冲区
-	float* fPrefixBuffer;
-	long lPrefixBufferPos;
-	float fPrefixLength;
-	long lPrefixLengthSampleNumber;
+	//float* fPrefixBuffer;
+	//long lPrefixBufferPos;
+	//float fPrefixLength;
+	//long lPrefixLengthSampleNumber;
 };
 
 //------------------------------------------------------------------------

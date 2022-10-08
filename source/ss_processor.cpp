@@ -44,7 +44,8 @@ void func_do_voice_transfer(
 	bool bRepeat,
 	float fRepeatTime,
 	float fPitchChange,
-	float fPrefixLength
+	//float fPrefixLength
+	bool bCalcPitchError
 ) {
 	// 保存音频数据到文件
 	(*mIntputQueueMutex).lock();
@@ -89,8 +90,17 @@ void func_do_voice_transfer(
 	OutputDebugStringA(buff);
 
 	snprintf(buff, sizeof(buff), "%f", fPitchChange);
+	std::string sCalcPitchError;
+	if (bCalcPitchError) {
+		sCalcPitchError = "true";
+	}
+	else {
+		sCalcPitchError = "false";
+	}
+
 	httplib::MultipartFormDataItems items = {
 		{ "fPitchChange", buff, "", ""},
+		{ "bCalcPitchError", sCalcPitchError.c_str(), "", ""},
 		{ "sample", sBuffer, "sample.wav", "application/octet-stream"},
 	};
 
@@ -124,17 +134,17 @@ void func_do_voice_transfer(
 		// 为了便于监听，加一个重复
 		int iRepeatSampleNumber = dProjectSampleRate * fRepeatTime;
 		// 跳过前导音频信号
-		int iSkipSamplePos = fPrefixLength * sampleRate;
-		iSkipSamplePos = 0;
+		//int iSkipSamplePos = fPrefixLength * sampleRate;
+		//iSkipSamplePos = 0;
 		(*mOutputQueueMutex).lock();
-		for (int i = iSkipSamplePos; i < numSamples; i++) {
+		for (int i = 0; i < numSamples; i++) {
 			(*qModelOutputSampleQueue).push(tmpAudioFile.samples[0][i]);
 		}
 		if (bRepeat) {
 			for (int i = 0; i < iRepeatSampleNumber; i++) {
 				(*qModelOutputSampleQueue).push(0.00001f);
 			}
-			for (int i = iSkipSamplePos; i < numSamples; i++) {
+			for (int i = 0; i < numSamples; i++) {
 				(*qModelOutputSampleQueue).push(tmpAudioFile.samples[0][i]);
 			}
 		}
@@ -170,12 +180,13 @@ NetProcessProcessor::NetProcessProcessor()
 	//, qModelInputSampleQueue(0)
 	//, qModelOutputSampleQueue(0)
 	, bRepeat(defaultEnableTwiceRepeat)
+	, bCalcPitchError(defaultEnabelPitchErrorCalc)
 	, fRepeatTime(0.f)
 	, fMaxSliceLength(2.f)
 	, fPitchChange(0.f)
-	, fPrefixLength(0.01f)
-	, lPrefixBufferPos(0)
-	, fPrefixBuffer(nullptr)
+	//, fPrefixLength(0.01f)
+	//, lPrefixBufferPos(0)
+	//, fPrefixBuffer(nullptr)
 {
 	//--- set the wanted controller for our processor
 	setControllerClass (kNetProcessControllerUID);
@@ -189,11 +200,12 @@ NetProcessProcessor::~NetProcessProcessor ()
 tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 {
 	// Here the Plug-in will be instanciated
-	lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
+	// 前导信号缓冲
+	/*lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
 	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixLengthSampleNumber);
 	if (fPrefixBuffer) {
 		memset(fPrefixBuffer, 0.f, lPrefixLengthSampleNumber);
-	}
+	}*/
 	//---always initialize the parent-------
 	tresult result = AudioEffect::initialize (context);
 	// if everything Ok, continue
@@ -252,6 +264,10 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 					OutputDebugStringA("kEnableTwiceRepeat\n");
 					bRepeat = (bool)value;
 					break;
+				case kEnabelPitchErrorCalc:
+					OutputDebugStringA("kEnabelPitchErrorCalc\n");
+					bCalcPitchError = (bool)value;
+					break;
 				case kTwiceRepeatIntvalTime:
 					OutputDebugStringA("kTwiceRepeatIntvalTime\n");
 					fRepeatTime = value * maxTwiceRepeatIntvalTime;
@@ -265,7 +281,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 					OutputDebugStringA("kPitchChange\n");
 					fPitchChange = value * maxPitchChange;
 					break;
-				case kPrefixBufferLength:
+				/*case kPrefixBufferLength:
 					OutputDebugStringA("kPrefixBufferLength\n");
 					fPrefixLength = value * maxPrefixBufferLength + minPrefixBufferLength;
 					lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
@@ -277,7 +293,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 						memset(fPrefixBuffer, 0.f, lPrefixLengthSampleNumber);
 					}
 					lPrefixBufferPos = 0;
-					break;
+					break;*/
 				}
 			}
 		}
@@ -310,9 +326,9 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		//outputR[i] = 0;
 
 		// 将当前信号复制到前导信号缓冲区中
-		fPrefixBuffer[(lPrefixBufferPos + i) % lPrefixLengthSampleNumber] = fCurrentSample;
+		//fPrefixBuffer[(lPrefixBufferPos + i) % lPrefixLengthSampleNumber] = fCurrentSample;
 	}
-	lPrefixBufferPos = (lPrefixBufferPos + data.numSamples) % lPrefixLengthSampleNumber;
+	//lPrefixBufferPos = (lPrefixBufferPos + data.numSamples) % lPrefixLengthSampleNumber;
 
 	char buff[100];
 	snprintf(buff, sizeof(buff), "当前音频数据的最大音量:%f\n", fSampleMax);
@@ -388,7 +404,8 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		//500000约10秒
 		//200000约5秒
 		//100000约2秒
-		if (qModelInputSampleQueue.size() > lMaxSliceLengthSampleNumber + lPrefixLengthSampleNumber) {
+		//if (qModelInputSampleQueue.size() > lMaxSliceLengthSampleNumber + lPrefixLengthSampleNumber) {
+		if (qModelInputSampleQueue.size() > lMaxSliceLengthSampleNumber) {
 			bExitWorkState = true;
 			OutputDebugStringA("队列大小达到预期，直接调用模型\n");
 		}
@@ -414,7 +431,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				bRepeat,
 				fRepeatTime,
 				fPitchChange,
-				fPrefixLength - data.numSamples / this->processSetup.sampleRate).detach();
+				bCalcPitchError).detach();
 		}
 	}
 
@@ -525,13 +542,17 @@ tresult PLUGIN_API NetProcessProcessor::setState (IBStream* state)
 		return kResultFalse;
 	}
 	fPitchChange = fVal * maxPitchChange;
-	if (streamer.readFloat(fVal) == false) {
+	if (streamer.readBool(bVal) == false) {
+		return kResultFalse;
+	}
+	bCalcPitchError = bVal;
+	/*if (streamer.readFloat(fVal) == false) {
 		return kResultFalse;
 	}
 	fPrefixLength = fVal * maxPrefixBufferLength + minPrefixBufferLength;
 	lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
 	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixLengthSampleNumber);
-	lPrefixBufferPos = 0;
+	lPrefixBufferPos = 0;*/
 
 	return kResultOk;
 }
@@ -547,7 +568,8 @@ tresult PLUGIN_API NetProcessProcessor::getState (IBStream* state)
 	streamer.writeFloat(fRepeatTime / maxTwiceRepeatIntvalTime);
 	streamer.writeFloat((fMaxSliceLength - 1.f) / maxMaxSliceLength);
 	streamer.writeFloat(fPitchChange / maxPitchChange);
-	streamer.writeFloat((fPrefixLength - minPrefixBufferLength) / maxPrefixBufferLength);
+	streamer.writeBool(bCalcPitchError);
+	//streamer.writeFloat((fPrefixLength - minPrefixBufferLength) / maxPrefixBufferLength);
 	return kResultOk;
 }
 

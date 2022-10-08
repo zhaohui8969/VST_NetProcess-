@@ -6,21 +6,20 @@
 	</colors>
 	<template name="view" origin="0,0" size="800,180" background-color="#333333">
 		<view class="CCheckBox" control-tag="OSC_kEnableTwiceRepeat" origin="10,10" size="130,20" title="是否二次重复监听"></view>
+		<view class="CCheckBox" control-tag="OSC_kEnabelPitchErrorCalc" origin="201, 10" size="100,20" title="音高偏差检测"></view>
 		<view class="CTextLabel" origin="30, 90" size="80, 20" title="二次监听间隔"></view>
 		<view class="CKnob" control-tag="OSC_kTwiceRepeatIntvalTime" origin="34, 30" size="70, 70" max-value="2" min-value="0" default-value="0"></view>
 		<view class="CTextLabel" origin="120, 90" size="80, 20" title="最长音频切片"></view>
 		<view class="CKnob" control-tag="OSC_kMaxSliceLength" origin="124, 30" size="70, 70" max-value="10" min-value="0" default-value="2"></view>
-		<view class="CTextLabel" origin="220, 90" size="80, 20" title="前导音频长度"></view>
-		<view class="CKnob" control-tag="OSC_kPrefixBufferLength" origin="205, 30" size="70, 70" max-value="10" min-value="0" default-value="2"></view>
-		<view class="CTextLabel" origin="320, 90" size="40, 20" title="变调"></view>
-		<view class="CKnob" control-tag="OSC_kPitchChange" origin="295, 30" size="70, 70" max-value="12" min-value="0" default-value="0"></view>
+		<view class="CTextLabel" origin="230, 90" size="40, 20" title="变调"></view>
+		<view class="CKnob" control-tag="OSC_kPitchChange" origin="215, 30" size="70, 70" max-value="30" min-value="0" default-value="0"></view>
 	</template>
 	<control-tags>
 		<control-tag name="OSC_kEnableTwiceRepeat" tag="100"></control-tag>
 		<control-tag name="OSC_kTwiceRepeatIntvalTime" tag="101"></control-tag>
 		<control-tag name="OSC_kMaxSliceLength" tag="102"></control-tag>
 		<control-tag name="OSC_kPitchChange" tag="103"></control-tag>
-		<control-tag name="OSC_kPrefixBufferLength" tag="104"></control-tag>
+		<control-tag name="OSC_kEnabelPitchErrorCalc" tag="105"></control-tag>
 	</control-tags>
 	<bitmaps/>
 </vstgui-ui-description>
