@@ -30,3 +30,5 @@
 studioOne里工程的采样率应设置为44.1Khz
 
 ![44.1kHz](./doc/studioOneSampleRateSetting.png)
+
+需建立`C:/temp/vst/`目录用于存储临时文件
