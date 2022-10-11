@@ -73,7 +73,8 @@ void func_do_voice_transfer(
 
 	// 调用AI模型进行声音处理
 	//httplib::Client cli("http://192.168.3.253:6842");
-	httplib::Client cli("http://ros.bigf00t.net:6842");
+	//httplib::Client cli("http://ros.bigf00t.net:6842");
+	httplib::Client cli("http://127.0.0.1:6842");
 
 	cli.set_connection_timeout(0, 1000000); // 300 milliseconds
 	cli.set_read_timeout(5, 0); // 5 seconds
