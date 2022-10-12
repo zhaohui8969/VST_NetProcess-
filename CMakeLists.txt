@@ -6,6 +6,10 @@ if(NOT vst3sdk_SOURCE_DIR)
     message(FATAL_ERROR "Path to VST3 SDK is empty!")
 endif()
 
+if(NOT SMTG_ADD_VSTGUI)
+    return()
+endif()
+
 project(NetProcess
     # This is your plug-in version number. Change it here only.
     # Version number symbols usable in C++ can be found in

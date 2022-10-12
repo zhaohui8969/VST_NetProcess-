@@ -92,7 +92,8 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PreLinkEvent>
-      <Message>		</Message>
+      <Message>
+      </Message>
       <Command>setlocal
 "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E make_directory D:/codes/vscode/vst3_demo/my_plugins/NetProcess/build/VST3/Debug/NetProcess.vst3/Contents/Resources
 if %errorlevel% neq 0 goto :cmEnd
@@ -134,7 +135,8 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd</Command>
     </PreLinkEvent>
     <PostBuildEvent>
-      <Message>		</Message>
+      <Message>
+      </Message>
       <Command>setlocal
 cd D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\bin
 if %errorlevel% neq 0 goto :cmEnd
@@ -235,7 +237,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PreLinkEvent>
-      <Message>		</Message>
+      <Message>
+      </Message>
       <Command>setlocal
 "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E make_directory D:/codes/vscode/vst3_demo/my_plugins/NetProcess/build/VST3/Release/NetProcess.vst3/Contents/Resources
 if %errorlevel% neq 0 goto :cmEnd
@@ -277,7 +280,8 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd</Command>
     </PreLinkEvent>
     <PostBuildEvent>
-      <Message>		</Message>
+      <Message>
+      </Message>
       <Command>setlocal
 cd D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build\bin
 if %errorlevel% neq 0 goto :cmEnd
@@ -372,6 +376,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\source\params.h" />
     <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\version.h" />
     <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_cids.h" />
     <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_processor.h" />

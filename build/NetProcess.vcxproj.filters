@@ -27,6 +27,9 @@
     <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_controller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\CMakeLists.txt" />

@@ -8,10 +8,13 @@
 // 引入必要的头文件
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "public.sdk/source/vst/hosting/eventlist.h"
+#include "public.sdk/source/vst/vstparameters.h"
 #include "AudioFile.h"
 #include "params.h"
 #include "pluginterfaces/base/ibstream.h"
 #include "base/source/fstreamer.h"
+#include "pluginterfaces/base/ustring.h"
+#include "json/json.h"
 
 using namespace Steinberg;
 
@@ -39,7 +42,33 @@ tresult PLUGIN_API NetProcessController::initialize (FUnknown* context)
 	parameters.addParameter(STR16("OSC_kPitchChange"), nullptr, 0, defaultPitchChange, Vst::ParameterInfo::kCanAutomate, kPitchChange);
 	//parameters.addParameter(STR16("OSC_kPrefixBufferLength"), nullptr, 0, defaultPrefixBufferLength, Vst::ParameterInfo::kCanAutomate, kPrefixBufferLength);
 	parameters.addParameter(STR16("OSC_kEnabelPitchErrorCalc"), nullptr, 0, defaultEnabelPitchErrorCalc, Vst::ParameterInfo::kCanAutomate, kEnabelPitchErrorCalc);
-	parameters.addParameter(STR16("OSC_kSelectRole"), nullptr, 0, defaultSelectRole, Vst::ParameterInfo::kCanAutomate, kSelectRole);
+	//parameters.addParameter(STR16("OSC_kSelectRole"), nullptr, 0, defaultSelectRole, Vst::ParameterInfo::kIsList, kSelectRole);
+
+	auto* filterTypeParam = new Vst::StringListParameter(USTRING("角色"), kSelectRole, nullptr, Vst::ParameterInfo::kIsList);
+	// JSON配置文件
+
+	std::string sJsonConfigFileName = "C:/temp/vst/netProcessConfig.json";
+	std::ifstream t_pc_file(sJsonConfigFileName, std::ios::binary);
+	std::stringstream buffer_pc_file;
+	buffer_pc_file << t_pc_file.rdbuf();
+	//auto sBuffer = buffer_pc_file.str();
+
+	Json::Value jsonRoot;
+	buffer_pc_file >> jsonRoot;
+	int iRoleSize = jsonRoot["roleList"].size();
+
+	for (int i = 0; i < iRoleSize; i++) {
+		std::string apiUrl = jsonRoot["roleList"][i]["apiUrl"].asString();
+		std::string name = jsonRoot["roleList"][i]["name"].asString();
+		std::string speakId = jsonRoot["roleList"][i]["speakId"].asString();
+		
+		char buff[100];
+		snprintf(buff, sizeof(buff), "%s", name);
+		filterTypeParam->appendString(USTRING(buff));
+	}
+	parameters.addParameter(filterTypeParam);
+
+
 	return result;
 }
 

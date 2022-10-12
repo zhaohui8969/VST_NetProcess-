@@ -106,7 +106,7 @@ namespace MyCompanyName {
 
 
 	httplib::MultipartFormDataItems items = {
-		{ "sSpeadId", roleStruct.sSpeadId, "", ""},
+		{ "sSpeakId", roleStruct.sSpeakId, "", ""},
 		{ "sName", roleStruct.sName, "", ""},
 		{ "fPitchChange", buff, "", ""},
 		{ "sampleRate", buffSamplerate, "", ""},
@@ -236,7 +236,7 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 		std::string name = jsonRoot["roleList"][i]["name"].asString();
 		std::string speakId = jsonRoot["roleList"][i]["speakId"].asString();
 		roleStruct role;
-		role.sSpeadId = speakId;
+		role.sSpeakId = speakId;
 		role.sName = name;
 		role.sApiUrl = apiUrl;
 		roleList.push_back(role);
@@ -317,6 +317,11 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				case kPitchChange:
 					OutputDebugStringA("kPitchChange\n");
 					fPitchChange = value * (maxPitchChange - minPitchChange) + minPitchChange;
+					break;
+				case kSelectRole:
+					OutputDebugStringA("kSelectRole\n");
+					iSelectRoleIndex= std::min<int8>(
+						(int8)(roleList.size() * value), roleList.size() - 1);
 					break;
 				/*case kPrefixBufferLength:
 					OutputDebugStringA("kPrefixBufferLength\n");

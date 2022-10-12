@@ -1,0 +1,22 @@
+{
+	// 适配的版本号
+	"configVersion": "1.1",
+	// 触发音量阈值
+	"fSampleVolumeWorkActiveVal": 0.05,
+	// 多角色的配置列表
+	"roleList": [
+		{
+			// HTTP服务的地址
+			"apiUrl": "http://127.0.0.1:6842",
+			// 角色ID
+			"speakId": "0",
+			// 角色别名（可随意修改）
+			"name": "猫雷"
+		},
+		{
+			"apiUrl": "http://127.0.0.1:6842",
+			"speakId": "1",
+			"name": "speakId1"
+		}
+	]
+}

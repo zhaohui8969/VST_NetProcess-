@@ -26,7 +26,7 @@ namespace MyCompanyName {
 struct roleStruct {
 
 	// 角色ID
-	std::string sSpeadId;
+	std::string sSpeakId;
 	// 角色名称
 	std::string sName;
 	// 服务URL
@@ -112,7 +112,7 @@ protected:
 	//float fPrefixLength;
 	//long lPrefixLengthSampleNumber;
 
-	// JSON配置文件
+	// JSON配置
 	std::string sJsonConfigFileName = "C:/temp/vst/netProcessConfig.json";
 	std::vector<roleStruct> roleList;
 	int iSelectRoleIndex;

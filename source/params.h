@@ -24,4 +24,3 @@ enum
 //#define defaultPrefixBufferLength 0.01f
 //#define maxPrefixBufferLength 5.f
 //#define minPrefixBufferLength 1.f
-
