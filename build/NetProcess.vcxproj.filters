@@ -27,21 +27,32 @@
     <ClInclude Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\source\ss_controller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\AudioFile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\httplib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\params.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\resource\ss_editor.uidesc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="D:\codes\vcpkg\packages\jsoncpp_x64-windows\debug\lib\objects-Debug\jsoncpp_object\json_reader.cpp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\codes\vcpkg\packages\jsoncpp_x64-windows\debug\lib\objects-Debug\jsoncpp_object\json_value.cpp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\codes\vcpkg\packages\jsoncpp_x64-windows\debug\lib\objects-Debug\jsoncpp_object\json_writer.cpp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\codes\vcpkg\packages\jsoncpp_x64-windows\lib\objects-Release\jsoncpp_object\json_reader.cpp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\codes\vcpkg\packages\jsoncpp_x64-windows\lib\objects-Release\jsoncpp_object\json_value.cpp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\codes\vcpkg\packages\jsoncpp_x64-windows\lib\objects-Release\jsoncpp_object\json_writer.cpp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="D:\codes\vscode\vst3_demo\my_plugins\NetProcess\resource\win32resource.rc">
@@ -51,6 +62,9 @@
   <ItemGroup>
     <Filter Include="Header Files">
       <UniqueIdentifier>{D1DB1C18-BFDD-3F9F-91E2-466B4C9A39B2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object Libraries">
+      <UniqueIdentifier>{A75910A2-996B-3E82-A9C6-213452BF20C9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
       <UniqueIdentifier>{98D8E4CD-1311-39D9-B312-A0E3FEF32AE2}</UniqueIdentifier>

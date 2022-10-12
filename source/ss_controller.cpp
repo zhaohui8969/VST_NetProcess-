@@ -39,6 +39,7 @@ tresult PLUGIN_API NetProcessController::initialize (FUnknown* context)
 	parameters.addParameter(STR16("OSC_kPitchChange"), nullptr, 0, defaultPitchChange, Vst::ParameterInfo::kCanAutomate, kPitchChange);
 	//parameters.addParameter(STR16("OSC_kPrefixBufferLength"), nullptr, 0, defaultPrefixBufferLength, Vst::ParameterInfo::kCanAutomate, kPrefixBufferLength);
 	parameters.addParameter(STR16("OSC_kEnabelPitchErrorCalc"), nullptr, 0, defaultEnabelPitchErrorCalc, Vst::ParameterInfo::kCanAutomate, kEnabelPitchErrorCalc);
+	parameters.addParameter(STR16("OSC_kSelectRole"), nullptr, 0, defaultSelectRole, Vst::ParameterInfo::kCanAutomate, kSelectRole);
 	return result;
 }
 

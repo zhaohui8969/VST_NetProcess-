@@ -10,6 +10,7 @@
 #include <queue>
 #include "AudioFile.h"
 #include <mutex>
+#include <stdio.h>
 
 namespace MyCompanyName {
 
@@ -20,6 +21,20 @@ namespace MyCompanyName {
 //------------------------------------------------------------------------
 //  NetProcessProcessor
 //------------------------------------------------------------------------
+
+
+struct roleStruct {
+
+	// 角色ID
+	std::string sSpeadId;
+	// 角色名称
+	std::string sName;
+	// 服务URL
+	std::string sApiUrl;
+
+};
+
+
 class NetProcessProcessor : public Steinberg::Vst::AudioEffect
 {
 public:
@@ -96,6 +111,13 @@ protected:
 	//long lPrefixBufferPos;
 	//float fPrefixLength;
 	//long lPrefixLengthSampleNumber;
+
+	// JSON配置文件
+	std::string sJsonConfigFileName = "C:/temp/vst/netProcessConfig.json";
+	std::vector<roleStruct> roleList;
+	int iSelectRoleIndex;
+
+	double fSampleVolumeWorkActiveVal;
 };
 
 //------------------------------------------------------------------------

@@ -81,3 +81,7 @@ elseif(SMTG_WIN)
         )
     endif()
 endif(SMTG_MAC)
+
+set(jsoncpp_DIR D:/codes/vcpkg/packages/jsoncpp_x64-windows/share/jsoncpp)
+find_package(jsoncpp CONFIG REQUIRED)
+target_link_libraries(NetProcess PRIVATE jsoncpp_lib jsoncpp_object JsonCpp::JsonCpp)

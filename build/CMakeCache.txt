@@ -282,6 +282,9 @@ VSTGUI_ENABLE_OPENGL_SUPPORT:BOOL=ON
 //Enable building deprecated Expat based XML Parser
 VSTGUI_ENABLE_XMLPARSER:BOOL=ON
 
+//The directory containing a CMake configuration file for jsoncpp.
+jsoncpp_DIR:PATH=jsoncpp_DIR-NOTFOUND
+
 //Dependencies for the target
 sdk_LIB_DEPENDS:STATIC=general;sdk_common;
 

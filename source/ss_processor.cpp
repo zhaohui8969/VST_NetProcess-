@@ -15,6 +15,7 @@
 #include <Query.h>
 #include <mutex>
 #include "params.h"
+#include "json/json.h"
 
 using namespace Steinberg;
 
@@ -26,26 +27,27 @@ namespace MyCompanyName {
 
 
 // 进行声音处理，较为耗时，在单独的线程里进行，避免主线程卡顿爆音
-void func_do_voice_transfer(
-	int iNumberOfChanel,									// 通道数量
-	double dProjectSampleRate,								// 项目采样率
-	//AudioFile<double>::AudioBuffer modelInputAudioBuffer,	// AI模型入参缓冲区
-	//long maxInputBufferSize,								// 模型入参缓冲区大小
-	//long* lModelInputAudioBufferPos,						// 模型入参缓冲区读写位置指针
-	//AudioFile<double>::AudioBuffer* modelOutputAudioBuffer,  // AI模型出参缓冲区
-	//long* lModelOutputAudioBufferPos,						// 模型出参缓冲区读写位置指针
-	std::string sSaveModelInputWaveFileName,				// 模型的入参保存在这个文件中
-	std::string sSaveModelOutputWaveFileName,				// 模型的返回结果保存在这个文件中
-	//bool* bHasMoreOutputData								// 开关标记，表示当前有模型返回
-	std::queue<double>* qModelInputSampleQueue,				// 模型入参队列
-	std::queue<double>* qModelOutputSampleQueue,				// 模型返回队列
-	std::mutex* mIntputQueueMutex,
-	std::mutex* mOutputQueueMutex,
-	bool bRepeat,
-	float fRepeatTime,
-	float fPitchChange,
-	//float fPrefixLength
-	bool bCalcPitchError
+	void func_do_voice_transfer(
+		int iNumberOfChanel,									// 通道数量
+		double dProjectSampleRate,								// 项目采样率
+		//AudioFile<double>::AudioBuffer modelInputAudioBuffer,	// AI模型入参缓冲区
+		//long maxInputBufferSize,								// 模型入参缓冲区大小
+		//long* lModelInputAudioBufferPos,						// 模型入参缓冲区读写位置指针
+		//AudioFile<double>::AudioBuffer* modelOutputAudioBuffer,  // AI模型出参缓冲区
+		//long* lModelOutputAudioBufferPos,						// 模型出参缓冲区读写位置指针
+		std::string sSaveModelInputWaveFileName,				// 模型的入参保存在这个文件中
+		std::string sSaveModelOutputWaveFileName,				// 模型的返回结果保存在这个文件中
+		//bool* bHasMoreOutputData								// 开关标记，表示当前有模型返回
+		std::queue<double>* qModelInputSampleQueue,				// 模型入参队列
+		std::queue<double>* qModelOutputSampleQueue,				// 模型返回队列
+		std::mutex* mIntputQueueMutex,
+		std::mutex* mOutputQueueMutex,
+		bool bRepeat,
+		float fRepeatTime,
+		float fPitchChange,
+		//float fPrefixLength
+		bool bCalcPitchError,
+		roleStruct roleStruct
 ) {
 	// 保存音频数据到文件
 	(*mIntputQueueMutex).lock();
@@ -74,7 +76,7 @@ void func_do_voice_transfer(
 	// 调用AI模型进行声音处理
 	//httplib::Client cli("http://192.168.3.253:6842");
 	//httplib::Client cli("http://ros.bigf00t.net:6842");
-	httplib::Client cli("http://127.0.0.1:6842");
+	httplib::Client cli(roleStruct.sApiUrl);
 
 	cli.set_connection_timeout(0, 1000000); // 300 milliseconds
 	cli.set_read_timeout(5, 0); // 5 seconds
@@ -99,10 +101,17 @@ void func_do_voice_transfer(
 		sCalcPitchError = "false";
 	}
 
+	char buffSamplerate[100];
+	snprintf(buffSamplerate, sizeof(buffSamplerate), "%f", dProjectSampleRate);
+
+
 	httplib::MultipartFormDataItems items = {
+		{ "sSpeadId", roleStruct.sSpeadId, "", ""},
+		{ "sName", roleStruct.sName, "", ""},
 		{ "fPitchChange", buff, "", ""},
+		{ "sampleRate", buffSamplerate, "", ""},
 		{ "bCalcPitchError", sCalcPitchError.c_str(), "", ""},
-		{ "sample", sBuffer, "sample.wav", "application/octet-stream"},
+		{ "sample", sBuffer, "sample.wav", "audio/x-wav"},
 	};
 
 	OutputDebugStringA("调用AI算法模型\n");
@@ -207,6 +216,33 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	if (fPrefixBuffer) {
 		memset(fPrefixBuffer, 0.f, lPrefixLengthSampleNumber);
 	}*/
+
+
+	// JSON配置文件
+	std::ifstream t_pc_file(sJsonConfigFileName, std::ios::binary);
+	std::stringstream buffer_pc_file;
+	buffer_pc_file << t_pc_file.rdbuf();
+	//auto sBuffer = buffer_pc_file.str();
+	
+	Json::Value jsonRoot;
+	buffer_pc_file >> jsonRoot;
+	int iRoleSize = jsonRoot["roleList"].size();
+	
+	fSampleVolumeWorkActiveVal = jsonRoot["fSampleVolumeWorkActiveVal"].asDouble();
+
+	roleList.clear();
+	for (int i = 0; i < iRoleSize; i++) {
+		std::string apiUrl = jsonRoot["roleList"][i]["apiUrl"].asString();
+		std::string name = jsonRoot["roleList"][i]["name"].asString();
+		std::string speakId = jsonRoot["roleList"][i]["speakId"].asString();
+		roleStruct role;
+		role.sSpeadId = speakId;
+		role.sName = name;
+		role.sApiUrl = apiUrl;
+		roleList.push_back(role);
+	}
+	iSelectRoleIndex = 0;
+
 	//---always initialize the parent-------
 	tresult result = AudioEffect::initialize (context);
 	// if everything Ok, continue
@@ -280,7 +316,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 					break;
 				case kPitchChange:
 					OutputDebugStringA("kPitchChange\n");
-					fPitchChange = value * maxPitchChange;
+					fPitchChange = value * (maxPitchChange - minPitchChange) + minPitchChange;
 					break;
 				/*case kPrefixBufferLength:
 					OutputDebugStringA("kPrefixBufferLength\n");
@@ -313,8 +349,9 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 
 		// 获取当前块的最大音量
 		double fCurrentSample = inputL[i];
-		if (fCurrentSample > fSampleMax) {
-			fSampleMax = fCurrentSample;
+		double fSampleAbs = std::abs(fCurrentSample);
+		if (fSampleAbs > fSampleMax) {
+			fSampleMax = fSampleAbs;
 		}
 		//fSampleSum += inputL[i] + inputR[i];
 
@@ -336,7 +373,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 	std::string buffAsStdStr = buff;
 	OutputDebugStringA(buff);
 
-	double fSampleVolumeWorkActiveVal = 0.05;
+	// double fSampleVolumeWorkActiveVal = 0.05;
 	bool bVolumeDetectFine = fSampleMax >= fSampleVolumeWorkActiveVal;
 
 	if (bVolumeDetectFine) {
@@ -432,7 +469,8 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				bRepeat,
 				fRepeatTime,
 				fPitchChange,
-				bCalcPitchError).detach();
+				bCalcPitchError,
+				roleList[iSelectRoleIndex]).detach();
 		}
 	}
 
@@ -465,9 +503,10 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			}
 			else {
 				double currentSample = qModelOutputSampleQueue.front();
-				if (i % 2 == 1) {
+				qModelOutputSampleQueue.pop();
+				/*if (i % 2 == 1) {
 					qModelOutputSampleQueue.pop();
-				}
+				}*/
 				outputL[i] = currentSample;
 				if (bHasRightChanel) {
 					outputR[i] = currentSample;
@@ -542,7 +581,7 @@ tresult PLUGIN_API NetProcessProcessor::setState (IBStream* state)
 	if (streamer.readFloat(fVal) == false) {
 		return kResultFalse;
 	}
-	fPitchChange = fVal * maxPitchChange;
+	fPitchChange = fVal * (maxPitchChange - minPitchChange) + minPitchChange;
 	if (streamer.readBool(bVal) == false) {
 		return kResultFalse;
 	}
@@ -568,7 +607,7 @@ tresult PLUGIN_API NetProcessProcessor::getState (IBStream* state)
 	streamer.writeBool(bRepeat);
 	streamer.writeFloat(fRepeatTime / maxTwiceRepeatIntvalTime);
 	streamer.writeFloat((fMaxSliceLength - 1.f) / maxMaxSliceLength);
-	streamer.writeFloat(fPitchChange / maxPitchChange);
+	streamer.writeFloat((fPitchChange - minPitchChange) / (maxPitchChange - minPitchChange));
 	streamer.writeBool(bCalcPitchError);
 	//streamer.writeFloat((fPrefixLength - minPrefixBufferLength) / maxPrefixBufferLength);
 	return kResultOk;
