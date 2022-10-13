@@ -16,6 +16,8 @@
 #include <mutex>
 #include "params.h"
 #include "json/json.h"
+#include <windows.h>
+#include <filesystem>
 
 using namespace Steinberg;
 
@@ -24,6 +26,23 @@ namespace MyCompanyName {
 // NetProcessProcessor
 //------------------------------------------------------------------------
 
+	// Resample
+	void func_audio_resample(FUNC_SRC_SIMPLE dllFuncSrcSimple, float* fInBuffer, float* fOutBuffer, double src_ratio, long lInSize, long lOutSize) {
+		SRC_DATA data;
+		data.src_ratio = src_ratio;
+		data.input_frames = lInSize;
+		data.output_frames = lOutSize;
+		data.data_in = fInBuffer;
+		data.data_out = fOutBuffer;
+		int error = dllFuncSrcSimple(&data, SRC_SINC_FASTEST, 1);
+
+		if (error > 0) {
+			char buff[100];
+			const char* cError = src_strerror(error);
+			snprintf(buff, sizeof(buff), "Resample error%s\n", cError);
+			OutputDebugStringA(buff);
+		}
+	}
 
 
 // 进行声音处理，较为耗时，在单独的线程里进行，避免主线程卡顿爆音
@@ -47,7 +66,8 @@ namespace MyCompanyName {
 		float fPitchChange,
 		//float fPrefixLength
 		bool bCalcPitchError,
-		roleStruct roleStruct
+		roleStruct roleStruct,
+		FUNC_SRC_SIMPLE dllFuncSrcSimple
 ) {
 	// 保存音频数据到文件
 	(*mIntputQueueMutex).lock();
@@ -141,21 +161,38 @@ namespace MyCompanyName {
 		bool isMono = tmpAudioFile.isMono();
 		bool isStereo = tmpAudioFile.isStereo();
 
+		// 音频重采样
+		float* fReSampleInBuffer = (float*)std::malloc(sizeof(float) * numSamples);
+		float* fReSampleOutBuffer;
+		int iResampleNumbers = numSamples;
+		for (int i = 0; i < numSamples; i++) {
+			fReSampleInBuffer[i] = tmpAudioFile.samples[0][i];
+		}
+		if (sampleRate == dProjectSampleRate) {
+			fReSampleOutBuffer = fReSampleInBuffer;
+		}
+		else {
+			double fScaleRate = dProjectSampleRate / sampleRate;
+			iResampleNumbers = fScaleRate * numSamples;
+			fReSampleOutBuffer = (float*)std::malloc(sizeof(float) * (iResampleNumbers + 128));
+			func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, numSamples, iResampleNumbers);
+		}
+
 		// 为了便于监听，加一个重复
 		int iRepeatSampleNumber = dProjectSampleRate * fRepeatTime;
 		// 跳过前导音频信号
 		//int iSkipSamplePos = fPrefixLength * sampleRate;
 		//iSkipSamplePos = 0;
 		(*mOutputQueueMutex).lock();
-		for (int i = 0; i < numSamples; i++) {
-			(*qModelOutputSampleQueue).push(tmpAudioFile.samples[0][i]);
+		for (int i = 0; i < iResampleNumbers; i++) {
+			(*qModelOutputSampleQueue).push(fReSampleOutBuffer[i]);
 		}
 		if (bRepeat) {
 			for (int i = 0; i < iRepeatSampleNumber; i++) {
 				(*qModelOutputSampleQueue).push(0.00001f);
 			}
-			for (int i = 0; i < numSamples; i++) {
-				(*qModelOutputSampleQueue).push(tmpAudioFile.samples[0][i]);
+			for (int i = 0; i < iResampleNumbers; i++) {
+				(*qModelOutputSampleQueue).push(fReSampleOutBuffer[i]);
 			}
 		}
 		(*mOutputQueueMutex).unlock();
@@ -194,6 +231,7 @@ NetProcessProcessor::NetProcessProcessor()
 	, fRepeatTime(0.f)
 	, fMaxSliceLength(2.f)
 	, fPitchChange(0.f)
+	, dllFuncSrcSimple(nullptr)
 	//, fPrefixLength(0.01f)
 	//, lPrefixBufferPos(0)
 	//, fPrefixBuffer(nullptr)
@@ -209,7 +247,16 @@ NetProcessProcessor::~NetProcessProcessor ()
 //------------------------------------------------------------------------
 tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 {
-	// Here the Plug-in will be instanciated
+	
+	std::wstring sDllPath = L"C:/Program Files/Common Files/VST3/NetProcess.vst3/Contents/x86_64-win/samplerate.dll";
+	auto dllClient = LoadLibrary(sDllPath.c_str());
+	if (dllClient != NULL) {
+		dllFuncSrcSimple = (FUNC_SRC_SIMPLE)GetProcAddress(dllClient, "src_simple");
+	}
+	else {
+		OutputDebugStringA("DLL load Error!");
+	}
+
 	// 前导信号缓冲
 	/*lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
 	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixLengthSampleNumber);
@@ -475,7 +522,8 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				fRepeatTime,
 				fPitchChange,
 				bCalcPitchError,
-				roleList[iSelectRoleIndex]).detach();
+				roleList[iSelectRoleIndex],
+				dllFuncSrcSimple).detach();
 		}
 	}
 

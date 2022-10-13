@@ -12,6 +12,9 @@
 #include <mutex>
 #include <stdio.h>
 
+#include "samplerate.h"
+typedef int(*FUNC_SRC_SIMPLE)(SRC_DATA* data, int converter_type, int channels);
+
 namespace MyCompanyName {
 
 	enum RECORD_STATE
@@ -118,6 +121,7 @@ protected:
 	int iSelectRoleIndex;
 
 	double fSampleVolumeWorkActiveVal;
+	FUNC_SRC_SIMPLE dllFuncSrcSimple;
 };
 
 //------------------------------------------------------------------------

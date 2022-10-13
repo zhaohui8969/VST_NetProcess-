@@ -58,6 +58,9 @@
     <LocalDebuggerCommand Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProgramW6432)/Steinberg/VST3PluginTestHost/VST3PluginTestHost.exe</LocalDebuggerCommand>
     <LocalDebuggerCommandArguments Condition="'$(Configuration)|$(Platform)'=='Release|x64'">--pluginfolder "$(OutDir)/"</LocalDebuggerCommandArguments>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>D:\codes\vscode\vst3_demo\my_plugins\NetProcess\build;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\vstgui4;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\base\..;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\public.sdk\..;D:\codes\vst-sdk_3.7.6_build-18_2022-09-05\VST_SDK\vst3sdk\pluginterfaces\..;D:\codes\vcpkg\packages\jsoncpp_x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
