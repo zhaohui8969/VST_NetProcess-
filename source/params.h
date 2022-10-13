@@ -21,6 +21,3 @@ enum
 #define maxPitchChange 30.f
 #define minPitchChange -30.f
 #define defaultSelectRole 0
-//#define defaultPrefixBufferLength 0.01f
-//#define maxPrefixBufferLength 5.f
-//#define minPrefixBufferLength 1.f
