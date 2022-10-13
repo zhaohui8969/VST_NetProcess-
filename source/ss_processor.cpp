@@ -65,12 +65,14 @@ namespace MyCompanyName {
 	// 保存音频数据到文件
 	(*mIntputQueueMutex).lock();
 	size_t inputQueueSize = (*qModelInputSampleQueue).size();
+	(*mIntputQueueMutex).unlock();
 
 	AudioFile<double>::AudioBuffer modelInputAudioBuffer;
 	modelInputAudioBuffer.resize(iNumberOfChanel);
 	modelInputAudioBuffer[0].resize(inputQueueSize);
 
 	// 从队列中取出所需的音频数据
+	(*mIntputQueueMutex).lock();
 	for (int i = 0; i < inputQueueSize; i++) {
 		modelInputAudioBuffer[0][i] = (*qModelInputSampleQueue).front();
 		(*qModelInputSampleQueue).pop();
@@ -155,18 +157,18 @@ namespace MyCompanyName {
 		bool isStereo = tmpAudioFile.isStereo();
 
 		// 音频重采样
-		float* fReSampleInBuffer = (float*)(std::malloc(sizeof(float) * numSamples));
+		float* fReSampleInBuffer = (float*)malloc(numSamples * sizeof(float));
 		float* fReSampleOutBuffer = fReSampleInBuffer;
 		int iResampleNumbers = numSamples;
 		for (int i = 0; i < numSamples; i++) {
 			fReSampleInBuffer[i] = tmpAudioFile.samples[0][i];
 		}
-		/*if (sampleRate != dProjectSampleRate) {
+		if (sampleRate != dProjectSampleRate) {
 			double fScaleRate = dProjectSampleRate / sampleRate;
 			iResampleNumbers = fScaleRate * numSamples;
 			fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * (iResampleNumbers + 128)));
 			func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, numSamples, iResampleNumbers);
-		}*/
+		}
 
 		// 为了便于监听，加一个重复
 		int iRepeatSampleNumber = dProjectSampleRate * fRepeatTime;
