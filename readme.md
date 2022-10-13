@@ -32,3 +32,5 @@ studioOne里工程的采样率应设置为44.1Khz
 ![44.1kHz](./doc/studioOneSampleRateSetting.png)
 
 需建立`C:/temp/vst/`目录用于存储临时文件
+
+多角色模型的配置文件模板在[doc/netProcessConfig.json](doc/netProcessConfig.json)，需要复制到`C:/temp/vst/`目录下
