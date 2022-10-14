@@ -13,7 +13,6 @@
 #include "httplib.h"
 #include <numeric>
 #include <Query.h>
-#include <mutex>
 #include "params.h"
 #include "json/json.h"
 #include <windows.h>
@@ -44,15 +43,37 @@ namespace MyCompanyName {
 		}*/
 	}
 
+	// 用于计算一个读写缓存里的有效数据大小
+	long func_cacl_read_write_buffer_data_size(long lBufferSize, long lReadPos, long lWritePos) {
+		long inputBufferSize;
+		if (lReadPos < lWritePos) {
+			inputBufferSize = lWritePos - lReadPos;
+		}
+		else {
+			inputBufferSize = lWritePos + lBufferSize - lReadPos;
+		}
+		return inputBufferSize;
+	}
 
 // 进行声音处理，较为耗时，在单独的线程里进行，避免主线程卡顿爆音
 	void func_do_voice_transfer(
 		int iNumberOfChanel,									// 通道数量
 		double dProjectSampleRate,								// 项目采样率
-		std::queue<double>* qModelInputSampleQueue,				// 模型入参队列
-		std::queue<double>* qModelOutputSampleQueue,			// 模型返回队列
-		std::mutex* mIntputQueueMutex,
-		std::mutex* mOutputQueueMutex,
+		//std::queue<double>* qModelInputSampleQueue,				// 模型入参队列
+		//std::queue<double>* qModelOutputSampleQueue,			// 模型返回队列
+		
+		long lModelInputOutputBufferSize,
+
+		float* fModeulInputSampleBuffer,
+		long* lModelInputSampleBufferReadPos,
+		long* lModelInputSampleBufferWritePos,
+
+		float* fModeulOutputSampleBuffer,
+		long* lModelOutputSampleBufferReadPos,
+		long* lModelOutputSampleBufferWritePos,
+
+		float fPrefixLength,
+		float fDropSuffixLength,
 		bool bRepeat,
 		float fRepeatTime,
 		float fPitchChange,
@@ -61,36 +82,45 @@ namespace MyCompanyName {
 		FUNC_SRC_SIMPLE dllFuncSrcSimple
 ) {
 	// 保存音频数据到文件
-	(*mIntputQueueMutex).lock();
-	size_t inputQueueSize = (*qModelInputSampleQueue).size();
-	(*mIntputQueueMutex).unlock();
-
+	// 获取当前写指针的位置
+	long lTmpModelInputSampleBufferWritePos = *lModelInputSampleBufferWritePos;
+	// 计算可以获取的数据长度
+	long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelInputOutputBufferSize, *lModelInputSampleBufferReadPos, lTmpModelInputSampleBufferWritePos);
+		
 	AudioFile<double>::AudioBuffer modelInputAudioBuffer;
 	modelInputAudioBuffer.resize(iNumberOfChanel);
-	modelInputAudioBuffer[0].resize(inputQueueSize);
+	modelInputAudioBuffer[0].resize(inputBufferSize);
 
 	// 从队列中取出所需的音频数据
-	(*mIntputQueueMutex).lock();
-	for (int i = 0; i < inputQueueSize; i++) {
-		modelInputAudioBuffer[0][i] = (*qModelInputSampleQueue).front();
-		(*qModelInputSampleQueue).pop();
+	int iAudioBufferPos = 0;
+	if (*lModelInputSampleBufferReadPos < lTmpModelInputSampleBufferWritePos) {
+		for (int i = *lModelInputSampleBufferReadPos; i < lTmpModelInputSampleBufferWritePos; i++) {
+			modelInputAudioBuffer[0][iAudioBufferPos++] = fModeulInputSampleBuffer[i];
+		}
 	}
-	(*mIntputQueueMutex).unlock();
+	else {
+		for (int i = *lModelInputSampleBufferReadPos; i < lModelInputOutputBufferSize; i++) {
+			modelInputAudioBuffer[0][iAudioBufferPos++] = fModeulInputSampleBuffer[i];
+		}
+		for (int i = 0; i < lTmpModelInputSampleBufferWritePos; i++) {
+			modelInputAudioBuffer[0][iAudioBufferPos++] = fModeulInputSampleBuffer[i];
+		}
+	}
+	// 读取完毕，将读指针指向最后写指针
+	*lModelInputSampleBufferReadPos = lTmpModelInputSampleBufferWritePos;
 
 	AudioFile<double> audioFile;
 	audioFile.shouldLogErrorsToConsole(true);
 	audioFile.setAudioBuffer(modelInputAudioBuffer);
-	audioFile.setAudioBufferSize(iNumberOfChanel, inputQueueSize);
+	audioFile.setAudioBufferSize(iNumberOfChanel, inputBufferSize);
 	audioFile.setBitDepth(24);
 	audioFile.setSampleRate(dProjectSampleRate);
-	//audioFile.save(sSaveModelInputWaveFileName, AudioFileFormat::Wave);
+	
+	// 保存音频文件到内存
 	std::vector<uint8_t> vModelInputMemoryBuffer = std::vector<uint8_t>(0);
 	audioFile.saveToWaveMemory(&vModelInputMemoryBuffer);
 
-
 	// 调用AI模型进行声音处理
-	//httplib::Client cli("http://192.168.3.253:6842");
-	//httplib::Client cli("http://ros.bigf00t.net:6842");
 	httplib::Client cli(roleStruct.sApiUrl);
 
 	cli.set_connection_timeout(0, 1000000); // 300 milliseconds
@@ -147,38 +177,62 @@ namespace MyCompanyName {
 		bool isMono = tmpAudioFile.isMono();
 		bool isStereo = tmpAudioFile.isStereo();
 
+		// 音频流式处理
+		// 做1s滑窗，但是丢掉最后0.1s再取最后的输出进行拼接
+		
+		// 跳过前导音频信号
+		int iSkipSamplePosStart = fPrefixLength * sampleRate;
+		// 丢弃尾部信号
+		int iSkipSamplePosEnd = numSamples - (fDropSuffixLength * sampleRate);
+		int iSliceSampleNumber = iSkipSamplePosEnd - iSkipSamplePosStart;
+		float* fSliceSampleBuffer = (float*)(std::malloc(sizeof(float) * iSliceSampleNumber));
+		int iSlicePos = 0;
+		auto fOriginAudioBuffer = tmpAudioFile.samples[0];
+		for (int i = iSkipSamplePosStart; i < iSkipSamplePosEnd; i++) {
+			fSliceSampleBuffer[iSlicePos++] = fOriginAudioBuffer[i];
+		}
+
 		// 音频重采样
-		float* fReSampleInBuffer = (float*)malloc(numSamples * sizeof(float));
+		float* fReSampleInBuffer = (float*)malloc(iSliceSampleNumber * sizeof(float));
 		float* fReSampleOutBuffer = fReSampleInBuffer;
-		int iResampleNumbers = numSamples;
-		for (int i = 0; i < numSamples; i++) {
-			fReSampleInBuffer[i] = tmpAudioFile.samples[0][i];
+		int iResampleNumbers = iSliceSampleNumber;
+		for (int i = 0; i < iSliceSampleNumber; i++) {
+			fReSampleInBuffer[i] = fSliceSampleBuffer[i];
 		}
 		if (sampleRate != dProjectSampleRate) {
 			double fScaleRate = dProjectSampleRate / sampleRate;
-			iResampleNumbers = fScaleRate * numSamples;
+			iResampleNumbers = fScaleRate * iSliceSampleNumber;
 			fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * (iResampleNumbers + 128)));
-			func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, numSamples, iResampleNumbers);
+			func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, iSliceSampleNumber, iResampleNumbers);
 		}
 
 		// 为了便于监听，加一个重复
-		int iRepeatSampleNumber = dProjectSampleRate * fRepeatTime;
-		// 跳过前导音频信号
-		//int iSkipSamplePos = fPrefixLength * sampleRate;
-		//iSkipSamplePos = 0;
-		(*mOutputQueueMutex).lock();
+		int iRepeatSilenceSampleNumber = dProjectSampleRate * fRepeatTime;
+
+		long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
 		for (int i = 0; i < iResampleNumbers; i++) {
-			(*qModelOutputSampleQueue).push(fReSampleOutBuffer[i]);
+			fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = fReSampleOutBuffer[i];
+			if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
+				lTmpModelOutputSampleBufferWritePos = 0;
+			}
+			// 注意，此处不考虑写指针追上读指针的情况，因此缓冲区应当尽可能的大
 		}
 		if (bRepeat) {
-			for (int i = 0; i < iRepeatSampleNumber; i++) {
-				(*qModelOutputSampleQueue).push(0.00001f);
+			for (int i = 0; i < iRepeatSilenceSampleNumber; i++) {
+				fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = 0.00001f;
+				if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
+					lTmpModelOutputSampleBufferWritePos = 0;
+				}
 			}
 			for (int i = 0; i < iResampleNumbers; i++) {
-				(*qModelOutputSampleQueue).push(fReSampleOutBuffer[i]);
+				fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = fReSampleOutBuffer[i];
+				if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
+					lTmpModelOutputSampleBufferWritePos = 0;
+				}
 			}
 		}
-		(*mOutputQueueMutex).unlock();
+		// 将写指针指向新的位置
+		*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
 	}
 	else {
 		auto err = res.error();
@@ -190,9 +244,8 @@ namespace MyCompanyName {
 }
 
 NetProcessProcessor::NetProcessProcessor()
-	: mBuffer(nullptr)
-	, mBufferPos(0)
-	, kRecordState(IDLE)
+	: kRecordState(IDLE)
+	, bNeedContinueRecord(false)
 	, fRecordIdleTime(0.f)
 	// 默认只处理单声道
 	, iNumberOfChanel(1)
@@ -223,7 +276,7 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	sDllDir = L"C:/temp/vst3";
 	AddDllDirectory(sDllDir.c_str());
 
-	std::wstring sDllPath = L"samplerate.dll";
+	std::wstring sDllPath = L"C:/Program Files/Common Files/VST3/NetProcess.vst3/Contents/x86_64-win/samplerate.dll";
 	auto dllClient = LoadLibrary(sDllPath.c_str());
 	if (dllClient != NULL) {
 		dllFuncSrcSimple = (FUNC_SRC_SIMPLE)GetProcAddress(dllClient, "src_simple");
@@ -231,14 +284,6 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	else {
 		OutputDebugStringA("DLL load Error!");
 	}
-
-	// 前导信号缓冲
-	/*lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
-	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixLengthSampleNumber);
-	if (fPrefixBuffer) {
-		memset(fPrefixBuffer, 0.f, lPrefixLengthSampleNumber);
-	}*/
-
 
 	// JSON配置文件
 	std::ifstream t_pc_file(sJsonConfigFileName, std::ios::binary);
@@ -248,7 +293,7 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	Json::Value jsonRoot;
 	buffer_pc_file >> jsonRoot;
 	int iRoleSize = jsonRoot["roleList"].size();
-	
+
 	fSampleVolumeWorkActiveVal = jsonRoot["fSampleVolumeWorkActiveVal"].asDouble();
 
 	roleList.clear();
@@ -263,6 +308,23 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 		roleList.push_back(role);
 	}
 	iSelectRoleIndex = 0;
+
+	// 前导缓冲区缓存初始化
+	fPrefixLength = jsonRoot["fPrefixLength"].asFloat();
+	fDropSuffixLength = jsonRoot["fDropSuffixLength"].asFloat();
+	lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
+	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixLengthSampleNumber);
+	lPrefixBufferPos = 0;
+
+	// 初始化线程间交换数据的缓冲区
+	float fModelInputOutputBufferSecond = 120.f;
+	lModelInputOutputBufferSize = fModelInputOutputBufferSecond * this->processSetup.sampleRate;
+	fModeulInputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelInputOutputBufferSize));
+	fModeulOutputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelInputOutputBufferSize));
+	lModelInputSampleBufferReadPos = 0;
+	lModelInputSampleBufferWritePos = 0;
+	lModelOutputSampleBufferReadPos = 0;
+	lModelOutputSampleBufferWritePos = 0;
 
 	//---always initialize the parent-------
 	tresult result = AudioEffect::initialize (context);
@@ -366,7 +428,15 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		if (fSampleAbs > fSampleMax) {
 			fSampleMax = fSampleAbs;
 		}
+
+		// 将当前信号复制到前导信号缓冲区中
+		fPrefixBuffer[lPrefixBufferPos++] = fCurrentSample;
+		if (lPrefixBufferPos == lPrefixLengthSampleNumber) {
+			lPrefixBufferPos = 0;
+		}
 	}
+	lPrefixBufferPos = (lPrefixBufferPos + data.numSamples) % lPrefixLengthSampleNumber;
+
 
 	char buff[100];
 	snprintf(buff, sizeof(buff), "当前音频数据的最大音量:%f\n", fSampleMax);
@@ -388,25 +458,43 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 
 	if (kRecordState == IDLE) {
 		// 当前是空闲状态
-		if (bVolumeDetectFine) {
+		if (bNeedContinueRecord || bVolumeDetectFine) {
 			OutputDebugStringA("切换到工作状态");
 			kRecordState = WORK;
 			// 将当前的音频数据写入到模型入参缓冲区中
-			mInputQueueMutex.lock();
-			for (int32 i = 0; i < data.numSamples; i++) {
+			//mInputQueueMutex.lock();
+			/*for (int32 i = 0; i < data.numSamples; i++) {
 				qModelInputSampleQueue.push(inputL[i]);
+			}*/
+			for (int i = lPrefixBufferPos; i < lPrefixLengthSampleNumber; i++) {
+				fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = fPrefixBuffer[i];
+				if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
+					lModelInputSampleBufferWritePos = 0;
+				}
+				//qModelInputSampleQueue.push(fPrefixBuffer[i]);
 			}
-			mInputQueueMutex.unlock();
+			for (int i = 0; i < lPrefixBufferPos; i++) {
+				fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = fPrefixBuffer[i];
+				if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
+					lModelInputSampleBufferWritePos = 0;
+				}
+				//qModelInputSampleQueue.push(fPrefixBuffer[i]);
+			}
+			//mInputQueueMutex.unlock();
 		}
 	}
 	else {
 		// 当前是工作状态
 		// 将当前的音频数据写入到模型入参缓冲区中
-		mInputQueueMutex.lock();
-		for (int32 i = 0; i < data.numSamples; i++) {
-			qModelInputSampleQueue.push(inputL[i]);
+		//mInputQueueMutex.lock();
+		for (int i = 0; i < data.numSamples; i++) {
+			fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = inputL[i];
+			if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
+				lModelInputSampleBufferWritePos = 0;
+			}
+			//qModelInputSampleQueue.push(inputL[i]);
 		}
-		mInputQueueMutex.unlock();
+		//mInputQueueMutex.unlock();
 		// 判断是否需要退出工作状态
 		bool bExitWorkState = false;
 
@@ -414,12 +502,15 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		float fLowVolumeDetectTime = 1.f; // 1s
 		if (fRecordIdleTime >= fLowVolumeDetectTime) {
 			bExitWorkState = true;
+			bNeedContinueRecord = false;
 			OutputDebugStringA("音量过小且持续超过一定时间，直接调用模型\n");
 		}
 
 		// 退出条件3：队列达到一定的大小
-		if (qModelInputSampleQueue.size() > lMaxSliceLengthSampleNumber) {
+		long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelInputOutputBufferSize, lModelInputSampleBufferReadPos, lModelInputSampleBufferWritePos);
+		if (inputBufferSize > lMaxSliceLengthSampleNumber + lPrefixLengthSampleNumber) {
 			bExitWorkState = true;
+			bNeedContinueRecord = true;
 			OutputDebugStringA("队列大小达到预期，直接调用模型\n");
 		}
 
@@ -429,10 +520,17 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			std::thread (func_do_voice_transfer,
 				iNumberOfChanel,
 				this->processSetup.sampleRate,
-				&qModelInputSampleQueue,
-				&qModelOutputSampleQueue,
-				&mInputQueueMutex,
-				&mOutputQueueMutex,
+				//&qModelInputSampleQueue,
+				//&qModelOutputSampleQueue,
+				lModelInputOutputBufferSize,
+				fModeulInputSampleBuffer,
+				&lModelInputSampleBufferReadPos,
+				&lModelInputSampleBufferWritePos,
+				fModeulOutputSampleBuffer,
+				&lModelOutputSampleBufferReadPos,
+				&lModelOutputSampleBufferWritePos,
+				fPrefixLength,
+				fDropSuffixLength,
 				bRepeat,
 				fRepeatTime,
 				fPitchChange,
@@ -446,13 +544,13 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 	int channel = 0;
 	bool bHasRightChanel = true;
 	if (outputR == outputL || outputR == NULL) bHasRightChanel = false;
-	if (!qModelOutputSampleQueue.empty()) {
+	if (lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos) {
 		OutputDebugStringA("模型输出缓冲区还有数据的话，写入到输出信号中去\n");
 		bool bFinish = false;
-		mOutputQueueMutex.lock();
+		//mOutputQueueMutex.lock();
 		for (int i = 0; i < data.numSamples; i++)
 		{
-			bFinish = qModelOutputSampleQueue.empty();
+			bFinish = lModelOutputSampleBufferReadPos == lModelOutputSampleBufferWritePos;
 			if (bFinish) {
 				outputL[i] = 0.f;
 				if (bHasRightChanel) {
@@ -460,15 +558,19 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				}
 			}
 			else {
-				double currentSample = qModelOutputSampleQueue.front();
-				qModelOutputSampleQueue.pop();
+				//double currentSample = qModelOutputSampleQueue.front();
+				//qModelOutputSampleQueue.pop();
+				double currentSample = fModeulOutputSampleBuffer[lModelOutputSampleBufferReadPos++];
+				if (lModelOutputSampleBufferReadPos == lModelInputOutputBufferSize) {
+					lModelOutputSampleBufferReadPos = 0;
+				}
 				outputL[i] = currentSample;
 				if (bHasRightChanel) {
 					outputR[i] = currentSample;
 				}
 			}
 		}
-		mOutputQueueMutex.unlock();
+		//mOutputQueueMutex.unlock();
 		if (bFinish) {
 			// 数据取完了
 			OutputDebugStringA("数据取完了\n");

@@ -7,9 +7,7 @@
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include <iostream>
 #include <cstring>
-#include <queue>
 #include "AudioFile.h"
-#include <mutex>
 #include <stdio.h>
 
 typedef struct
@@ -98,17 +96,26 @@ public:
 
 //------------------------------------------------------------------------
 protected:
-	float** mBuffer;
-	long mBufferPos;
-	std::queue<double> qModelInputSampleQueue;
 	RECORD_STATE kRecordState;
+	bool bNeedContinueRecord;
 	double fRecordIdleTime;
 	int iNumberOfChanel;
 
-	std::queue<double> qModelOutputSampleQueue;
+	// 基于队列和互斥锁的线程数据交换机制
+	//std::queue<double> qModelInputSampleQueue;
+	//std::queue<double> qModelOutputSampleQueue;
+	//std::mutex mInputQueueMutex;
+	//std::mutex mOutputQueueMutex;
 
-	std::mutex mInputQueueMutex;
-	std::mutex mOutputQueueMutex;
+	// 基于双指针缓冲区的线程数据交换机制
+	long lModelInputOutputBufferSize;
+	float* fModeulInputSampleBuffer;
+	long lModelInputSampleBufferReadPos;
+	long lModelInputSampleBufferWritePos;
+	
+	float* fModeulOutputSampleBuffer;
+	long lModelOutputSampleBufferReadPos;
+	long lModelOutputSampleBufferWritePos;
 
 	bool bRepeat;
 	bool bCalcPitchError;
@@ -116,6 +123,13 @@ protected:
 	float fMaxSliceLength;
 	long lMaxSliceLengthSampleNumber;
 	float fPitchChange;
+
+	// 前导信号缓冲区
+	float* fPrefixBuffer;
+	long lPrefixBufferPos;
+	float fPrefixLength;
+	float fDropSuffixLength;
+	long lPrefixLengthSampleNumber;
 	
 	// JSON配置
 	std::string sJsonConfigFileName = "C:/temp/vst/netProcessConfig.json";
