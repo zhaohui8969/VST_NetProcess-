@@ -36,12 +36,12 @@ namespace MyCompanyName {
 		data.data_out = fOutBuffer;
 		int error = dllFuncSrcSimple(&data, SRC_SINC_FASTEST, 1);
 
-		if (error > 0) {
+		/*if (error > 0) {
 			char buff[100];
 			const char* cError = src_strerror(error);
 			snprintf(buff, sizeof(buff), "Resample error%s\n", cError);
 			OutputDebugStringA(buff);
-		}
+		}*/
 	}
 
 
@@ -49,10 +49,8 @@ namespace MyCompanyName {
 	void func_do_voice_transfer(
 		int iNumberOfChanel,									// 通道数量
 		double dProjectSampleRate,								// 项目采样率
-		std::string sSaveModelInputWaveFileName,				// 模型的入参保存在这个文件中
-		std::string sSaveModelOutputWaveFileName,				// 模型的返回结果保存在这个文件中
 		std::queue<double>* qModelInputSampleQueue,				// 模型入参队列
-		std::queue<double>* qModelOutputSampleQueue,				// 模型返回队列
+		std::queue<double>* qModelOutputSampleQueue,			// 模型返回队列
 		std::mutex* mIntputQueueMutex,
 		std::mutex* mOutputQueueMutex,
 		bool bRepeat,
@@ -85,7 +83,9 @@ namespace MyCompanyName {
 	audioFile.setAudioBufferSize(iNumberOfChanel, inputQueueSize);
 	audioFile.setBitDepth(24);
 	audioFile.setSampleRate(dProjectSampleRate);
-	audioFile.save(sSaveModelInputWaveFileName, AudioFileFormat::Wave);
+	//audioFile.save(sSaveModelInputWaveFileName, AudioFileFormat::Wave);
+	std::vector<uint8_t> vModelInputMemoryBuffer = std::vector<uint8_t>(0);
+	audioFile.saveToWaveMemory(&vModelInputMemoryBuffer);
 
 
 	// 调用AI模型进行声音处理
@@ -97,10 +97,10 @@ namespace MyCompanyName {
 	cli.set_read_timeout(5, 0); // 5 seconds
 	cli.set_write_timeout(5, 0); // 5 seconds
 
-	std::ifstream t_pc_file(sSaveModelInputWaveFileName, std::ios::binary);
-	std::stringstream buffer_pc_file;
-	buffer_pc_file << t_pc_file.rdbuf();
-	auto sBuffer = buffer_pc_file.str();
+	// 从内存读取数据
+	auto vModelInputData = vModelInputMemoryBuffer.data();
+	std::string sBuffer(vModelInputData, vModelInputData + vModelInputMemoryBuffer.size());
+
 	auto sBufferSize = sBuffer.size();
 	char buff[100];
 	snprintf(buff, sizeof(buff), "发送文件大小:%llu\n", sBufferSize);
@@ -119,7 +119,6 @@ namespace MyCompanyName {
 	char buffSamplerate[100];
 	snprintf(buffSamplerate, sizeof(buffSamplerate), "%f", dProjectSampleRate);
 
-
 	httplib::MultipartFormDataItems items = {
 		{ "sSpeakId", roleStruct.sSpeakId, "", ""},
 		{ "sName", roleStruct.sName, "", ""},
@@ -133,19 +132,11 @@ namespace MyCompanyName {
 	auto res = cli.Post("/voiceChangeModel", items);
 	if (res.error() == httplib::Error::Success && res->status == 200) {
 		// 调用成功，开始将结果放入到临时缓冲区，并替换输出
-		// 写入文件
-		std::ofstream t_out_file(sSaveModelOutputWaveFileName, std::ios::binary);
 		std::string body = res->body;
-		for (size_t i = 0; i < body.size(); i++)
-		{
-			char value = (char)body[i];
-			t_out_file.write(&value, sizeof(char));
-		}
-		t_out_file.close();
+		std::vector<uint8_t> vModelOutputBuffer(body.begin(), body.end());
 
-		// 从文件中读取音频数据，放入输出缓冲区中
 		AudioFile<double> tmpAudioFile;
-		tmpAudioFile.load(sSaveModelOutputWaveFileName);
+		tmpAudioFile.loadFromMemory(vModelOutputBuffer);
 		int sampleRate = tmpAudioFile.getSampleRate();
 		int bitDepth = tmpAudioFile.getBitDepth();
 
@@ -223,8 +214,16 @@ NetProcessProcessor::~NetProcessProcessor ()
 //------------------------------------------------------------------------
 tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 {
-	
-	std::wstring sDllPath = L"C:/Program Files/Common Files/VST3/NetProcess.vst3/Contents/x86_64-win/samplerate.dll";
+	std::wstring sDllDir = L"C:/Program Files/Common Files/VST3/NetProcess.vst3/Contents/x86_64-win";
+	AddDllDirectory(sDllDir.c_str());
+	sDllDir = L"C:/Windows/SysWOW64";
+	AddDllDirectory(sDllDir.c_str());
+	sDllDir = L"C:/temp/vst";
+	AddDllDirectory(sDllDir.c_str());
+	sDllDir = L"C:/temp/vst3";
+	AddDllDirectory(sDllDir.c_str());
+
+	std::wstring sDllPath = L"samplerate.dll";
 	auto dllClient = LoadLibrary(sDllPath.c_str());
 	if (dllClient != NULL) {
 		dllFuncSrcSimple = (FUNC_SRC_SIMPLE)GetProcAddress(dllClient, "src_simple");
@@ -430,8 +429,6 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			std::thread (func_do_voice_transfer,
 				iNumberOfChanel,
 				this->processSetup.sampleRate,
-				sDefaultSaveModelInputWaveFileName,
-				sDefaultSaveModelOutputWaveFileName,
 				&qModelInputSampleQueue,
 				&qModelOutputSampleQueue,
 				&mInputQueueMutex,

@@ -15,6 +15,9 @@
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/base/ustring.h"
 #include "json/json.h"
+#include <cuchar>
+#include <locale>
+#include <codecvt>
 
 using namespace Steinberg;
 
@@ -62,9 +65,9 @@ tresult PLUGIN_API NetProcessController::initialize (FUnknown* context)
 		std::string name = jsonRoot["roleList"][i]["name"].asString();
 		std::string speakId = jsonRoot["roleList"][i]["speakId"].asString();
 		
-		char buff[100];
-		snprintf(buff, sizeof(buff), "%s", name);
-		filterTypeParam->appendString(USTRING(buff));
+		std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+		auto wStringName = convert.from_bytes(name);
+		filterTypeParam->appendString(wStringName.c_str());
 	}
 	parameters.addParameter(filterTypeParam);
 

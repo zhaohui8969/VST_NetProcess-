@@ -12,7 +12,28 @@
 #include <mutex>
 #include <stdio.h>
 
-#include "samplerate.h"
+typedef struct
+{
+	const float* data_in;
+	float* data_out;
+
+	long	input_frames, output_frames;
+	long	input_frames_used, output_frames_gen;
+
+	int		end_of_input;
+
+	double	src_ratio;
+} SRC_DATA;
+
+enum
+{
+	SRC_SINC_BEST_QUALITY = 0,
+	SRC_SINC_MEDIUM_QUALITY = 1,
+	SRC_SINC_FASTEST = 2,
+	SRC_ZERO_ORDER_HOLD = 3,
+	SRC_LINEAR = 4,
+};
+
 typedef int(*FUNC_SRC_SIMPLE)(SRC_DATA* data, int converter_type, int channels);
 
 namespace MyCompanyName {
@@ -77,8 +98,6 @@ public:
 
 //------------------------------------------------------------------------
 protected:
-	// 默认将模型的入参保存在这个文件中
-	std::string sDefaultSaveModelInputWaveFileName = "C:/temp/vst/vst_model_input_wave.wav";
 	float** mBuffer;
 	long mBufferPos;
 	std::queue<double> qModelInputSampleQueue;
@@ -86,8 +105,6 @@ protected:
 	double fRecordIdleTime;
 	int iNumberOfChanel;
 
-	// 默认将模型的返回结果保存在这个文件中
-	std::string sDefaultSaveModelOutputWaveFileName = "C:/temp/vst/vst_model_output_wave.wav";
 	std::queue<double> qModelOutputSampleQueue;
 
 	std::mutex mInputQueueMutex;
