@@ -333,7 +333,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 					break;
 				case kMaxSliceLength:
 					OutputDebugStringA("kMaxSliceLength\n");
-					fMaxSliceLength = value * maxMaxSliceLength + 1.f;
+					fMaxSliceLength = value * maxMaxSliceLength + 0.1f;
 					lMaxSliceLengthSampleNumber = this->processSetup.sampleRate * fMaxSliceLength;
 					break;
 				case kPitchChange:
@@ -528,7 +528,7 @@ tresult PLUGIN_API NetProcessProcessor::setState (IBStream* state)
 	if (streamer.readFloat(fVal) == false) {
 		return kResultFalse;
 	}
-	fMaxSliceLength = fVal * maxMaxSliceLength + 1.f;
+	fMaxSliceLength = fVal * maxMaxSliceLength + 0.1f;
 	lMaxSliceLengthSampleNumber = this->processSetup.sampleRate * fMaxSliceLength;
 	if (streamer.readFloat(fVal) == false) {
 		return kResultFalse;
@@ -551,7 +551,7 @@ tresult PLUGIN_API NetProcessProcessor::getState (IBStream* state)
 
 	streamer.writeBool(bRepeat);
 	streamer.writeFloat(fRepeatTime / maxTwiceRepeatIntvalTime);
-	streamer.writeFloat((fMaxSliceLength - 1.f) / maxMaxSliceLength);
+	streamer.writeFloat((fMaxSliceLength - 0.1f) / maxMaxSliceLength);
 	streamer.writeFloat((fPitchChange - minPitchChange) / (maxPitchChange - minPitchChange));
 	streamer.writeBool(bCalcPitchError);
 	return kResultOk;
