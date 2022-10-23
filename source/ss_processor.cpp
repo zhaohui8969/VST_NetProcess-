@@ -403,8 +403,8 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 					break;
 				case kSelectRole:
 					OutputDebugStringA("kSelectRole\n");
-					iSelectRoleIndex= std::min<int8>(
-						(int8)(roleList.size() * value), roleList.size() - 1);
+					iSelectRoleIndex= std::min<int>(
+						(int)(roleList.size() * value), roleList.size() - 1);
 					break;
 				}
 			}
@@ -485,6 +485,12 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 	}
 	else {
 		// 当前是工作状态
+		// 对于第一个录音块，不执行跳过逻辑
+		float fSkipPrefixLength = 0.f;
+		if (bNeedContinueRecord) {
+			// 这不是第一个录音块，执行跳过逻辑
+			fSkipPrefixLength = fPrefixLength;
+		}
 		// 将当前的音频数据写入到模型入参缓冲区中
 		//mInputQueueMutex.lock();
 		for (int i = 0; i < data.numSamples; i++) {
@@ -529,7 +535,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				fModeulOutputSampleBuffer,
 				&lModelOutputSampleBufferReadPos,
 				&lModelOutputSampleBufferWritePos,
-				fPrefixLength,
+				fSkipPrefixLength,
 				fDropSuffixLength,
 				bRepeat,
 				fRepeatTime,
