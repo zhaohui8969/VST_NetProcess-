@@ -8,9 +8,6 @@
 
 ## VST以及DAW配置
 
-在release页面提供了打包好的VST插件，打包好的插件默认调用的API是一个[测试用的接口](http://ros.bigf00t.net:6842)，有需要可以修改[source\ss_process.cpp](source\ss_process.cpp)里的接口地址适配自己本地的HTTP接口，用于降低延迟
-
-
 插件安装完毕后会在StudioOne里按如下显示
 
 ![studioOnePlugins](./doc/plugins.png)
@@ -31,7 +28,7 @@ studioOne里工程的采样率应设置为44.1Khz
 
 ![44.1kHz](./doc/studioOneSampleRateSetting.png)
 
-需建立`C:/temp/vst/`目录用于存储临时文件
+需建立`C:/temp/vst/`目录用于存储配置文件
 
 多角色模型的配置文件模板在[doc/netProcessConfig.json](doc/netProcessConfig.json)，需要复制到`C:/temp/vst/`目录下
 
