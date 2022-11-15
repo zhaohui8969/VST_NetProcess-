@@ -97,7 +97,6 @@ public:
 //------------------------------------------------------------------------
 protected:
 	RECORD_STATE kRecordState;
-	bool bNeedContinueRecord;
 	double fRecordIdleTime;
 	int iNumberOfChanel;
 
@@ -117,9 +116,7 @@ protected:
 	long lModelOutputSampleBufferReadPos;
 	long lModelOutputSampleBufferWritePos;
 
-	bool bRepeat;
 	bool bCalcPitchError;
-	float fRepeatTime;
 	float fMaxSliceLength;
 	long lMaxSliceLengthSampleNumber;
 	float fPitchChange;
@@ -130,6 +127,7 @@ protected:
 	float fPrefixLength;
 	float fDropSuffixLength;
 	long lPrefixLengthSampleNumber;
+	bool bDisableVolumeDetect;
 	
 	// JSON≈‰÷√
 	std::string sJsonConfigFileName = "C:/temp/vst/netProcessConfig.json";
@@ -138,6 +136,15 @@ protected:
 
 	double fSampleVolumeWorkActiveVal;
 	FUNC_SRC_SIMPLE dllFuncSrcSimple;
+	// debug 
+	long lNoOutputCount;
+
+	// preReSamplerate
+	bool bEnablePreResample;
+	int iModelInputSamplerate;
+	int iHUBERTInputSampleRate;
+	float fAvoidJitPrefixTime;
+	bool bFoundJit;
 };
 
 //------------------------------------------------------------------------

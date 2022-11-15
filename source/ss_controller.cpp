@@ -39,8 +39,8 @@ tresult PLUGIN_API NetProcessController::initialize (FUnknown* context)
 
 	// Here you could register some parameters
 	setKnobMode(Vst::kLinearMode);
-	parameters.addParameter(STR16("OSC_kEnableTwiceRepeat"), nullptr, 0, defaultEnableTwiceRepeat, Vst::ParameterInfo::kCanAutomate, kEnableTwiceRepeat);
-	parameters.addParameter(STR16("OSC_kTwiceRepeatIntvalTime"), nullptr, 0, defaultTwiceRepeatIntvalTime, Vst::ParameterInfo::kCanAutomate, kTwiceRepeatIntvalTime);
+	//parameters.addParameter(STR16("OSC_kEnableTwiceRepeat"), nullptr, 0, defaultEnableTwiceRepeat, Vst::ParameterInfo::kCanAutomate, kEnableTwiceRepeat);
+	//parameters.addParameter(STR16("OSC_kTwiceRepeatIntvalTime"), nullptr, 0, defaultTwiceRepeatIntvalTime, Vst::ParameterInfo::kCanAutomate, kTwiceRepeatIntvalTime);
 	parameters.addParameter(STR16("OSC_kMaxSliceLength"), nullptr, 0, defaultMaxSliceLength, Vst::ParameterInfo::kCanAutomate, kMaxSliceLength);
 	parameters.addParameter(STR16("OSC_kPitchChange"), nullptr, 0, defaultPitchChange, Vst::ParameterInfo::kCanAutomate, kPitchChange);
 	//parameters.addParameter(STR16("OSC_kPrefixBufferLength"), nullptr, 0, defaultPrefixBufferLength, Vst::ParameterInfo::kCanAutomate, kPrefixBufferLength);
@@ -96,10 +96,6 @@ tresult PLUGIN_API NetProcessController::setComponentState (IBStream* state)
 
 	bool bVal;
 	float fVal;
-	if (streamer.readBool(bVal) == false) return kResultFalse;
-	setParamNormalized(kEnableTwiceRepeat, bVal);
-	if (streamer.readFloat(fVal) == false) return kResultFalse;
-	setParamNormalized(kTwiceRepeatIntvalTime, fVal);
 	if (streamer.readFloat(fVal) == false) return kResultFalse;
 	setParamNormalized(kMaxSliceLength, fVal);
 	if (streamer.readFloat(fVal) == false) return kResultFalse;
