@@ -145,6 +145,8 @@ protected:
 	int iHUBERTInputSampleRate;
 	float fAvoidJitPrefixTime;
 	bool bFoundJit;
+
+	float fLowVolumeDetectTime;
 };
 
 //------------------------------------------------------------------------

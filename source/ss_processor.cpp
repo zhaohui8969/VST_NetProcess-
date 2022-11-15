@@ -429,6 +429,7 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	iModelInputSamplerate = jsonRoot["iModelInputSamplerate"].asInt();
 	iHUBERTInputSampleRate = jsonRoot["iHUBERTInputSampleRate"].asInt();
 	fAvoidJitPrefixTime = jsonRoot["fAvoidJitPrefixTime"].asFloat();
+	fLowVolumeDetectTime = jsonRoot["fLowVolumeDetectTime"].asFloat();
 
 	fSampleVolumeWorkActiveVal = jsonRoot["fSampleVolumeWorkActiveVal"].asDouble();
 
@@ -637,7 +638,6 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		bool bExitWorkState = false;
 
 		// 退出条件2：音量过小且持续超过一定时间
-		float fLowVolumeDetectTime = 1.f; // 1s
 		if (fRecordIdleTime >= fLowVolumeDetectTime) {
 			bExitWorkState = true;
 			OutputDebugStringA("音量过小且持续超过一定时间，直接调用模型\n");
