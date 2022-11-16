@@ -6,7 +6,6 @@
 #include "ss_cids.h"
 
 #include "base/source/fstreamer.h"
-// 引入必要的头文件
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "AudioFile.h"
@@ -31,8 +30,8 @@ namespace MyCompanyName {
 // NetProcessProcessor
 //------------------------------------------------------------------------
 
-	// Resample
-	void func_audio_resample(FUNC_SRC_SIMPLE dllFuncSrcSimple, float* fInBuffer, float* fOutBuffer, double src_ratio, long lInSize, long lOutSize) {
+	// 重采样
+	int func_audio_resample(FUNC_SRC_SIMPLE dllFuncSrcSimple, float* fInBuffer, float* fOutBuffer, double src_ratio, long lInSize, long lOutSize) {
 		SRC_DATA data;
 		data.src_ratio = src_ratio;
 		data.input_frames = lInSize;
@@ -40,13 +39,7 @@ namespace MyCompanyName {
 		data.data_in = fInBuffer;
 		data.data_out = fOutBuffer;
 		int error = dllFuncSrcSimple(&data, SRC_SINC_FASTEST, 1);
-
-		/*if (error > 0) {
-			char buff[100];
-			const char* cError = src_strerror(error);
-			snprintf(buff, sizeof(buff), "Resample error%s\n", cError);
-			OutputDebugStringA(buff);
-		}*/
+		return error;
 	}
 
 	// 用于计算一个读写缓存里的有效数据大小
@@ -61,319 +54,313 @@ namespace MyCompanyName {
 		return inputBufferSize;
 	}
 
-// 进行声音处理，较为耗时，在单独的线程里进行，避免主线程卡顿爆音
-	void func_do_voice_transfer(
-		int iNumberOfChanel,									// 通道数量
-		double dProjectSampleRate,								// 项目采样率
-		//std::queue<double>* qModelInputSampleQueue,				// 模型入参队列
-		//std::queue<double>* qModelOutputSampleQueue,			// 模型返回队列
+	// bool值序列化为字符串
+	std::string func_bool_to_string(bool bVal) {
+		if (bVal) {
+			return "true";
+		} else {
+			return "false";
+		}
+	}
+
 		
-		long lModelInputOutputBufferSize,
+	// 进行声音处理，较为耗时，在单独的线程里进行，避免主线程卡顿爆音
+	void func_do_voice_transfer_worker(
+		int iNumberOfChanel,					// 通道数量
+		double dProjectSampleRate,				// 项目采样率
+		
+		long lModelInputOutputBufferSize,		// 模型输入输出缓冲区大小
+		float* fModeulInputSampleBuffer,		// 模型输入缓冲区
+		long* lModelInputSampleBufferReadPos,	// 模型输入缓冲区读指针
+		long* lModelInputSampleBufferWritePos,	// 模型输入缓冲区写指针
 
-		float* fModeulInputSampleBuffer,
-		long* lModelInputSampleBufferReadPos,
-		long* lModelInputSampleBufferWritePos,
+		float* fModeulOutputSampleBuffer,		// 模型输出缓冲区
+		long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
+		long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-		float* fModeulOutputSampleBuffer,
-		long* lModelOutputSampleBufferReadPos,
-		long* lModelOutputSampleBufferWritePos,
+		float* fPrefixLength,					// 前导缓冲区时长(s)
+		float* fDropSuffixLength,				// 丢弃的尾部时长(s)
+		float* fPitchChange,					// 音调变化数值
+		bool* bCalcPitchError,					// 启用音调误差检测
 
-		float fPrefixLength,
-		float fDropSuffixLength,
-		float fPitchChange,
-		bool bCalcPitchError,
-		roleStruct roleStruct,
-		FUNC_SRC_SIMPLE dllFuncSrcSimple,
-		long long tStart,
-		bool bEnablePreResample,
-		int iModelInputSamplerate,
-		int iHUBERTInputSampleRate,
+		roleStruct roleStruct,					// 配置的可用音色列表
+		FUNC_SRC_SIMPLE dllFuncSrcSimple,		// DLL内部SrcSimple方法
 
-		bool bFoundJit,
-		float fAvoidJitPrefixTime
+		bool* bEnableSOVITSPreResample,			// 启用SOVITS模型入参音频重采样预处理
+		int iSOVITSModelInputSamplerate,		// SOVITS模型入参采样率
+		bool* bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
+		int iHUBERTInputSampleRate,				// HUBERT模型入参采样率
+
+		bool* bDisableVolumeDetect,				// 占位符，停用音量检测（持续处理模式）
+		bool* bFoundJit,						// 占位符，是否出现了Jitter问题
+		float fAvoidJitPrefixTime,				// Jitter后，增加的前导缓冲区长度(s)
+		bool* bDoItSignal						// 占位符，表示该worker有待处理的数据
 ) {
 	char buff[100];
 	long long tTime1;
 	long long tTime2;
 	long long tUseTime;
-	tTime1 = tStart;
-	tTime2 = func_get_timestamp();
-	tUseTime = tTime2 - tTime1;
-	snprintf(buff, sizeof(buff), "AI线程启动耗时:%lldms\n", tUseTime);
-	OutputDebugStringA(buff);
-	tTime1 = tTime2;
-
-	// 保存音频数据到文件
-	// 获取当前写指针的位置
-	long lTmpModelInputSampleBufferWritePos = *lModelInputSampleBufferWritePos;
-
-	AudioFile<double>::AudioBuffer modelInputAudioBuffer;
-	modelInputAudioBuffer.resize(iNumberOfChanel);
-
-	// 从队列中取出所需的音频数据
-	std::vector<float> vModelInputSampleBufferVector;
-	if (*lModelInputSampleBufferReadPos < lTmpModelInputSampleBufferWritePos) {
-		for (int i = *lModelInputSampleBufferReadPos; i < lTmpModelInputSampleBufferWritePos; i++) {
-			vModelInputSampleBufferVector.push_back(fModeulInputSampleBuffer[i]);
-		}
-	}
-	else {
-		for (int i = *lModelInputSampleBufferReadPos; i < lModelInputOutputBufferSize; i++) {
-			vModelInputSampleBufferVector.push_back(fModeulInputSampleBuffer[i]);
-		}
-		for (int i = 0; i < lTmpModelInputSampleBufferWritePos; i++) {
-			vModelInputSampleBufferVector.push_back(fModeulInputSampleBuffer[i]);
-		}
-	}
-	// 读取完毕，将读指针指向最后写指针
-	*lModelInputSampleBufferReadPos = lTmpModelInputSampleBufferWritePos;
-
-	char buffSamplerate[100];
-	std::string sHUBERTSampleBuffer;
+	long long tStart;
+	
 	double dSOVITSInputSamplerate;
-	if (bEnablePreResample) {
-		// 提前对音频重采样，C++重采样比Python端快
-		// SOVITS输入音频重采样
-		float* fReSampleInBuffer = vModelInputSampleBufferVector.data();
-		float* fReSampleOutBuffer = fReSampleInBuffer;
-		int iResampleNumbers = vModelInputSampleBufferVector.size();
-
-		if (dProjectSampleRate != iModelInputSamplerate) {
-			double fScaleRate = iModelInputSamplerate / dProjectSampleRate;
-			iResampleNumbers = fScaleRate * iResampleNumbers;
-			fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-			func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, vModelInputSampleBufferVector.size(), iResampleNumbers);
-		}
-
-		snprintf(buffSamplerate, sizeof(buffSamplerate), "%d", iModelInputSamplerate);
-		dSOVITSInputSamplerate = iModelInputSamplerate;
-		modelInputAudioBuffer[0].resize(iResampleNumbers);
-		for (int i = 0; i < iResampleNumbers; i++) {
-			modelInputAudioBuffer[0][i] = fReSampleOutBuffer[i];
-		}
-
-		// HUBERT输入音频重采样
-		double fScaleRate = iHUBERTInputSampleRate / dProjectSampleRate;
-		iResampleNumbers = fScaleRate * vModelInputSampleBufferVector.size();
-		fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-		func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, vModelInputSampleBufferVector.size(), iResampleNumbers);
-
-		AudioFile<double>::AudioBuffer HUBERTModelInputAudioBuffer;
-		HUBERTModelInputAudioBuffer.resize(iNumberOfChanel);
-		HUBERTModelInputAudioBuffer[0].resize(iResampleNumbers);
-		for (int i = 0; i < iResampleNumbers; i++) {
-			HUBERTModelInputAudioBuffer[0][i] = fReSampleOutBuffer[i];
-		}
-		AudioFile<double> HUBERTAudioFile;
-		HUBERTAudioFile.shouldLogErrorsToConsole(true);
-		HUBERTAudioFile.setAudioBuffer(HUBERTModelInputAudioBuffer);
-		HUBERTAudioFile.setAudioBufferSize(iNumberOfChanel, HUBERTModelInputAudioBuffer[0].size());
-		HUBERTAudioFile.setBitDepth(24);
-		HUBERTAudioFile.setSampleRate(iHUBERTInputSampleRate);
-		// 保存音频文件到内存
-		std::vector<uint8_t> vHUBERTModelInputMemoryBuffer = std::vector<uint8_t>();
-		HUBERTAudioFile.saveToWaveMemory(&vHUBERTModelInputMemoryBuffer);
-		// 从内存读取数据
-		auto vHUBERTModelInputData = vHUBERTModelInputMemoryBuffer.data();
-		std::string sHUBERTModelInputString(vHUBERTModelInputData, vHUBERTModelInputData + vHUBERTModelInputMemoryBuffer.size());
-		sHUBERTSampleBuffer = sHUBERTModelInputString;
-	}
-	else {
-		// 未开启预处理重采样，音频原样发送
-		dSOVITSInputSamplerate = dProjectSampleRate;
-		snprintf(buffSamplerate, sizeof(buffSamplerate), "%f", dProjectSampleRate);
-		modelInputAudioBuffer[0].resize(vModelInputSampleBufferVector.size());
-		for (int i = 0; i < vModelInputSampleBufferVector.size(); i++) {
-			modelInputAudioBuffer[0][i] = vModelInputSampleBufferVector[i];
-		}
-	}
-
-	int iModelInputNumSamples = modelInputAudioBuffer[0].size();
-	AudioFile<double> audioFile;
-	audioFile.shouldLogErrorsToConsole(true);
-	audioFile.setAudioBuffer(modelInputAudioBuffer);
-	audioFile.setAudioBufferSize(iNumberOfChanel, iModelInputNumSamples);
-	audioFile.setBitDepth(24);
-	audioFile.setSampleRate(dSOVITSInputSamplerate);
-	
-	tTime2 = func_get_timestamp();
-	tUseTime = tTime2 - tTime1;
-	snprintf(buff, sizeof(buff), "准备保存到音频文件耗时:%lldms\n", tUseTime);
-	OutputDebugStringA(buff);
-	tTime1 = tTime2;
-
-	// 保存音频文件到内存
-	std::vector<uint8_t> vModelInputMemoryBuffer = std::vector<uint8_t>(iModelInputNumSamples * 3);
-	audioFile.saveToWaveMemory(&vModelInputMemoryBuffer);
-
-	tTime2 = func_get_timestamp();
-	tUseTime = tTime2 - tTime1;
-	snprintf(buff, sizeof(buff), "保存到音频文件耗时:%lldms\n", tUseTime);
-	OutputDebugStringA(buff);
-	tTime1 = tTime2;
-
-	// 调用AI模型进行声音处理
-	httplib::Client cli(roleStruct.sApiUrl);
-
-	cli.set_connection_timeout(0, 1000000); // 300 milliseconds
-	cli.set_read_timeout(5, 0); // 5 seconds
-	cli.set_write_timeout(5, 0); // 5 seconds
-
-	// 从内存读取数据
-	auto vModelInputData = vModelInputMemoryBuffer.data();
-	std::string sModelInputString(vModelInputData, vModelInputData + vModelInputMemoryBuffer.size());
-
-	auto sBufferSize = sModelInputString.size();
-	snprintf(buff, sizeof(buff), "发送文件大小:%llu\n", sBufferSize);
-	OutputDebugStringA(buff);
-	
+	char sSOVITSSamplerateBuff[100];
 	char cPitchBuff[100];
-	snprintf(cPitchBuff, sizeof(cPitchBuff), "%f", fPitchChange);
-
+	std::string sHUBERTSampleBuffer;
 	std::string sCalcPitchError;
-	if (bCalcPitchError) {
-		sCalcPitchError = "true";
-	}
-	else {
-		sCalcPitchError = "false";
-	}
-
 	std::string sEnablePreResample;
-	if (bEnablePreResample) {
-		sEnablePreResample = "true";
-	}
-	else {
-		sEnablePreResample = "false";
-	}
 
-	tTime2 = func_get_timestamp();
-	tUseTime = tTime2 - tTime1;
-	snprintf(buff, sizeof(buff), "调用HTTP接口准备耗时:%lldms\n", tUseTime);
-	OutputDebugStringA(buff);
-	tTime1 = tTime2;
+	while (true) {
+		// 轮训检查标志位
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		if (*bDoItSignal) {
+			// 有需要处理的信号，开始处理，并将标志位设置为false
+			// 此处考虑到性能问题，并未使用互斥锁实现原子操作
+			// 若同一时间产生了需要处理的信号，则等到下一个标志位为true时再处理也无妨
+			*bDoItSignal = false;
+			tStart = func_get_timestamp();
+			tTime1 = tStart;
 
-	httplib::MultipartFormDataItems items = {
-		{ "sSpeakId", roleStruct.sSpeakId, "", ""},
-		{ "sName", roleStruct.sName, "", ""},
-		{ "fPitchChange", cPitchBuff, "", ""},
-		{ "sampleRate", buffSamplerate, "", ""},
-		{ "bCalcPitchError", sCalcPitchError.c_str(), "", ""},
-		{ "bEnablePreResample", sEnablePreResample.c_str(), "", ""},
-		{ "sample", sModelInputString, "sample.wav", "audio/x-wav"},
-		{ "hubert_sample", sHUBERTSampleBuffer, "hubert_sample.wav", "audio/x-wav"},
-	};
-	OutputDebugStringA("调用AI算法模型\n");
-	auto res = cli.Post("/voiceChangeModel", items);
+			// 保存音频数据到文件
+			// 获取当前写指针的位置
+			long lTmpModelInputSampleBufferWritePos = *lModelInputSampleBufferWritePos;
 
-	tTime2 = func_get_timestamp();
-	tUseTime = tTime2 - tTime1;
-	snprintf(buff, sizeof(buff), "调用HTTP接口耗时:%lldms\n", tUseTime);
-	OutputDebugStringA(buff);
-	tTime1 = tTime2;
+			AudioFile<double>::AudioBuffer modelInputAudioBuffer;
+			modelInputAudioBuffer.resize(iNumberOfChanel);
 
-	if (res.error() == httplib::Error::Success && res->status == 200) {
-		// 调用成功，开始将结果放入到临时缓冲区，并替换输出
-		std::string body = res->body;
-		std::vector<uint8_t> vModelOutputBuffer(body.begin(), body.end());
-
-		AudioFile<double> tmpAudioFile;
-		tmpAudioFile.loadFromMemory(vModelOutputBuffer);
-		int sampleRate = tmpAudioFile.getSampleRate();
-		int bitDepth = tmpAudioFile.getBitDepth();
-
-		int numSamples = tmpAudioFile.getNumSamplesPerChannel();
-		double lengthInSeconds = tmpAudioFile.getLengthInSeconds();
-
-		int numChannels = tmpAudioFile.getNumChannels();
-		bool isMono = tmpAudioFile.isMono();
-		bool isStereo = tmpAudioFile.isStereo();
-
-		tTime2 = func_get_timestamp();
-		tUseTime = tTime2 - tTime1;
-		snprintf(buff, sizeof(buff), "从HTTP结果中获取音频文件耗时:%lldms\n", tUseTime);
-		OutputDebugStringA(buff);
-		tTime1 = tTime2;
-
-		// 音频流式处理
-		// 做1s滑窗，但是丢掉最后0.1s再取最后的输出进行拼接
-		
-		// 跳过前导音频信号
-		int iSkipSamplePosStart = fPrefixLength * sampleRate;
-		// 丢弃尾部信号
-		int iSkipSamplePosEnd = numSamples - (fDropSuffixLength * sampleRate);
-		int iSliceSampleNumber = iSkipSamplePosEnd - iSkipSamplePosStart;
-		float* fSliceSampleBuffer = (float*)(std::malloc(sizeof(float) * iSliceSampleNumber));
-		int iSlicePos = 0;
-		auto fOriginAudioBuffer = tmpAudioFile.samples[0];
-		for (int i = iSkipSamplePosStart; i < iSkipSamplePosEnd; i++) {
-			fSliceSampleBuffer[iSlicePos++] = fOriginAudioBuffer[i];
-		}
-
-		tTime2 = func_get_timestamp();
-		tUseTime = tTime2 - tTime1;
-		snprintf(buff, sizeof(buff), "前后裁剪耗时:%lldms\n", tUseTime);
-		OutputDebugStringA(buff);
-		tTime1 = tTime2;
-
-		// 音频重采样
-		float* fReSampleInBuffer = (float*)malloc(iSliceSampleNumber * sizeof(float));
-		float* fReSampleOutBuffer = fReSampleInBuffer;
-		int iResampleNumbers = iSliceSampleNumber;
-		for (int i = 0; i < iSliceSampleNumber; i++) {
-			fReSampleInBuffer[i] = fSliceSampleBuffer[i];
-		}
-		if (sampleRate != dProjectSampleRate) {
-			double fScaleRate = dProjectSampleRate / sampleRate;
-			iResampleNumbers = fScaleRate * iSliceSampleNumber;
-			fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-			func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, iSliceSampleNumber, iResampleNumbers);
-		}
-
-		tTime2 = func_get_timestamp();
-		tUseTime = tTime2 - tTime1;
-		snprintf(buff, sizeof(buff), "重采样耗时:%lldms\n", tUseTime);
-		OutputDebugStringA(buff);
-		tTime1 = tTime2;
-
-		long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
-		
-		// 为了避免模型JIT，写一段静音的缓冲区
-		if (bFoundJit) {
-			int iRepeatSilenceSampleNumber = dProjectSampleRate * fAvoidJitPrefixTime;
-			for (int i = 0; i < iRepeatSilenceSampleNumber; i++) {
-				fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = 0.f;
-				if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
-					lTmpModelOutputSampleBufferWritePos = 0;
+			// 从队列中取出所需的音频数据
+			std::vector<float> vModelInputSampleBufferVector;
+			if (*lModelInputSampleBufferReadPos < lTmpModelInputSampleBufferWritePos) {
+				for (int i = *lModelInputSampleBufferReadPos; i < lTmpModelInputSampleBufferWritePos; i++) {
+					vModelInputSampleBufferVector.push_back(fModeulInputSampleBuffer[i]);
 				}
 			}
-		}
-		for (int i = 0; i < iResampleNumbers; i++) {
-			fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = fReSampleOutBuffer[i];
-			if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
-				lTmpModelOutputSampleBufferWritePos = 0;
+			else {
+				for (int i = *lModelInputSampleBufferReadPos; i < lModelInputOutputBufferSize; i++) {
+					vModelInputSampleBufferVector.push_back(fModeulInputSampleBuffer[i]);
+				}
+				for (int i = 0; i < lTmpModelInputSampleBufferWritePos; i++) {
+					vModelInputSampleBufferVector.push_back(fModeulInputSampleBuffer[i]);
+				}
 			}
-			*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
-			// 注意，此处不考虑写指针追上读指针的情况，因此缓冲区应当尽可能的大
-		}
-		// 将写指针指向新的位置
-		//*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
-		snprintf(buff, sizeof(buff), "输出写指针:%ld\n", lTmpModelOutputSampleBufferWritePos);
-		OutputDebugStringA(buff);
+			// 读取完毕，将读指针指向最后写指针
+			*lModelInputSampleBufferReadPos = lTmpModelInputSampleBufferWritePos;
 
-		tTime2 = func_get_timestamp();
-		tUseTime = tTime2 - tTime1;
-		snprintf(buff, sizeof(buff), "写缓冲区耗时:%lldms\n", tUseTime);
-		OutputDebugStringA(buff);
-		tTime1 = tTime2;
+
+			if (*bEnableSOVITSPreResample) {
+				// 提前对音频重采样，C++重采样比Python端快
+				dSOVITSInputSamplerate = iSOVITSModelInputSamplerate;
+				
+				// SOVITS输入音频重采样
+				float* fReSampleInBuffer = vModelInputSampleBufferVector.data();
+				float* fReSampleOutBuffer = fReSampleInBuffer;
+				int iResampleNumbers = vModelInputSampleBufferVector.size();
+
+				if (dProjectSampleRate != iSOVITSModelInputSamplerate) {
+					double fScaleRate = iSOVITSModelInputSamplerate / dProjectSampleRate;
+					iResampleNumbers = fScaleRate * iResampleNumbers;
+					fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
+					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, vModelInputSampleBufferVector.size(), iResampleNumbers);
+				}
+
+				snprintf(sSOVITSSamplerateBuff, sizeof(sSOVITSSamplerateBuff), "%d", iSOVITSModelInputSamplerate);
+				modelInputAudioBuffer[0].resize(iResampleNumbers);
+				for (int i = 0; i < iResampleNumbers; i++) {
+					modelInputAudioBuffer[0][i] = fReSampleOutBuffer[i];
+				}
+
+				if (*bEnableHUBERTPreResample) {
+					// HUBERT输入音频重采样
+					double fScaleRate = iHUBERTInputSampleRate / dProjectSampleRate;
+					iResampleNumbers = fScaleRate * vModelInputSampleBufferVector.size();
+					fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
+					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, vModelInputSampleBufferVector.size(), iResampleNumbers);
+
+					AudioFile<double>::AudioBuffer HUBERTModelInputAudioBuffer;
+					HUBERTModelInputAudioBuffer.resize(iNumberOfChanel);
+					HUBERTModelInputAudioBuffer[0].resize(iResampleNumbers);
+					for (int i = 0; i < iResampleNumbers; i++) {
+						HUBERTModelInputAudioBuffer[0][i] = fReSampleOutBuffer[i];
+					}
+					AudioFile<double> HUBERTAudioFile;
+					HUBERTAudioFile.shouldLogErrorsToConsole(false);
+					HUBERTAudioFile.setAudioBuffer(HUBERTModelInputAudioBuffer);
+					HUBERTAudioFile.setAudioBufferSize(iNumberOfChanel, HUBERTModelInputAudioBuffer[0].size());
+					HUBERTAudioFile.setBitDepth(24);
+					HUBERTAudioFile.setSampleRate(iHUBERTInputSampleRate);
+
+					// 保存音频文件到内存
+					std::vector<uint8_t> vHUBERTModelInputMemoryBuffer;
+					HUBERTAudioFile.saveToWaveMemory(&vHUBERTModelInputMemoryBuffer);
+
+					// 从内存读取数据
+					auto vHUBERTModelInputData = vHUBERTModelInputMemoryBuffer.data();
+					std::string sHUBERTModelInputString(vHUBERTModelInputData, vHUBERTModelInputData + vHUBERTModelInputMemoryBuffer.size());
+					sHUBERTSampleBuffer = sHUBERTModelInputString;
+				}
+				else {
+					sHUBERTSampleBuffer = "";
+				}
+			}
+			else {
+				// 未开启预处理重采样，音频原样发送
+				sHUBERTSampleBuffer = "";
+				dSOVITSInputSamplerate = dProjectSampleRate;
+				snprintf(sSOVITSSamplerateBuff, sizeof(sSOVITSSamplerateBuff), "%f", dProjectSampleRate);
+				modelInputAudioBuffer[0].resize(vModelInputSampleBufferVector.size());
+				for (int i = 0; i < vModelInputSampleBufferVector.size(); i++) {
+					modelInputAudioBuffer[0][i] = vModelInputSampleBufferVector[i];
+				}
+			}
+
+			int iModelInputNumSamples = modelInputAudioBuffer[0].size();
+			AudioFile<double> audioFile;
+			audioFile.shouldLogErrorsToConsole(false);
+			audioFile.setAudioBuffer(modelInputAudioBuffer);
+			audioFile.setAudioBufferSize(iNumberOfChanel, iModelInputNumSamples);
+			audioFile.setBitDepth(24);
+			audioFile.setSampleRate(dSOVITSInputSamplerate);
+			
+			tTime2 = func_get_timestamp();
+			tUseTime = tTime2 - tTime1;
+			snprintf(buff, sizeof(buff), "准备保存到音频文件耗时:%lldms\n", tUseTime);
+			OutputDebugStringA(buff);
+			tTime1 = tTime2;
+
+			// 保存音频文件到内存
+			std::vector<uint8_t> vModelInputMemoryBuffer;
+			audioFile.saveToWaveMemory(&vModelInputMemoryBuffer);
+
+			tTime2 = func_get_timestamp();
+			tUseTime = tTime2 - tTime1;
+			snprintf(buff, sizeof(buff), "保存到音频文件耗时:%lldms\n", tUseTime);
+			OutputDebugStringA(buff);
+			tTime1 = tTime2;
+
+			// 调用AI模型进行声音处理
+			httplib::Client cli(roleStruct.sApiUrl);
+
+			cli.set_connection_timeout(0, 1000000); // 300 milliseconds
+			cli.set_read_timeout(5, 0); // 5 seconds
+			cli.set_write_timeout(5, 0); // 5 seconds
+
+			// 从内存读取数据
+			auto vModelInputData = vModelInputMemoryBuffer.data();
+			std::string sModelInputString(vModelInputData, vModelInputData + vModelInputMemoryBuffer.size());			
+
+			// 准备HTTP请求参数
+			snprintf(cPitchBuff, sizeof(cPitchBuff), "%f", *fPitchChange);
+			sCalcPitchError = func_bool_to_string(*bCalcPitchError);
+			sEnablePreResample = func_bool_to_string(*bEnableSOVITSPreResample);
+
+			httplib::MultipartFormDataItems items = {
+				{ "sSpeakId", roleStruct.sSpeakId, "", ""},
+				{ "sName", roleStruct.sName, "", ""},
+				{ "fPitchChange", cPitchBuff, "", ""},
+				{ "sampleRate", sSOVITSSamplerateBuff, "", ""},
+				{ "bCalcPitchError", sCalcPitchError.c_str(), "", ""},
+				{ "bEnablePreResample", sEnablePreResample.c_str(), "", ""},
+				{ "sample", sModelInputString, "sample.wav", "audio/x-wav"},
+				{ "hubert_sample", sHUBERTSampleBuffer, "hubert_sample.wav", "audio/x-wav"},
+			};
+			OutputDebugStringA("调用AI算法模型\n");
+			auto res = cli.Post("/voiceChangeModel", items);
+
+			tTime2 = func_get_timestamp();
+			tUseTime = tTime2 - tTime1;
+			snprintf(buff, sizeof(buff), "调用HTTP接口耗时:%lldms\n", tUseTime);
+			OutputDebugStringA(buff);
+			tTime1 = tTime2;
+
+			if (res.error() == httplib::Error::Success && res->status == 200) {
+				// 调用成功，开始将结果放入到临时缓冲区，并替换输出
+				std::string body = res->body;
+				std::vector<uint8_t> vModelOutputBuffer(body.begin(), body.end());
+
+				AudioFile<double> tmpAudioFile;
+				tmpAudioFile.loadFromMemory(vModelOutputBuffer);
+				int sampleRate = tmpAudioFile.getSampleRate();
+				// int bitDepth = tmpAudioFile.getBitDepth();
+				int numSamples = tmpAudioFile.getNumSamplesPerChannel();
+				double lengthInSeconds = tmpAudioFile.getLengthInSeconds();
+				// int numChannels = tmpAudioFile.getNumChannels();
+				bool isMono = tmpAudioFile.isMono();
+
+				// 音频流式处理
+				// 做1s滑窗，但是丢掉最后0.1s再取最后的输出进行拼接
+				
+				// 跳过前导音频信号
+				int iSkipSamplePosStart = *fPrefixLength * sampleRate;
+				// 丢弃尾部信号
+				int iSkipSamplePosEnd = numSamples - (*fDropSuffixLength * sampleRate);
+				int iSliceSampleNumber = iSkipSamplePosEnd - iSkipSamplePosStart;
+				float* fSliceSampleBuffer = (float*)(std::malloc(sizeof(float) * iSliceSampleNumber));
+				int iSlicePos = 0;
+				auto fOriginAudioBuffer = tmpAudioFile.samples[0];
+				for (int i = iSkipSamplePosStart; i < iSkipSamplePosEnd; i++) {
+					fSliceSampleBuffer[iSlicePos++] = fOriginAudioBuffer[i];
+				}
+
+				// 音频重采样
+				float* fReSampleInBuffer = (float*)malloc(iSliceSampleNumber * sizeof(float));
+				float* fReSampleOutBuffer = fReSampleInBuffer;
+				int iResampleNumbers = iSliceSampleNumber;
+				for (int i = 0; i < iSliceSampleNumber; i++) {
+					fReSampleInBuffer[i] = fSliceSampleBuffer[i];
+				}
+				if (sampleRate != dProjectSampleRate) {
+					double fScaleRate = dProjectSampleRate / sampleRate;
+					iResampleNumbers = fScaleRate * iSliceSampleNumber;
+					fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
+					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, iSliceSampleNumber, iResampleNumbers);
+				}
+
+				tTime2 = func_get_timestamp();
+				tUseTime = tTime2 - tTime1;
+				snprintf(buff, sizeof(buff), "对模型输出重采样耗时:%lldms\n", tUseTime);
+				OutputDebugStringA(buff);
+				tTime1 = tTime2;
+
+				long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
+				
+				// 为了避免模型JIT，写一段静音的缓冲区
+				if (*bFoundJit && *bDisableVolumeDetect) {
+					*bFoundJit = false;
+					int iRepeatSilenceSampleNumber = dProjectSampleRate * fAvoidJitPrefixTime;
+					for (int i = 0; i < iRepeatSilenceSampleNumber; i++) {
+						fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = 0.f;
+						if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
+							lTmpModelOutputSampleBufferWritePos = 0;
+						}
+					}
+				}
+				for (int i = 0; i < iResampleNumbers; i++) {
+					fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = fReSampleOutBuffer[i];
+					if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
+						lTmpModelOutputSampleBufferWritePos = 0;
+					}
+					// 注意，因为缓冲区应当尽可能的大，所以此处不考虑写指针追上读指针的情况
+				}
+				// 将写指针指向新的位置
+				*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
+				snprintf(buff, sizeof(buff), "输出写指针:%ld\n", lTmpModelOutputSampleBufferWritePos);
+				OutputDebugStringA(buff);
+
+				tTime2 = func_get_timestamp();
+				tUseTime = tTime2 - tTime1;
+				snprintf(buff, sizeof(buff), "写缓冲区耗时:%lldms\n", tUseTime);
+				OutputDebugStringA(buff);
+				tTime1 = tTime2;
+			}
+			else {
+				auto err = res.error();
+				snprintf(buff, sizeof(buff), "算法服务错误:%d\n", err);
+				OutputDebugStringA(buff);
+			}
+			tUseTime = func_get_timestamp() - tStart;
+			snprintf(buff, sizeof(buff), "该次woker轮训总耗时:%lld\n", tUseTime);
+			OutputDebugStringA(buff);
+		}
 	}
-	else {
-		auto err = res.error();
-		snprintf(buff, sizeof(buff), "算法服务错误:%d\n", err);
-		OutputDebugStringA(buff);
-	}
-	tUseTime = func_get_timestamp() - tStart;
-	snprintf(buff, sizeof(buff), "线程总耗时:%lld\n", tUseTime);
-	OutputDebugStringA(buff);
 }
 
 NetProcessProcessor::NetProcessProcessor()
@@ -385,7 +372,6 @@ NetProcessProcessor::NetProcessProcessor()
 	, fMaxSliceLength(2.f)
 	, fPitchChange(0.f)
 	, dllFuncSrcSimple(nullptr){
-
 	//--- set the wanted controller for our processor
 	setControllerClass (kNetProcessControllerUID);
 }
@@ -412,28 +398,29 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 		dllFuncSrcSimple = (FUNC_SRC_SIMPLE)GetProcAddress(dllClient, "src_simple");
 	}
 	else {
-		OutputDebugStringA("DLL load Error!");
+		OutputDebugStringA("samplerate.dll load Error!");
 	}
 
-	// JSON配置文件
+	// 读取JSON配置文件
+	Json::Value jsonRoot;
 	std::ifstream t_pc_file(sJsonConfigFileName, std::ios::binary);
 	std::stringstream buffer_pc_file;
 	buffer_pc_file << t_pc_file.rdbuf();
-	
-	Json::Value jsonRoot;
 	buffer_pc_file >> jsonRoot;
-	int iRoleSize = jsonRoot["roleList"].size();
 
 	bDisableVolumeDetect = jsonRoot["bDisableVolumeDetect"].asBool();
-	bEnablePreResample = jsonRoot["bEnablePreResample"].asBool();
-	iModelInputSamplerate = jsonRoot["iModelInputSamplerate"].asInt();
+	bEnableSOVITSPreResample = jsonRoot["bEnableSOVITSPreResample"].asBool();
+	iSOVITSModelInputSamplerate = jsonRoot["iSOVITSModelInputSamplerate"].asInt();
+	bEnableHUBERTPreResample = jsonRoot["bEnableHUBERTPreResample"].asBool();
 	iHUBERTInputSampleRate = jsonRoot["iHUBERTInputSampleRate"].asInt();
 	fAvoidJitPrefixTime = jsonRoot["fAvoidJitPrefixTime"].asFloat();
 	fLowVolumeDetectTime = jsonRoot["fLowVolumeDetectTime"].asFloat();
-
 	fSampleVolumeWorkActiveVal = jsonRoot["fSampleVolumeWorkActiveVal"].asDouble();
+	fPrefixLength = jsonRoot["fPrefixLength"].asFloat();
+	fDropSuffixLength = jsonRoot["fDropSuffixLength"].asFloat();
 
 	roleList.clear();
+	int iRoleSize = jsonRoot["roleList"].size();
 	for (int i = 0; i < iRoleSize; i++) {
 		std::string apiUrl = jsonRoot["roleList"][i]["apiUrl"].asString();
 		std::string name = jsonRoot["roleList"][i]["name"].asString();
@@ -447,16 +434,14 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	iSelectRoleIndex = 0;
 
 	// 前导缓冲区缓存初始化
-	fPrefixLength = jsonRoot["fPrefixLength"].asFloat();
-	fDropSuffixLength = jsonRoot["fDropSuffixLength"].asFloat();
 	lPrefixLengthSampleNumber = fPrefixLength * this->processSetup.sampleRate;
 	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixLengthSampleNumber);
 	lPrefixBufferPos = 0;
-	
 	lNoOutputCount = 0;
 	bFoundJit = true;
+	bDoItSignal = false;
 
-	// 初始化线程间交换数据的缓冲区
+	// 初始化线程间交换数据的缓冲区，120s的缓冲区足够大
 	float fModelInputOutputBufferSecond = 120.f;
 	lModelInputOutputBufferSize = fModelInputOutputBufferSecond * this->processSetup.sampleRate;
 	fModeulInputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelInputOutputBufferSize));
@@ -465,6 +450,39 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	lModelInputSampleBufferWritePos = 0;
 	lModelOutputSampleBufferReadPos = 0;
 	lModelOutputSampleBufferWritePos = 0;
+
+	// 启动Worker线程
+	std::thread (func_do_voice_transfer_worker,
+				iNumberOfChanel,					// 通道数量
+				this->processSetup.sampleRate,		// 项目采样率
+
+				lModelInputOutputBufferSize,		// 模型输入输出缓冲区大小
+				fModeulInputSampleBuffer,			// 模型输入缓冲区
+				&lModelInputSampleBufferReadPos,	// 模型输入缓冲区读指针
+				&lModelInputSampleBufferWritePos,	// 模型输入缓冲区写指针
+
+				fModeulOutputSampleBuffer,			// 模型输出缓冲区
+				&lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
+				&lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
+
+				&fPrefixLength,						// 前导缓冲区时长(s)
+				&fDropSuffixLength,					// 丢弃的尾部时长(s)
+				&fPitchChange,						// 音调变化数值
+				&bCalcPitchError,					// 启用音调误差检测
+
+				roleList[iSelectRoleIndex],			// 配置的可用音色列表
+				dllFuncSrcSimple,					// DLL内部SrcSimple方法
+
+				&bEnableSOVITSPreResample,			// 启用SOVITS模型入参音频重采样预处理
+				iSOVITSModelInputSamplerate,		// SOVITS模型入参采样率
+				& bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
+				iHUBERTInputSampleRate,				// HUBERT模型入参采样率
+				
+				&bDisableVolumeDetect,				// 占位符，停用音量检测（持续处理模式）
+				&bFoundJit,							// 占位符，是否出现了Jitter问题
+				fAvoidJitPrefixTime,				// Jitter后，增加的前导缓冲区长度(s)
+				&bDoItSignal						// 占位符，表示该worker有待处理的数据
+				).detach();
 
 	//---always initialize the parent-------
 	tresult result = AudioEffect::initialize (context);
@@ -550,10 +568,6 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 	Vst::Sample32* outputR = data.outputs[0].channelBuffers32[1];
 	double fSampleMax = -9999;
 	for (int32 i = 0; i < data.numSamples; i++) {
-		// 将输入端的信号复制一遍
-		// modelInputAudioBuffer[0][lModelInputAudioBufferPos + i] = inputL[i];
-		// modelInputAudioBuffer[1][lModelInputAudioBufferPos + i] = inputR[i];
-
 		// 获取当前块的最大音量
 		double fCurrentSample = inputL[i];
 		double fSampleAbs = std::abs(fCurrentSample);
@@ -568,15 +582,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		}
 	}
 	lPrefixBufferPos = (lPrefixBufferPos + data.numSamples) % lPrefixLengthSampleNumber;
-
-	/*
-	char buff[100];
-	snprintf(buff, sizeof(buff), "当前音频数据的最大音量:%f\n", fSampleMax);
-	std::string buffAsStdStr = buff;
-	OutputDebugStringA(buff);
-	*/
 	
-	bool bVolumeDetectFine;
 	if (bDisableVolumeDetect) {
 		// 如果禁用了音量检测，则音量直接合格
 		bVolumeDetectFine = true;
@@ -601,49 +607,40 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 			OutputDebugStringA("切换到工作状态");
 			kRecordState = WORK;
 			// 将当前的音频数据写入到模型入参缓冲区中
-			//mInputQueueMutex.lock();
-			/*for (int32 i = 0; i < data.numSamples; i++) {
-				qModelInputSampleQueue.push(inputL[i]);
-			}*/
 			for (int i = lPrefixBufferPos; i < lPrefixLengthSampleNumber; i++) {
 				fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = fPrefixBuffer[i];
 				if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
 					lModelInputSampleBufferWritePos = 0;
 				}
-				//qModelInputSampleQueue.push(fPrefixBuffer[i]);
 			}
 			for (int i = 0; i < lPrefixBufferPos; i++) {
 				fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = fPrefixBuffer[i];
 				if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
 					lModelInputSampleBufferWritePos = 0;
 				}
-				//qModelInputSampleQueue.push(fPrefixBuffer[i]);
 			}
-			//mInputQueueMutex.unlock();
 		}
 	}
 	else {
 		// 当前是工作状态
 		// 将当前的音频数据写入到模型入参缓冲区中
-		//mInputQueueMutex.lock();
 		for (int i = 0; i < data.numSamples; i++) {
 			fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = inputL[i];
 			if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
 				lModelInputSampleBufferWritePos = 0;
 			}
-			//qModelInputSampleQueue.push(inputL[i]);
 		}
-		//mInputQueueMutex.unlock();
+
 		// 判断是否需要退出工作状态
 		bool bExitWorkState = false;
 
-		// 退出条件2：音量过小且持续超过一定时间
+		// 退出条件1：音量过小且持续超过一定时间
 		if (fRecordIdleTime >= fLowVolumeDetectTime) {
 			bExitWorkState = true;
 			OutputDebugStringA("音量过小且持续超过一定时间，直接调用模型\n");
 		}
 
-		// 退出条件3：队列达到一定的大小
+		// 退出条件2：队列达到一定的大小
 		long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelInputOutputBufferSize, lModelInputSampleBufferReadPos, lModelInputSampleBufferWritePos);
 		if (inputBufferSize > lMaxSliceLengthSampleNumber + lPrefixLengthSampleNumber) {
 			bExitWorkState = true;
@@ -653,31 +650,8 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		if (bExitWorkState) {
 			// 需要退出工作状态
 			kRecordState = IDLE;
-			long long tStart = func_get_timestamp();
-			std::thread (func_do_voice_transfer,
-				iNumberOfChanel,
-				this->processSetup.sampleRate,
-				//&qModelInputSampleQueue,
-				//&qModelOutputSampleQueue,
-				lModelInputOutputBufferSize,
-				fModeulInputSampleBuffer,
-				&lModelInputSampleBufferReadPos,
-				&lModelInputSampleBufferWritePos,
-				fModeulOutputSampleBuffer,
-				&lModelOutputSampleBufferReadPos,
-				&lModelOutputSampleBufferWritePos,
-				fPrefixLength,
-				fDropSuffixLength,
-				fPitchChange,
-				bCalcPitchError,
-				roleList[iSelectRoleIndex],
-				dllFuncSrcSimple,
-				tStart,
-				bEnablePreResample,
-				iModelInputSamplerate,
-				iHUBERTInputSampleRate,
-				bFoundJit,
-				fAvoidJitPrefixTime).detach();
+			// worker标志位设置为true，供worker检查
+			bDoItSignal = true;
 		}
 	}
 
@@ -689,9 +663,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 	OutputDebugStringA(buff);
 	if (lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos) {
 		bFoundJit = false;
-		//OutputDebugStringA("模型输出缓冲区还有数据的话，写入到输出信号中去\n");
 		bool bFinish = false;
-		//mOutputQueueMutex.lock();
 		for (int i = 0; i < data.numSamples; i++)
 		{
 			bFinish = lModelOutputSampleBufferReadPos == lModelOutputSampleBufferWritePos;
@@ -702,8 +674,6 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				}
 			}
 			else {
-				//double currentSample = qModelOutputSampleQueue.front();
-				//qModelOutputSampleQueue.pop();
 				double currentSample = fModeulOutputSampleBuffer[lModelOutputSampleBufferReadPos++];
 				if (lModelOutputSampleBufferReadPos == lModelInputOutputBufferSize) {
 					lModelOutputSampleBufferReadPos = 0;
@@ -714,7 +684,6 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 				}
 			}
 		}
-		//mOutputQueueMutex.unlock();
 		if (bFinish) {
 			// 数据取完了
 			OutputDebugStringA("数据取完了\n");

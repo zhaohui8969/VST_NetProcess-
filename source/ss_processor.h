@@ -100,12 +100,6 @@ protected:
 	double fRecordIdleTime;
 	int iNumberOfChanel;
 
-	// 基于队列和互斥锁的线程数据交换机制
-	//std::queue<double> qModelInputSampleQueue;
-	//std::queue<double> qModelOutputSampleQueue;
-	//std::mutex mInputQueueMutex;
-	//std::mutex mOutputQueueMutex;
-
 	// 基于双指针缓冲区的线程数据交换机制
 	long lModelInputOutputBufferSize;
 	float* fModeulInputSampleBuffer;
@@ -127,7 +121,6 @@ protected:
 	float fPrefixLength;
 	float fDropSuffixLength;
 	long lPrefixLengthSampleNumber;
-	bool bDisableVolumeDetect;
 	
 	// JSON配置
 	std::string sJsonConfigFileName = "C:/temp/vst/netProcessConfig.json";
@@ -140,12 +133,16 @@ protected:
 	long lNoOutputCount;
 
 	// preReSamplerate
-	bool bEnablePreResample;
-	int iModelInputSamplerate;
+	bool bEnableSOVITSPreResample;
+	int iSOVITSModelInputSamplerate;
+	bool bEnableHUBERTPreResample;
 	int iHUBERTInputSampleRate;
 	float fAvoidJitPrefixTime;
 	bool bFoundJit;
+	bool bDoItSignal;
 
+	bool bDisableVolumeDetect;
+	bool bVolumeDetectFine;
 	float fLowVolumeDetectTime;
 };
 

@@ -986,7 +986,7 @@ bool AudioFile<T>::saveToWaveFile (std::string filePath)
 
 template <class T>
 bool AudioFile<T>::saveToWaveMemory(std::vector<uint8_t>* vMemoryBuffer)
-{
+{   
     std::vector<uint8_t> fileData;
 
     int32_t dataChunkSize = getNumSamplesPerChannel() * (getNumChannels() * bitDepth / 8);
@@ -1089,10 +1089,7 @@ bool AudioFile<T>::saveToWaveMemory(std::vector<uint8_t>* vMemoryBuffer)
         addStringToFileData(fileData, iXMLChunk);
     }
 
-    vMemoryBuffer->clear();
-    for (int i = 0; i < fileData.size(); i++) {
-        vMemoryBuffer->push_back(fileData[i]);
-    }
+    *vMemoryBuffer = fileData;
     return true;
 }
 
