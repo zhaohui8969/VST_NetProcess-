@@ -83,7 +83,8 @@ namespace MyCompanyName {
 		float* fPitchChange,					// 音调变化数值
 		bool* bCalcPitchError,					// 启用音调误差检测
 
-		roleStruct roleStruct,					// 配置的可用音色列表
+		std::vector<roleStruct> roleStructList,	// 配置的可用音色列表
+		int* iSelectRoleIndex,					// 选择的角色ID
 		FUNC_SRC_SIMPLE dllFuncSrcSimple,		// DLL内部SrcSimple方法
 
 		bool* bEnableSOVITSPreResample,			// 启用SOVITS模型入参音频重采样预处理
@@ -119,6 +120,9 @@ namespace MyCompanyName {
 			*bDoItSignal = false;
 			tStart = func_get_timestamp();
 			tTime1 = tStart;
+
+
+			roleStruct roleStruct = roleStructList[*iSelectRoleIndex];
 
 			// 保存音频数据到文件
 			// 获取当前写指针的位置
@@ -470,7 +474,8 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 				&fPitchChange,						// 音调变化数值
 				&bCalcPitchError,					// 启用音调误差检测
 
-				roleList[iSelectRoleIndex],			// 配置的可用音色列表
+				roleList,							// 配置的可用音色列表
+				&iSelectRoleIndex,					// 选择的角色ID
 				dllFuncSrcSimple,					// DLL内部SrcSimple方法
 
 				&bEnableSOVITSPreResample,			// 启用SOVITS模型入参音频重采样预处理
@@ -553,7 +558,7 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 					break;
 				case kSelectRole:
 					OutputDebugStringA("kSelectRole\n");
-					iSelectRoleIndex= std::min<int>(
+					iSelectRoleIndex = std::min<int>(
 						(int)(roleList.size() * value), roleList.size() - 1);
 					break;
 				}
