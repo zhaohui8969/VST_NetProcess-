@@ -45,6 +45,9 @@ namespace MyCompanyName {
 	// 用于计算一个读写缓存里的有效数据大小
 	long func_cacl_read_write_buffer_data_size(long lBufferSize, long lReadPos, long lWritePos) {
 		long inputBufferSize;
+		if (lReadPos == lWritePos) {
+			return 0;
+		}
 		if (lReadPos < lWritePos) {
 			inputBufferSize = lWritePos - lReadPos;
 		}
@@ -92,7 +95,7 @@ namespace MyCompanyName {
 		bool* bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
 		int iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
-		bool* bDisableVolumeDetect,				// 占位符，停用音量检测（持续处理模式）
+		bool* bRealTimeModel,					// 占位符，实时模式
 		bool* bDoItSignal,						// 占位符，表示该worker有待处理的数据
 
 		bool* bWorkerNeedExit,					// 占位符，表示worker线程需要退出
@@ -326,6 +329,21 @@ namespace MyCompanyName {
 				OutputDebugStringA(buff);
 				tTime1 = tTime2;
 
+				// 当启用了实时模式时，缓冲区的写指针需要特殊处理
+				// 例如：当出现延迟抖动时，接收到最新的数据时缓冲区还有旧数据，此时直接丢弃旧数据，用新数据覆盖
+				if (*bRealTimeModel) {
+					// 安全区大小，因为现在读写线程并非线程安全，因此这里设置一个安全区大小，避免数据出现问题
+					int iRealTimeModeBufferSafeZoneSize = 16;
+					// 计算出新的写指针位置：
+					// 1.当前旧数据大小 > 安全区大小，写指针前移定位在安全区尾部
+					// 2.当前旧数据大小 < 安全区大小，写指针前移定位在旧数据尾部（无任何操作，保持不变）
+					long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelInputOutputBufferSize, *lModelOutputSampleBufferReadPos, *lModelOutputSampleBufferWritePos);
+					if (inputBufferSize > iRealTimeModeBufferSafeZoneSize) {
+						*lModelOutputSampleBufferWritePos = (*lModelOutputSampleBufferReadPos + iRealTimeModeBufferSafeZoneSize) % lModelInputOutputBufferSize;
+					}
+				}
+
+				// 从写指针标记的缓冲区位置开始写入新的音频数据
 				long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
 				
 				for (int i = 0; i < iResampleNumbers; i++) {
@@ -404,7 +422,7 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	buffer_pc_file << t_pc_file.rdbuf();
 	buffer_pc_file >> jsonRoot;
 
-	bDisableVolumeDetect = jsonRoot["bDisableVolumeDetect"].asBool();
+	bRealTimeModel = jsonRoot["bRealTimeModel"].asBool();
 	bEnableSOVITSPreResample = jsonRoot["bEnableSOVITSPreResample"].asBool();
 	iSOVITSModelInputSamplerate = jsonRoot["iSOVITSModelInputSamplerate"].asInt();
 	bEnableHUBERTPreResample = jsonRoot["bEnableHUBERTPreResample"].asBool();
@@ -476,7 +494,7 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 				& bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
 				iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 				
-				&bDisableVolumeDetect,				// 占位符，停用音量检测（持续处理模式）
+				&bRealTimeModel,					// 占位符，实时模式
 				&bDoItSignal,						// 占位符，表示该worker有待处理的数据
 				
 				&bWorkerNeedExit,					// 占位符，表示worker线程需要退出
@@ -586,8 +604,8 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 	}
 	lPrefixBufferPos = (lPrefixBufferPos + data.numSamples) % lPrefixLengthSampleNumber;
 	
-	if (bDisableVolumeDetect) {
-		// 如果禁用了音量检测，则音量直接合格
+	if (bRealTimeModel) {
+		// 如果启用了实时模式，则无需检测音量阈值
 		bVolumeDetectFine = true;
 	}
 	else {

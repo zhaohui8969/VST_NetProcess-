@@ -140,7 +140,10 @@ protected:
 	int iHUBERTInputSampleRate;
 	bool bDoItSignal;
 
-	bool bDisableVolumeDetect;
+	// 实时模式
+	bool bRealTimeModel;
+
+	// 音量检测
 	bool bVolumeDetectFine;
 	float fLowVolumeDetectTime;
 
