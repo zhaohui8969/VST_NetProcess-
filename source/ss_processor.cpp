@@ -93,9 +93,10 @@ namespace MyCompanyName {
 		int iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
 		bool* bDisableVolumeDetect,				// 占位符，停用音量检测（持续处理模式）
-		bool* bFoundJit,						// 占位符，是否出现了Jitter问题
-		float fAvoidJitPrefixTime,				// Jitter后，增加的前导缓冲区长度(s)
-		bool* bDoItSignal						// 占位符，表示该worker有待处理的数据
+		bool* bDoItSignal,						// 占位符，表示该worker有待处理的数据
+
+		bool* bWorkerNeedExit,					// 占位符，表示worker线程需要退出
+		std::mutex* mWorkerSafeExit				// 互斥锁，表示worker线程已经安全退出
 ) {
 	char buff[100];
 	long long tTime1;
@@ -109,8 +110,9 @@ namespace MyCompanyName {
 	std::string sHUBERTSampleBuffer;
 	std::string sCalcPitchError;
 	std::string sEnablePreResample;
-
-	while (true) {
+	
+	mWorkerSafeExit->lock();
+	while (!*bWorkerNeedExit) {
 		// 轮训检查标志位
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		if (*bDoItSignal) {
@@ -326,17 +328,6 @@ namespace MyCompanyName {
 
 				long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
 				
-				// 为了避免模型JIT，写一段静音的缓冲区
-				if (*bFoundJit && *bDisableVolumeDetect) {
-					*bFoundJit = false;
-					int iRepeatSilenceSampleNumber = dProjectSampleRate * fAvoidJitPrefixTime;
-					for (int i = 0; i < iRepeatSilenceSampleNumber; i++) {
-						fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = 0.f;
-						if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
-							lTmpModelOutputSampleBufferWritePos = 0;
-						}
-					}
-				}
 				for (int i = 0; i < iResampleNumbers; i++) {
 					fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = fReSampleOutBuffer[i];
 					if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
@@ -365,6 +356,7 @@ namespace MyCompanyName {
 			OutputDebugStringA(buff);
 		}
 	}
+	mWorkerSafeExit->unlock();
 }
 
 NetProcessProcessor::NetProcessProcessor()
@@ -417,7 +409,6 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	iSOVITSModelInputSamplerate = jsonRoot["iSOVITSModelInputSamplerate"].asInt();
 	bEnableHUBERTPreResample = jsonRoot["bEnableHUBERTPreResample"].asBool();
 	iHUBERTInputSampleRate = jsonRoot["iHUBERTInputSampleRate"].asInt();
-	fAvoidJitPrefixTime = jsonRoot["fAvoidJitPrefixTime"].asFloat();
 	fLowVolumeDetectTime = jsonRoot["fLowVolumeDetectTime"].asFloat();
 	fSampleVolumeWorkActiveVal = jsonRoot["fSampleVolumeWorkActiveVal"].asDouble();
 	fPrefixLength = jsonRoot["fPrefixLength"].asFloat();
@@ -442,7 +433,6 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixLengthSampleNumber);
 	lPrefixBufferPos = 0;
 	lNoOutputCount = 0;
-	bFoundJit = true;
 	bDoItSignal = false;
 
 	// 初始化线程间交换数据的缓冲区，120s的缓冲区足够大
@@ -454,6 +444,9 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 	lModelInputSampleBufferWritePos = 0;
 	lModelOutputSampleBufferReadPos = 0;
 	lModelOutputSampleBufferWritePos = 0;
+
+	// worker线程安全退出相关信号
+	bWorkerNeedExit = false;
 
 	// 启动Worker线程
 	std::thread (func_do_voice_transfer_worker,
@@ -484,9 +477,10 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 				iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 				
 				&bDisableVolumeDetect,				// 占位符，停用音量检测（持续处理模式）
-				&bFoundJit,							// 占位符，是否出现了Jitter问题
-				fAvoidJitPrefixTime,				// Jitter后，增加的前导缓冲区长度(s)
-				&bDoItSignal						// 占位符，表示该worker有待处理的数据
+				&bDoItSignal,						// 占位符，表示该worker有待处理的数据
+				
+				&bWorkerNeedExit,					// 占位符，表示worker线程需要退出
+				&mWorkerSafeExit					// 互斥锁，表示worker线程已经安全退出
 				).detach();
 
 	//---always initialize the parent-------
@@ -511,7 +505,11 @@ tresult PLUGIN_API NetProcessProcessor::initialize (FUnknown* context)
 tresult PLUGIN_API NetProcessProcessor::terminate ()
 {
 	// Here the Plug-in will be de-instanciated, last possibility to remove some memory!
-	
+	bWorkerNeedExit = true;
+	// 当子线程还在运行时，这个锁是锁上的，此时主线程还不能退出
+	// 主线程通过将退出信号发给子线程，等待子线程安全退出后，释放锁，主线程再退出
+	mWorkerSafeExit.lock();
+
 	//---do not forget to call parent ------
 	return AudioEffect::terminate ();
 }
@@ -667,7 +665,6 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 	snprintf(buff, sizeof(buff), "输出读指针:%ld\n", lModelOutputSampleBufferReadPos);
 	OutputDebugStringA(buff);
 	if (lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos) {
-		bFoundJit = false;
 		bool bFinish = false;
 		for (int i = 0; i < data.numSamples; i++)
 		{
@@ -695,7 +692,6 @@ tresult PLUGIN_API NetProcessProcessor::process (Vst::ProcessData& data)
 		}
 	}
 	else {
-		bFoundJit = true;
 		lNoOutputCount += 1;
 		char buff[100];
 		snprintf(buff, sizeof(buff), "!!!!!!!!!!!!!!!!!!!!!!!输出缓冲空:%ld\n", lNoOutputCount);

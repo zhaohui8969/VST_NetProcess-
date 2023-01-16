@@ -9,6 +9,7 @@
 #include <cstring>
 #include "AudioFile.h"
 #include <stdio.h>
+#include <mutex>
 
 typedef struct
 {
@@ -137,13 +138,15 @@ protected:
 	int iSOVITSModelInputSamplerate;
 	bool bEnableHUBERTPreResample;
 	int iHUBERTInputSampleRate;
-	float fAvoidJitPrefixTime;
-	bool bFoundJit;
 	bool bDoItSignal;
 
 	bool bDisableVolumeDetect;
 	bool bVolumeDetectFine;
 	float fLowVolumeDetectTime;
+
+	// 工作线程状态
+	std::mutex mWorkerSafeExit;
+	bool bWorkerNeedExit;
 };
 
 //------------------------------------------------------------------------
