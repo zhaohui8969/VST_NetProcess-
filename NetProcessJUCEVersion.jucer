@@ -11,6 +11,8 @@
     <GROUP id="{56F8911A-B8B9-BC12-9502-7AF0B0AAB9EC}" name="Source">
       <FILE id="tF2TSU" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
+      <FILE id="mMSxgm" name="AudioWork.h" compile="0" resource="0" file="Source/AudioWork.h"/>
+      <FILE id="aw0tyh" name="AudioWork.cpp" compile="1" resource="0" file="Source/AudioWork.cpp"/>
       <FILE id="IXLAuK" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
       <FILE id="AuYP8t" name="PluginEditor.cpp" compile="1" resource="0"
@@ -23,9 +25,9 @@
     <VS2022 targetFolder="Builds/VisualStudio2022">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="NetProcessJUCEVersion" enablePluginBinaryCopyStep="1"
-                       vst3BinaryLocation="C:\Program Files\Common Files\VST3"/>
+                       vst3BinaryLocation="C:\Program Files\Common Files\VST3\NetProcessJUCEVersion"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="NetProcessJUCEVersion"
-                       enablePluginBinaryCopyStep="1" vst3BinaryLocation="C:\Program Files\Common Files\VST3"/>
+                       enablePluginBinaryCopyStep="1" vst3BinaryLocation="C:\Program Files\Common Files\VST3\NetProcessJUCEVersion"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../../lib/JUCE/modules"/>

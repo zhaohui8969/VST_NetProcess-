@@ -100,7 +100,7 @@
       <AdditionalDependencies>NetProcessJUCEVersion.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <PostBuildEvent>
-      <Command>copy /Y &quot;$(OutDir)$(TargetFileName)&quot; &quot;C:\Program Files\Common Files\VST3\$(TargetFileName)&quot;</Command>
+      <Command>copy /Y &quot;$(OutDir)$(TargetFileName)&quot; &quot;C:\Program Files\Common Files\VST3\NetProcessJUCEVersion\$(TargetFileName)&quot;</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -151,7 +151,7 @@
       <AdditionalDependencies>NetProcessJUCEVersion.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <PostBuildEvent>
-      <Command>copy /Y &quot;$(OutDir)$(TargetFileName)&quot; &quot;C:\Program Files\Common Files\VST3\$(TargetFileName)&quot;</Command>
+      <Command>copy /Y &quot;$(OutDir)$(TargetFileName)&quot; &quot;C:\Program Files\Common Files\VST3\NetProcessJUCEVersion\$(TargetFileName)&quot;</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

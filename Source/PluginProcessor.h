@@ -124,7 +124,6 @@ public:
 	float fPitchChange;
 
 	// JSON≈‰÷√
-	std::string sJsonConfigFileName = "C:/temp/vst/netProcessConfig.json";
 	std::vector<roleStruct> roleList;
 	int iSelectRoleIndex;
 

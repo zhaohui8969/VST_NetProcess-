@@ -580,6 +580,9 @@
     <ClCompile Include="..\..\Source\PluginProcessor.cpp">
       <Filter>NetProcessJUCEVersion\Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\AudioWork.cpp">
+      <Filter>NetProcessJUCEVersion\Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\PluginEditor.cpp">
       <Filter>NetProcessJUCEVersion\Source</Filter>
     </ClCompile>
@@ -2907,6 +2910,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\AudioWork.h">
+      <Filter>NetProcessJUCEVersion\Source</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\PluginProcessor.h">
       <Filter>NetProcessJUCEVersion\Source</Filter>
     </ClInclude>
