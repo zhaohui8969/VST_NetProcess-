@@ -83,6 +83,7 @@ void func_do_voice_transfer_worker(
 	bool* bRealTimeModel,					// 占位符，实时模式
 	bool* bDoItSignal,						// 占位符，表示该worker有待处理的数据
 	bool* bEnableDebug,
+	juce::Value vServerUseTime,
 
 	bool* bWorkerNeedExit					// 占位符，表示worker线程需要退出
 	//std::mutex* mWorkerSafeExit				// 互斥锁，表示worker线程已经安全退出
@@ -268,6 +269,7 @@ void func_do_voice_transfer_worker(
 
 			tTime2 = func_get_timestamp();
 			tUseTime = tTime2 - tTime1;
+			vServerUseTime.setValue(tUseTime);
 			if (*bEnableDebug) {
 				snprintf(buff, sizeof(buff), "调用HTTP接口耗时:%lldms\n", tUseTime);
 				OutputDebugStringA(buff);
@@ -744,6 +746,7 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
         &bRealTimeMode,					    // 占位符，实时模式
         &bDoItSignal,						// 占位符，表示该worker有待处理的数据
 		&bEnableDebug,
+		vServerUseTime,
 
         &bWorkerNeedExit					// 占位符，表示worker线程需要退出
         //&mWorkerSafeExit					// 互斥锁，表示worker线程已经安全退出

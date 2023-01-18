@@ -15,7 +15,8 @@
 /**
 */
 class NetProcessJUCEVersionAudioProcessorEditor  : public juce::AudioProcessorEditor,
-    private juce::Slider::Listener
+    private juce::Slider::Listener,
+    private juce::Value::Listener
 {
 public:
     NetProcessJUCEVersionAudioProcessorEditor (NetProcessJUCEVersionAudioProcessor&);
@@ -31,6 +32,7 @@ private:
     NetProcessJUCEVersionAudioProcessor& audioProcessor;
     
     void sliderValueChanged(juce::Slider* slider) override;
+    void valueChanged(juce::Value& value) override;
 
     juce::ToggleButton tToggleRealTimeMode;
     juce::ToggleButton tToggleDebugMode;
@@ -41,6 +43,8 @@ private:
     juce::Label lMaxLowVolumeLengthLabel;
     juce::Slider sMaxLowVolumeLengthSlider;
     juce::Label lChangeRoleLabel;
+    juce::Label lServerUseTimeLabel;
+    juce::Label lServerUseTimeValLabel;
     juce::TextButton bChangeRoleButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NetProcessJUCEVersionAudioProcessorEditor)

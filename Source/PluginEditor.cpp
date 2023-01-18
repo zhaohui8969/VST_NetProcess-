@@ -18,7 +18,7 @@ using namespace std::chrono;
 NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEditor(NetProcessJUCEVersionAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    setSize (400, 140);
+    setSize (400, 160);
 
     std::wstring sDllPath = L"C:/Program Files/Common Files/VST3/samplerate.dll";
     auto dllClient = LoadLibraryW(sDllPath.c_str());
@@ -28,7 +28,6 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     else {
         OutputDebugStringA("samplerate.dll load Error!");
     }
-
 
 
     // 读取JSON配置文件
@@ -68,10 +67,9 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     };
 
     audioProcessor.iNumberOfChanel = 1;
-
     audioProcessor.lNoOutputCount = 0;
     audioProcessor.bDoItSignal = false;
-        
+
     // 初始化线程间交换数据的缓冲区，120s的缓冲区足够大
     float fModelInputOutputBufferSecond = 120.f;
     audioProcessor.lModelInputOutputBufferSize = fModelInputOutputBufferSecond * audioProcessor.getSampleRate();
@@ -155,6 +153,12 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
         menu.showMenuAsync(juce::PopupMenu::Options{}.withTargetComponent(bChangeRoleButton));
     };
 
+    lServerUseTimeLabel.setText("Server use time:", juce::dontSendNotification);
+    lServerUseTimeValLabel.setText("unCheck", juce::dontSendNotification);
+    addAndMakeVisible(&lServerUseTimeLabel);
+    addAndMakeVisible(&lServerUseTimeValLabel);
+    audioProcessor.vServerUseTime.addListener(this);
+
     audioProcessor.initDone = true;
 }
 
@@ -175,6 +179,13 @@ void NetProcessJUCEVersionAudioProcessorEditor::sliderValueChanged(juce::Slider*
     } else if (slider == &sMaxLowVolumeLengthSlider) {
         float val = slider->getValue();
         audioProcessor.fLowVolumeDetectTime = val;
+    }
+}
+
+void NetProcessJUCEVersionAudioProcessorEditor::valueChanged(juce::Value& value) {
+    if (value == audioProcessor.vServerUseTime) {
+        auto sModelUseTime = audioProcessor.vServerUseTime.toString() + "ms";
+        lServerUseTimeValLabel.setText(sModelUseTime, juce::dontSendNotification);
     }
 }
 
@@ -223,4 +234,10 @@ void NetProcessJUCEVersionAudioProcessorEditor::resized()
     lChangeRoleLabel.setBounds(changeRoleLabelArea);
     auto changeRoleButtonArea = changeRoleArea;
     bChangeRoleButton.setBounds(changeRoleButtonArea);
+
+    auto serverUseTimeArea = localArea.removeFromTop(iRowHeight);
+    auto serverUseTimeLabelArea = serverUseTimeArea.removeFromLeft(ilabelColumnWidth);
+    lServerUseTimeLabel.setBounds(serverUseTimeLabelArea);
+    auto serverUseTimeLabelValArea = serverUseTimeArea;
+    lServerUseTimeValLabel.setBounds(serverUseTimeLabelValArea);
 }
