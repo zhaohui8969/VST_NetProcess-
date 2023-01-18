@@ -122,13 +122,6 @@ public:
 	long lMaxSliceLengthSampleNumber;
 	float fPitchChange;
 
-	// 前导信号缓冲区
-	float* fPrefixBuffer;
-	long lPrefixBufferPos;
-	float fPrefixLength;
-	float fDropSuffixLength;
-	long lPrefixLengthSampleNumber;
-
 	// JSON配置
 	std::string sJsonConfigFileName = "C:/temp/vst/netProcessConfig.json";
 	std::vector<roleStruct> roleList;

@@ -44,8 +44,6 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
         audioProcessor.bEnableHUBERTPreResample = props["bEnableHUBERTPreResample"];
         audioProcessor.iHUBERTInputSampleRate = props["iHUBERTInputSampleRate"];
         audioProcessor.fSampleVolumeWorkActiveVal = props["fSampleVolumeWorkActiveVal"];
-        audioProcessor.fPrefixLength = props["fPrefixLength"];
-        audioProcessor.fDropSuffixLength = props["fDropSuffixLength"];
 
         audioProcessor.roleList.clear();
         auto roleList = props["roleList"];
@@ -71,14 +69,9 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
 
     audioProcessor.iNumberOfChanel = 1;
 
-    // 前导缓冲区缓存初始化
-    audioProcessor.lPrefixLengthSampleNumber = audioProcessor.fPrefixLength * audioProcessor.getSampleRate();
-    audioProcessor.fPrefixBuffer = (float*)std::malloc(sizeof(float) * audioProcessor.lPrefixLengthSampleNumber);
-    audioProcessor.lPrefixBufferPos = 0;
     audioProcessor.lNoOutputCount = 0;
     audioProcessor.bDoItSignal = false;
-
-    
+        
     // 初始化线程间交换数据的缓冲区，120s的缓冲区足够大
     float fModelInputOutputBufferSecond = 120.f;
     audioProcessor.lModelInputOutputBufferSize = fModelInputOutputBufferSecond * audioProcessor.getSampleRate();

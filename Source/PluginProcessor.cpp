@@ -68,8 +68,6 @@ void func_do_voice_transfer_worker(
 	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
 	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-	float* fPrefixLength,					// 前导缓冲区时长(s)
-	float* fDropSuffixLength,				// 丢弃的尾部时长(s)
 	float* fPitchChange,					// 音调变化数值
 	bool* bCalcPitchError,					// 启用音调误差检测
 
@@ -290,33 +288,20 @@ void func_do_voice_transfer_worker(
 				// int numChannels = tmpAudioFile.getNumChannels();
 				//bool isMono = tmpAudioFile.isMono();
 
-				// 音频流式处理
-				// 做1s滑窗，但是丢掉最后0.1s再取最后的输出进行拼接
-
-				// 跳过前导音频信号
-				int iSkipSamplePosStart = static_cast<int>(*fPrefixLength * sampleRate);
-				// 丢弃尾部信号
-				int iSkipSamplePosEnd = static_cast<int>(numSamples - (*fDropSuffixLength * sampleRate));
-				int iSliceSampleNumber = iSkipSamplePosEnd - iSkipSamplePosStart;
-				float* fSliceSampleBuffer = (float*)(std::malloc(sizeof(float) * iSliceSampleNumber));
-				int iSlicePos = 0;
 				std::vector<double> fOriginAudioBuffer = tmpAudioFile.samples[0];
-				for (int i = iSkipSamplePosStart; i < iSkipSamplePosEnd; i++) {
-					fSliceSampleBuffer[iSlicePos++] = static_cast<float>(fOriginAudioBuffer[i]);
-				}
 
 				// 音频重采样
-				float* fReSampleInBuffer = (float*)malloc(iSliceSampleNumber * sizeof(float));
+				float* fReSampleInBuffer = (float*)malloc(numSamples * sizeof(float));
 				float* fReSampleOutBuffer = fReSampleInBuffer;
-				int iResampleNumbers = iSliceSampleNumber;
-				for (int i = 0; i < iSliceSampleNumber; i++) {
-					fReSampleInBuffer[i] = fSliceSampleBuffer[i];
+				int iResampleNumbers = numSamples;
+				for (int i = 0; i < numSamples; i++) {
+					fReSampleInBuffer[i] = fOriginAudioBuffer[i];
 				}
 				if (sampleRate != dProjectSampleRate) {
 					double fScaleRate = dProjectSampleRate / sampleRate;
-					iResampleNumbers = static_cast<int>(fScaleRate * iSliceSampleNumber);
+					iResampleNumbers = static_cast<int>(fScaleRate * numSamples);
 					fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, iSliceSampleNumber, iResampleNumbers);
+					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, numSamples, iResampleNumbers);
 				}
 
 				tTime2 = func_get_timestamp();
@@ -540,14 +525,7 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			if (fSampleAbs > fSampleMax) {
 				fSampleMax = fSampleAbs;
 			}
-
-			// 将当前信号复制到前导信号缓冲区中
-			fPrefixBuffer[lPrefixBufferPos++] = fCurrentSample;
-			if (lPrefixBufferPos == lPrefixLengthSampleNumber) {
-				lPrefixBufferPos = 0;
-			}
 		}
-		lPrefixBufferPos = (lPrefixBufferPos + audioBuffer.getNumSamples()) % lPrefixLengthSampleNumber;
 
 		if (bRealTimeMode) {
 			// 如果启用了实时模式，则无需检测音量阈值
@@ -576,14 +554,8 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				}
 				kRecordState = WORK;
 				// 将当前的音频数据写入到模型入参缓冲区中
-				for (int i = lPrefixBufferPos; i < lPrefixLengthSampleNumber; i++) {
-					fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = fPrefixBuffer[i];
-					if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
-						lModelInputSampleBufferWritePos = 0;
-					}
-				}
-				for (int i = 0; i < lPrefixBufferPos; i++) {
-					fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = fPrefixBuffer[i];
+				for (int i = 0; i < audioBuffer.getNumSamples(); i++) {
+					fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = inputOutputL[i];
 					if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
 						lModelInputSampleBufferWritePos = 0;
 					}
@@ -613,7 +585,7 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 
 			// 退出条件2：队列达到一定的大小
 			long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelInputOutputBufferSize, lModelInputSampleBufferReadPos, lModelInputSampleBufferWritePos);
-			if (inputBufferSize > lMaxSliceLengthSampleNumber + lPrefixLengthSampleNumber) {
+			if (inputBufferSize > lMaxSliceLengthSampleNumber) {
 				bExitWorkState = true;
 				if (bEnableDebug) {
 					OutputDebugStringA("队列大小达到预期，直接调用模型\n");
@@ -714,12 +686,12 @@ void NetProcessJUCEVersionAudioProcessor::setStateInformation (const void* data,
     // whose contents will have been created by the getStateInformation() call.
 
 	// default value
-	fMaxSliceLength = 1.0;
+	fMaxSliceLength = 1.0f;
 	fMaxSliceLengthForRealTimeMode = fMaxSliceLength;
 	fMaxSliceLengthForSentenceMode = fMaxSliceLength;
-	fLowVolumeDetectTime = 0.4;
+	fLowVolumeDetectTime = 0.4f;
 	lMaxSliceLengthSampleNumber = static_cast<long>(getSampleRate() * fMaxSliceLength);
-	fPitchChange = 1.0;
+	fPitchChange = 1.0f;
 	bRealTimeMode = false;
 	bEnableDebug = false;
 	iSelectRoleIndex = 0;
@@ -757,8 +729,6 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
         &lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
         &lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-        &fPrefixLength,						// 前导缓冲区时长(s)
-        &fDropSuffixLength,					// 丢弃的尾部时长(s)
         &fPitchChange,						// 音调变化数值
         &bCalcPitchError,					// 启用音调误差检测
 
