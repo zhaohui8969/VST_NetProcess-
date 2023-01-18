@@ -1,38 +1,40 @@
 #pragma once
-// ÓÃÓÚ¼ÆËãÒ»¸ö¶ÁÐ´»º´æÀïµÄÓÐÐ§Êý¾Ý´óÐ¡
+// 用于计算一个读写缓存里的有效数据大小
 long func_cacl_read_write_buffer_data_size(long lBufferSize, long lReadPos, long lWritePos);
 
-// ½øÐÐÉùÒô´¦Àí£¬½ÏÎªºÄÊ±£¬ÔÚµ¥¶ÀµÄÏß³ÌÀï½øÐÐ£¬±ÜÃâÖ÷Ïß³Ì¿¨¶Ù±¬Òô
+// 进行声音处理，较为耗时，在单独的线程里进行，避免主线程卡顿爆音
 void func_do_voice_transfer_worker(
-	int iNumberOfChanel,					// Í¨µÀÊýÁ¿
-	double dProjectSampleRate,				// ÏîÄ¿²ÉÑùÂÊ
+	int iNumberOfChanel,					// 通道数量
+	double dProjectSampleRate,				// 项目采样率
 
-	long lModelInputOutputBufferSize,		// Ä£ÐÍÊäÈëÊä³ö»º³åÇø´óÐ¡
-	float* fModeulInputSampleBuffer,		// Ä£ÐÍÊäÈë»º³åÇø
-	long* lModelInputSampleBufferReadPos,	// Ä£ÐÍÊäÈë»º³åÇø¶ÁÖ¸Õë
-	long* lModelInputSampleBufferWritePos,	// Ä£ÐÍÊäÈë»º³åÇøÐ´Ö¸Õë
+	long lModelInputOutputBufferSize,		// 模型输入输出缓冲区大小
+	float* fModeulInputSampleBuffer,		// 模型输入缓冲区
+	long* lModelInputSampleBufferReadPos,	// 模型输入缓冲区读指针
+	long* lModelInputSampleBufferWritePos,	// 模型输入缓冲区写指针
 
-	float* fModeulOutputSampleBuffer,		// Ä£ÐÍÊä³ö»º³åÇø
-	long* lModelOutputSampleBufferReadPos,	// Ä£ÐÍÊä³ö»º³åÇø¶ÁÖ¸Õë
-	long* lModelOutputSampleBufferWritePos,	// Ä£ÐÍÊä³ö»º³åÇøÐ´Ö¸Õë
+	float* fModeulOutputSampleBuffer,		// 模型输出缓冲区
+	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
+	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-	float* fPitchChange,					// Òôµ÷±ä»¯ÊýÖµ
-	bool* bCalcPitchError,					// ÆôÓÃÒôµ÷Îó²î¼ì²â
+	float* fPrefixLength,					// 前导缓冲区时长(s)
+	float* fDropSuffixLength,				// 丢弃的尾部时长(s)
+	float* fPitchChange,					// 音调变化数值
+	bool* bCalcPitchError,					// 启用音调误差检测
 
-	std::vector<roleStruct> roleStructList,	// ÅäÖÃµÄ¿ÉÓÃÒôÉ«ÁÐ±í
-	int* iSelectRoleIndex,					// Ñ¡ÔñµÄ½ÇÉ«ID
-	FUNC_SRC_SIMPLE dllFuncSrcSimple,		// DLLÄÚ²¿SrcSimple·½·¨
+	std::vector<roleStruct> roleStructList,	// 配置的可用音色列表
+	int* iSelectRoleIndex,					// 选择的角色ID
+	FUNC_SRC_SIMPLE dllFuncSrcSimple,		// DLL内部SrcSimple方法
 
-	bool* bEnableSOVITSPreResample,			// ÆôÓÃSOVITSÄ£ÐÍÈë²ÎÒôÆµÖØ²ÉÑùÔ¤´¦Àí
-	int iSOVITSModelInputSamplerate,		// SOVITSÄ£ÐÍÈë²Î²ÉÑùÂÊ
-	bool* bEnableHUBERTPreResample,			// ÆôÓÃHUBERTÄ£ÐÍÈë²ÎÒôÆµÖØ²ÉÑùÔ¤´¦Àí
-	int iHUBERTInputSampleRate,				// HUBERTÄ£ÐÍÈë²Î²ÉÑùÂÊ
+	bool* bEnableSOVITSPreResample,			// 启用SOVITS模型入参音频重采样预处理
+	int iSOVITSModelInputSamplerate,		// SOVITS模型入参采样率
+	bool* bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
+	int iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
-	bool* bRealTimeModel,					// Õ¼Î»·û£¬ÊµÊ±Ä£Ê½
-	bool* bDoItSignal,						// Õ¼Î»·û£¬±íÊ¾¸ÃworkerÓÐ´ý´¦ÀíµÄÊý¾Ý
-	bool* bEnableDebug,
-	juce::Value vServerUseTime,
+	bool* bRealTimeModel,					// 占位符，实时模式
+	bool* bDoItSignal,						// 占位符，表示该worker有待处理的数据
+	bool* bEnableDebug,						// 占位符，启用DEBUG输出
+	juce::Value vServerUseTime,				// UI变量，显示服务调用耗时
 
-	bool* bWorkerNeedExit,					// Õ¼Î»·û£¬±íÊ¾workerÏß³ÌÐèÒªÍË³ö
-	std::mutex* mWorkerSafeExit				// »¥³âËø£¬±íÊ¾workerÏß³ÌÒÑ¾­°²È«ÍË³ö
+	bool* bWorkerNeedExit,					// 占位符，表示worker线程需要退出
+	std::mutex* mWorkerSafeExit				// 互斥锁，表示worker线程已经安全退出
 );
