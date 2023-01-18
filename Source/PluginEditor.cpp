@@ -30,12 +30,15 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
         auto val = tToggleRealTimeMode.getToggleState();
         audioProcessor.bRealTimeMode = val;
         if (val) {
+            // on
             audioProcessor.fMaxSliceLengthForSentenceMode = audioProcessor.fMaxSliceLength;
             sSliceSizeSlider.setValue(audioProcessor.fMaxSliceLengthForRealTimeMode);
         }
         else {
+            // off
             audioProcessor.fMaxSliceLengthForRealTimeMode = audioProcessor.fMaxSliceLength;
             sSliceSizeSlider.setValue(audioProcessor.fMaxSliceLengthForSentenceMode);
+            lDropDataLengthValLabel.setText("unCheck", juce::dontSendNotification);
         }
     };
     addAndMakeVisible(&tToggleRealTimeMode);
@@ -93,17 +96,16 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     };
 
     lServerUseTimeLabel.setText("Server use time:", juce::dontSendNotification);
-    lServerUseTimeValLabel.setText("unCheck", juce::dontSendNotification);
     lServerUseTimeValLabel.getTextValue().referTo(audioProcessor.vServerUseTime);
+    lServerUseTimeValLabel.setText("unCheck", juce::dontSendNotification);
     addAndMakeVisible(&lServerUseTimeLabel);
     addAndMakeVisible(&lServerUseTimeValLabel);
 
     lDropDataLengthLabel.setText("Drop data:", juce::dontSendNotification);
-    lDropDataLengthValLabel.setText("unCheck", juce::dontSendNotification);
     lDropDataLengthValLabel.getTextValue().referTo(audioProcessor.vDropDataLength);
+    lDropDataLengthValLabel.setText("unCheck", juce::dontSendNotification);
     addAndMakeVisible(&lDropDataLengthLabel);
     addAndMakeVisible(&lDropDataLengthValLabel);
-
 }
 
 NetProcessJUCEVersionAudioProcessorEditor::~NetProcessJUCEVersionAudioProcessorEditor()

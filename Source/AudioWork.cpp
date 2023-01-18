@@ -324,6 +324,9 @@ void func_do_voice_transfer_worker(
 						long lDropDataLength = 1000 * lDropDataNumber / sampleRate;
 						vDropDataLength.setValue(juce::String(lDropDataLength) + "ms");
 					}
+					else {
+						vDropDataLength.setValue(juce::String("0") + "ms");
+					}
 				}
 
 				// 从写指针标记的缓冲区位置开始写入新的音频数据
