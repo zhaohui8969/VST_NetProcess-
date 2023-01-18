@@ -60,8 +60,8 @@ void func_do_voice_transfer_worker(
 	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
 	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-	//float* fPrefixLength,					// 前导缓冲区时长(s)
-	//float* fDropSuffixLength,				// 丢弃的尾部时长(s)
+	float* fPrefixLength,					// 前导缓冲区时长(s)
+	float* fDropSuffixLength,				// 丢弃的尾部时长(s)
 	float* fPitchChange,					// 音调变化数值
 	bool* bCalcPitchError,					// 启用音调误差检测
 
@@ -135,7 +135,7 @@ void func_do_voice_transfer_worker(
 			}
 			// 读取完毕，将读指针指向最后写指针
 			*lModelInputSampleBufferReadPos = lTmpModelInputSampleBufferWritePos;
-
+			float readLength = 1.0 * vModelInputSampleBufferVector.size() / 44100;
 
 			if (*bEnableSOVITSPreResample) {
 				// 提前对音频重采样，C++重采样比Python端快
@@ -287,18 +287,29 @@ void func_do_voice_transfer_worker(
 
 				std::vector<double> fOriginAudioBuffer = tmpAudioFile.samples[0];
 
+				// 跳过前导音频信号
+				int iSkipSamplePosStart = static_cast<int>(*fPrefixLength * sampleRate);
+				// 丢弃尾部信号
+				int iSkipSamplePosEnd = static_cast<int>(numSamples - (*fDropSuffixLength * sampleRate));
+				int iSliceSampleNumber = iSkipSamplePosEnd - iSkipSamplePosStart;
+				float* fSliceSampleBuffer = (float*)(std::malloc(sizeof(float) * iSliceSampleNumber));
+				int iSlicePos = 0;
+				for (int i = iSkipSamplePosStart; i < iSkipSamplePosEnd; i++) {
+					fSliceSampleBuffer[iSlicePos++] = static_cast<float>(fOriginAudioBuffer[i]);
+				}
+
 				// 音频重采样
-				float* fReSampleInBuffer = (float*)malloc(numSamples * sizeof(float));
+				float* fReSampleInBuffer = (float*)malloc(iSliceSampleNumber * sizeof(float));
 				float* fReSampleOutBuffer = fReSampleInBuffer;
-				int iResampleNumbers = numSamples;
-				for (int i = 0; i < numSamples; i++) {
-					fReSampleInBuffer[i] = static_cast<float>(fOriginAudioBuffer[i]);
+				int iResampleNumbers = iSliceSampleNumber;
+				for (int i = 0; i < iSliceSampleNumber; i++) {
+					fReSampleInBuffer[i] = static_cast<float>(fSliceSampleBuffer[i]);
 				}
 				if (sampleRate != dProjectSampleRate) {
 					double fScaleRate = dProjectSampleRate / sampleRate;
-					iResampleNumbers = static_cast<int>(fScaleRate * numSamples);
+					iResampleNumbers = static_cast<int>(fScaleRate * iSliceSampleNumber);
 					fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, numSamples, iResampleNumbers);
+					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, iSliceSampleNumber, iResampleNumbers);
 				}
 
 				tTime2 = func_get_timestamp();

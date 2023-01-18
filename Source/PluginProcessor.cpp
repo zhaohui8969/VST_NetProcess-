@@ -106,9 +106,17 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 	lNoOutputCount = 0;
 	bDoItSignal = false;
 
+	// 前导缓冲区缓存初始化
+	// 准备20s的缓冲区
+	lPrefixBufferSize = static_cast<long>(20.0f * sampleRate);
+	// 前导缓冲长度
+	lPrefixLengthSampleNumber = static_cast<long>(fPrefixLength * sampleRate);
+	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixBufferSize);
+	lPrefixBufferPos = 0;
+
 	// 初始化线程间交换数据的缓冲区，120s的缓冲区足够大
 	float fModelInputOutputBufferSecond = 120.f;
-	lModelInputOutputBufferSize = static_cast<long>(fModelInputOutputBufferSecond * getSampleRate());
+	lModelInputOutputBufferSize = static_cast<long>(fModelInputOutputBufferSecond * sampleRate);
 	fModeulInputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelInputOutputBufferSize));
 	fModeulOutputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelInputOutputBufferSize));
 	lModelInputSampleBufferReadPos = 0;
@@ -118,7 +126,7 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 
 	// worker线程安全退出相关信号
 	bWorkerNeedExit = false;
-
+	kRecordState = IDLE;
 	runWorker();
 }
 
@@ -176,8 +184,6 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			audioBuffer.clear(i, 0, audioBuffer.getNumSamples());
 		}
 
-		char buff[100];
-
 		double fSampleMax = -9999;
 		float* inputOutputL = audioBuffer.getWritePointer(0);
 		float* inputOutputR = NULL;
@@ -224,13 +230,42 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					OutputDebugStringA("切换到工作状态");
 				}
 				kRecordState = WORK;
+				int readCount = 0;
+
+				
+				// 将前导缓冲区的数据写入到模型入参缓冲区中
+				// 从前导缓冲区当前位置向前寻找lPrefixLengthSampleNumber个数据 
+				int readPosStart = lPrefixBufferPos - lPrefixLengthSampleNumber;
+				for (int i = max(0, readPosStart); i < lPrefixBufferPos; i++) {
+					readCount++;
+					fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = fPrefixBuffer[i];
+					if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
+						lModelInputSampleBufferWritePos = 0;
+					}
+				}
+				// 还需要从循环缓冲区尾部获取一些数据
+				if (readPosStart < 0) {
+					readPosStart = lPrefixBufferSize + readPosStart - 1;
+					for (int i = readPosStart; i < lPrefixBufferSize; i++) {
+						readCount++;
+						fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = fPrefixBuffer[i];
+						if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
+							lModelInputSampleBufferWritePos = 0;
+						}
+					}
+				}
+				
+
 				// 将当前的音频数据写入到模型入参缓冲区中
 				for (int i = 0; i < audioBuffer.getNumSamples(); i++) {
+					readCount++;
 					fModeulInputSampleBuffer[lModelInputSampleBufferWritePos++] = inputOutputL[i];
 					if (lModelInputSampleBufferWritePos == lModelInputOutputBufferSize) {
 						lModelInputSampleBufferWritePos = 0;
 					}
 				}
+				float readLength = 1.0 * readCount / getSampleRate();
+				int a = 1;
 			}
 		}
 		else {
@@ -256,7 +291,7 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 
 			// 退出条件2：队列达到一定的大小
 			long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelInputOutputBufferSize, lModelInputSampleBufferReadPos, lModelInputSampleBufferWritePos);
-			if (inputBufferSize > lMaxSliceLengthSampleNumber) {
+			if (inputBufferSize > lMaxSliceLengthSampleNumber + lPrefixLengthSampleNumber) {
 				bExitWorkState = true;
 				if (bEnableDebug) {
 					OutputDebugStringA("队列大小达到预期，直接调用模型\n");
@@ -268,6 +303,14 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				kRecordState = IDLE;
 				// worker标志位设置为true，供worker检查
 				bDoItSignal = true;
+			}
+		}
+
+		// 将当前的音频数据写入到前导缓冲区中，供下一次使用
+		for (int i = 0; i < audioBuffer.getNumSamples(); i++) {
+			fPrefixBuffer[lPrefixBufferPos++] = inputOutputL[i];
+			if (lPrefixBufferPos == lPrefixBufferSize) {
+				lPrefixBufferPos = 0;
 			}
 		}
 
@@ -341,6 +384,8 @@ void NetProcessJUCEVersionAudioProcessor::getStateInformation (juce::MemoryBlock
 	xml->setAttribute("fMaxSliceLengthForRealTimeMode", (double)fMaxSliceLengthForRealTimeMode);
 	xml->setAttribute("fMaxSliceLengthForSentenceMode", (double)fMaxSliceLengthForSentenceMode);
 	xml->setAttribute("fLowVolumeDetectTime", (double)fLowVolumeDetectTime);
+	xml->setAttribute("fPrefixLength", (double)fPrefixLength);
+	xml->setAttribute("fDropSuffixLength", (double)fDropSuffixLength);
 	xml->setAttribute("fPitchChange", (double)fPitchChange);
 	xml->setAttribute("bRealTimeMode", bRealTimeMode);
 	xml->setAttribute("bEnableDebug", bEnableDebug);
@@ -358,8 +403,10 @@ void NetProcessJUCEVersionAudioProcessor::setStateInformation (const void* data,
 			fMaxSliceLength = (float)xmlState->getDoubleAttribute("fMaxSliceLength", 1.0);
 			fMaxSliceLengthForRealTimeMode = (float)xmlState->getDoubleAttribute("fMaxSliceLengthForRealTimeMode", 1.0);
 			fMaxSliceLengthForSentenceMode = (float)xmlState->getDoubleAttribute("fMaxSliceLengthForSentenceMode", 1.0);
-			fLowVolumeDetectTime = (float)xmlState->getDoubleAttribute("fLowVolumeDetectTime", 0.4);
 			lMaxSliceLengthSampleNumber = static_cast<long>(getSampleRate() * fMaxSliceLength);
+			fLowVolumeDetectTime = (float)xmlState->getDoubleAttribute("fLowVolumeDetectTime", 0.4);
+			fPrefixLength = (float)xmlState->getDoubleAttribute("fPrefixLength", 0.0);
+			fDropSuffixLength = (float)xmlState->getDoubleAttribute("fDropSuffixLength", 0.0);
 			fPitchChange = (float)xmlState->getDoubleAttribute("fPitchChange", 1.0);
 			bRealTimeMode = (bool)xmlState->getBoolAttribute("bRealTimeMode", false);
 			bEnableDebug = (bool)xmlState->getBoolAttribute("bEnableDebug", false);
@@ -378,6 +425,8 @@ void NetProcessJUCEVersionAudioProcessor::loadConfig()
 		fMaxSliceLengthForRealTimeMode = fMaxSliceLength;
 		fMaxSliceLengthForSentenceMode = fMaxSliceLength;
 		fLowVolumeDetectTime = 0.4f;
+		fPrefixLength = 0.0f;
+		fDropSuffixLength = 0.0f;
 		lMaxSliceLengthSampleNumber = static_cast<long>(getSampleRate() * fMaxSliceLength);
 		fPitchChange = 0.0f;
 		bRealTimeMode = false;
@@ -448,6 +497,8 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
         &lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
         &lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
+		&fPrefixLength,						// 前导缓冲区时长(s)
+		&fDropSuffixLength,					// 丢弃的尾部时长(s)
         &fPitchChange,						// 音调变化数值
         &bCalcPitchError,					// 启用音调误差检测
 

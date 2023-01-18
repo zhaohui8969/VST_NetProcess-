@@ -99,6 +99,9 @@ public:
 	void loadConfig();
 	void runWorker();
 
+	// 用来保存日志
+	char buff[100];
+
 	RECORD_STATE kRecordState;
 	double fRecordIdleTime;
 	int iNumberOfChanel;
@@ -122,6 +125,14 @@ public:
 	float fMaxSliceLengthForSentenceMode;
 	long lMaxSliceLengthSampleNumber;
 	float fPitchChange;
+
+	// 前导信号缓冲区
+	float* fPrefixBuffer;
+	long lPrefixBufferSize;
+	long lPrefixBufferPos;
+	float fPrefixLength;
+	long lPrefixLengthSampleNumber;
+	float fDropSuffixLength;
 
 	// JSON配置
 	std::vector<roleStruct> roleList;

@@ -16,8 +16,8 @@ void func_do_voice_transfer_worker(
 	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
 	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-	//float* fPrefixLength,					// 前导缓冲区时长(s)
-	//float* fDropSuffixLength,				// 丢弃的尾部时长(s)
+	float* fPrefixLength,					// 前导缓冲区时长(s)
+	float* fDropSuffixLength,				// 丢弃的尾部时长(s)
 	float* fPitchChange,					// 音调变化数值
 	bool* bCalcPitchError,					// 启用音调误差检测
 
