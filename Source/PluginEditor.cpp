@@ -181,10 +181,3 @@ void NetProcessJUCEVersionAudioProcessorEditor::resized()
     auto DropDataLengthLabelValArea = DropDataLengthArea;
     lDropDataLengthValLabel.setBounds(DropDataLengthLabelValArea);
 }
-
-/*
-tresult PLUGIN_API NetProcessJUCEVersionAudioProcessorEditor::checkSizeConstraint(ViewRect* rectToCheck)
-{
-    return kResultFalse;
-}
-*/

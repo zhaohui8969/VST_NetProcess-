@@ -214,7 +214,7 @@ void func_do_voice_transfer_worker(
 			tTime2 = func_get_timestamp();
 			tUseTime = tTime2 - tTime1;
 			if (*bEnableDebug) {
-				snprintf(buff, sizeof(buff), "×¼±¸±£´æµ½ÒôÆµÎÄ¼þºÄÊ±:%lldms\n", tUseTime);
+				snprintf(buff, sizeof(buff), "准备保存到音频文件耗时:%lldms\n", tUseTime);
 				OutputDebugStringA(buff);
 			}
 			tTime1 = tTime2;
@@ -226,7 +226,7 @@ void func_do_voice_transfer_worker(
 			tTime2 = func_get_timestamp();
 			tUseTime = tTime2 - tTime1;
 			if (*bEnableDebug) {
-				snprintf(buff, sizeof(buff), "±£´æµ½ÒôÆµÎÄ¼þºÄÊ±:%lldms\n", tUseTime);
+				snprintf(buff, sizeof(buff), "保存到音频文件耗时:%lldms\n", tUseTime);
 				OutputDebugStringA(buff);
 			}
 			tTime1 = tTime2;
@@ -258,7 +258,7 @@ void func_do_voice_transfer_worker(
 				{ "hubert_sample", sHUBERTSampleBuffer, "hubert_sample.wav", "audio/x-wav"},
 			};
 			if (*bEnableDebug) {
-				OutputDebugStringA("µ÷ÓÃAIËã·¨Ä£ÐÍ\n");
+				OutputDebugStringA("算法模型\n");
 			}
 			auto res = cli.Post("/voiceChangeModel", items);
 
@@ -266,7 +266,7 @@ void func_do_voice_transfer_worker(
 			tUseTime = tTime2 - tTime1;
 			vServerUseTime.setValue(juce::String(tUseTime) + "ms");
 			if (*bEnableDebug) {
-				snprintf(buff, sizeof(buff), "µ÷ÓÃHTTP½Ó¿ÚºÄÊ±:%lldms\n", tUseTime);
+				snprintf(buff, sizeof(buff), "调用HTTP接口耗时:%lldms\n", tUseTime);
 				OutputDebugStringA(buff);
 			}
 			tTime1 = tTime2;
@@ -304,7 +304,7 @@ void func_do_voice_transfer_worker(
 				tTime2 = func_get_timestamp();
 				tUseTime = tTime2 - tTime1;
 				if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "¶ÔÄ£ÐÍÊä³öÖØ²ÉÑùºÄÊ±:%lldms\n", tUseTime);
+					snprintf(buff, sizeof(buff), "对模型输出重采样耗时:%lldms\n", tUseTime);
 					OutputDebugStringA(buff);
 				}
 				tTime1 = tTime2;
@@ -339,14 +339,14 @@ void func_do_voice_transfer_worker(
 				// 将写指针指向新的位置
 				*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
 				if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "Êä³öÐ´Ö¸Õë:%ld\n", lTmpModelOutputSampleBufferWritePos);
+					snprintf(buff, sizeof(buff), "输出写指针:%ld\n", lTmpModelOutputSampleBufferWritePos);
 					OutputDebugStringA(buff);
 				}
 
 				tTime2 = func_get_timestamp();
 				tUseTime = tTime2 - tTime1;
 				if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "Ð´»º³åÇøºÄÊ±:%lldms\n", tUseTime);
+					snprintf(buff, sizeof(buff), "写缓冲区耗时:%lldms\n", tUseTime);
 					OutputDebugStringA(buff);
 				}
 				tTime1 = tTime2;
@@ -354,13 +354,13 @@ void func_do_voice_transfer_worker(
 			else {
 				auto err = res.error();
 				if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "Ëã·¨·þÎñ´íÎó:%d\n", err);
+					snprintf(buff, sizeof(buff), "算法服务错误:%d\n", err);
 					OutputDebugStringA(buff);
 				}
 			}
 			tUseTime = func_get_timestamp() - tStart;
 			if (*bEnableDebug) {
-				snprintf(buff, sizeof(buff), "¸Ã´ÎwokerÂÖÑµ×ÜºÄÊ±:%lld\n", tUseTime);
+				snprintf(buff, sizeof(buff), "该次woker轮训总耗时:%lld\n", tUseTime);
 				OutputDebugStringA(buff);
 			}
 		}
