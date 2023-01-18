@@ -48,6 +48,8 @@ private:
     juce::Label lChangeRoleLabel;
     juce::Label lServerUseTimeLabel;
     juce::Label lServerUseTimeValLabel;
+    juce::Label lDropDataLengthLabel;
+    juce::Label lDropDataLengthValLabel;
     juce::TextButton bChangeRoleButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NetProcessJUCEVersionAudioProcessorEditor)

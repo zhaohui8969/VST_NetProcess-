@@ -60,8 +60,8 @@ void func_do_voice_transfer_worker(
 	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
 	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-	float* fPrefixLength,					// 前导缓冲区时长(s)
-	float* fDropSuffixLength,				// 丢弃的尾部时长(s)
+	//float* fPrefixLength,					// 前导缓冲区时长(s)
+	//float* fDropSuffixLength,				// 丢弃的尾部时长(s)
 	float* fPitchChange,					// 音调变化数值
 	bool* bCalcPitchError,					// 启用音调误差检测
 
@@ -78,6 +78,7 @@ void func_do_voice_transfer_worker(
 	bool* bDoItSignal,						// 占位符，表示该worker有待处理的数据
 	bool* bEnableDebug,						// 占位符，启用DEBUG输出
 	juce::Value vServerUseTime,				// UI变量，显示服务调用耗时
+	juce::Value vDropDataLength,			// UI变量，显示实时模式下丢弃的音频数据长度
 
 	bool* bWorkerNeedExit,					// 占位符，表示worker线程需要退出
 	std::mutex* mWorkerSafeExit				// 互斥锁，表示worker线程已经安全退出
@@ -291,7 +292,7 @@ void func_do_voice_transfer_worker(
 				float* fReSampleOutBuffer = fReSampleInBuffer;
 				int iResampleNumbers = numSamples;
 				for (int i = 0; i < numSamples; i++) {
-					fReSampleInBuffer[i] = fOriginAudioBuffer[i];
+					fReSampleInBuffer[i] = static_cast<float>(fOriginAudioBuffer[i]);
 				}
 				if (sampleRate != dProjectSampleRate) {
 					double fScaleRate = dProjectSampleRate / sampleRate;
@@ -319,6 +320,9 @@ void func_do_voice_transfer_worker(
 					long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelInputOutputBufferSize, *lModelOutputSampleBufferReadPos, *lModelOutputSampleBufferWritePos);
 					if (inputBufferSize > iRealTimeModeBufferSafeZoneSize) {
 						*lModelOutputSampleBufferWritePos = (*lModelOutputSampleBufferReadPos + iRealTimeModeBufferSafeZoneSize) % lModelInputOutputBufferSize;
+						long lDropDataNumber = inputBufferSize - iRealTimeModeBufferSafeZoneSize;
+						long lDropDataLength = 1000 * lDropDataNumber / sampleRate;
+						vDropDataLength.setValue(juce::String(lDropDataLength) + "ms");
 					}
 				}
 

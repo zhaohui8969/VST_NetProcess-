@@ -20,7 +20,7 @@ using namespace std::chrono;
 NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEditor(NetProcessJUCEVersionAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    setSize(400, 160);
+    setSize(400, 190);
     setResizable(false, false);
 
     // UI
@@ -94,11 +94,16 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
 
     lServerUseTimeLabel.setText("Server use time:", juce::dontSendNotification);
     lServerUseTimeValLabel.setText("unCheck", juce::dontSendNotification);
+    lServerUseTimeValLabel.getTextValue().referTo(audioProcessor.vServerUseTime);
     addAndMakeVisible(&lServerUseTimeLabel);
     addAndMakeVisible(&lServerUseTimeValLabel);
 
-    //audioProcessor.vServerUseTime.addListener(this);
-    lServerUseTimeValLabel.getTextValue().referTo(audioProcessor.vServerUseTime);
+    lDropDataLengthLabel.setText("Drop data:", juce::dontSendNotification);
+    lDropDataLengthValLabel.setText("unCheck", juce::dontSendNotification);
+    lDropDataLengthValLabel.getTextValue().referTo(audioProcessor.vDropDataLength);
+    addAndMakeVisible(&lDropDataLengthLabel);
+    addAndMakeVisible(&lDropDataLengthValLabel);
+
 }
 
 NetProcessJUCEVersionAudioProcessorEditor::~NetProcessJUCEVersionAudioProcessorEditor()
@@ -169,6 +174,12 @@ void NetProcessJUCEVersionAudioProcessorEditor::resized()
     lServerUseTimeLabel.setBounds(serverUseTimeLabelArea);
     auto serverUseTimeLabelValArea = serverUseTimeArea;
     lServerUseTimeValLabel.setBounds(serverUseTimeLabelValArea);
+
+    auto DropDataLengthArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
+    auto DropDataLengthLabelArea = DropDataLengthArea.removeFromLeft(ilabelColumnWidth);
+    lDropDataLengthLabel.setBounds(DropDataLengthLabelArea);
+    auto DropDataLengthLabelValArea = DropDataLengthArea;
+    lDropDataLengthValLabel.setBounds(DropDataLengthLabelValArea);
 }
 
 /*

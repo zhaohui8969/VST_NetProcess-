@@ -462,8 +462,9 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
 
         &bRealTimeMode,					    // 占位符，实时模式
         &bDoItSignal,						// 占位符，表示该worker有待处理的数据
-		&bEnableDebug,
-		vServerUseTime,
+		&bEnableDebug,						// 占位符，启用DEBUG输出
+		vServerUseTime,						// UI变量，显示服务调用耗时
+		vDropDataLength,					// UI变量，显示实时模式下丢弃的音频数据长度
 
         &bWorkerNeedExit,					// 占位符，表示worker线程需要退出
         &mWorkerSafeExit					// 互斥锁，表示worker线程已经安全退出

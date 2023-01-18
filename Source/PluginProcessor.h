@@ -152,6 +152,8 @@ public:
 
 	// Model state
 	juce::Value vServerUseTime;
+	// 实时模式下丢弃的音频数据长度
+	juce::Value vDropDataLength;
 
 private:
     //==============================================================================
