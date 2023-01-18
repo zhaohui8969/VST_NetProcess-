@@ -50,7 +50,7 @@
  #define JucePlugin_Manufacturer           "natas"
 #endif
 #ifndef  JucePlugin_ManufacturerWebsite
- #define JucePlugin_ManufacturerWebsite    "natas"
+ #define JucePlugin_ManufacturerWebsite    "https://github.com/zhaohui8969"
 #endif
 #ifndef  JucePlugin_ManufacturerEmail
  #define JucePlugin_ManufacturerEmail      "natas_hw@163.com"

@@ -5,8 +5,8 @@
               addUsingNamespaceToJuceHeader="0" pluginFormats="buildStandalone,buildVST3"
               version="1.0" pluginManufacturer="natas" pluginManufacturerCode="nata"
               pluginVST3Category="Fx,Mono,Pitch Shift" companyName="natas"
-              companyCopyright="natas" companyWebsite="natas" companyEmail="natas_hw@163.com"
-              maxBinaryFileSize="20971520">
+              companyWebsite="https://github.com/zhaohui8969" companyEmail="natas_hw@163.com"
+              maxBinaryFileSize="20971520" companyCopyright="None">
   <MAINGROUP id="uSQfG1" name="NetProcessJUCEVersion">
     <GROUP id="{56F8911A-B8B9-BC12-9502-7AF0B0AAB9EC}" name="Source">
       <FILE id="tF2TSU" name="PluginProcessor.cpp" compile="1" resource="0"

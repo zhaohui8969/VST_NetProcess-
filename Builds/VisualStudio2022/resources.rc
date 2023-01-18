@@ -16,7 +16,7 @@ BEGIN
     BLOCK "040904E4"
     BEGIN
       VALUE "CompanyName",  "natas\0"
-      VALUE "LegalCopyright",  "natas\0"
+      VALUE "LegalCopyright",  "None\0"
       VALUE "FileDescription",  "NetProcessJUCEVersion\0"
       VALUE "FileVersion",  "1.0\0"
       VALUE "ProductName",  "NetProcessJUCEVersion\0"
