@@ -310,15 +310,16 @@ void func_do_voice_transfer_worker(
 				tTime1 = tTime2;
 
 				// 当启用了实时模式时，缓冲区的写指针需要特殊处理
-				// 例如：当出现延迟抖动时，接收到最新的数据时缓冲区还有旧数据，此时直接丢弃旧数据，用新数据覆盖
+				// 例如：当出现延迟抖动时，接收到最新的数据时缓冲区还有旧数据，此时若直接丢弃数据，则声音有明显卡顿，因此设置了一个可以容忍的延迟抖动时长
+				const long iAcceptableDelaySize = static_cast<long>(0.03f * sampleRate);
 				if (*bRealTimeModel) {
 					// 安全区大小，因为现在读写线程并非线程安全，因此这里设置一个安全区大小，避免数据出现问题
-					int iRealTimeModeBufferSafeZoneSize = 16;
+					const int iRealTimeModeBufferSafeZoneSize = 16;
 					// 计算出新的写指针位置：
-					// 1.当前旧数据大小 > 安全区大小，写指针前移定位在安全区尾部
-					// 2.当前旧数据大小 < 安全区大小，写指针前移定位在旧数据尾部（无任何操作，保持不变）
+					// 1.当前旧数据大小 > 可容忍的延迟抖动，写指针前移定位在安全区尾部
+					// 2.当前旧数据大小 < 可容忍的延迟抖动，写指针前移定位在旧数据尾部（无任何操作，保持不变）
 					long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelInputOutputBufferSize, *lModelOutputSampleBufferReadPos, *lModelOutputSampleBufferWritePos);
-					if (inputBufferSize > iRealTimeModeBufferSafeZoneSize) {
+					if (inputBufferSize > iAcceptableDelaySize) {
 						*lModelOutputSampleBufferWritePos = (*lModelOutputSampleBufferReadPos + iRealTimeModeBufferSafeZoneSize) % lModelInputOutputBufferSize;
 						long lDropDataNumber = inputBufferSize - iRealTimeModeBufferSafeZoneSize;
 						long lDropDataLength = 1000 * lDropDataNumber / sampleRate;
