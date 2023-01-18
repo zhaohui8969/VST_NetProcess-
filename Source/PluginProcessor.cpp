@@ -317,6 +317,19 @@ juce::AudioProcessorEditor* NetProcessJUCEVersionAudioProcessor::createEditor()
 //==============================================================================
 void NetProcessJUCEVersionAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
+	if (!initDone) {
+		// default value
+		fMaxSliceLength = 5.0f;
+		fMaxSliceLengthForRealTimeMode = fMaxSliceLength;
+		fMaxSliceLengthForSentenceMode = fMaxSliceLength;
+		fLowVolumeDetectTime = 0.4f;
+		lMaxSliceLengthSampleNumber = static_cast<long>(getSampleRate() * fMaxSliceLength);
+		fPitchChange = 0.0f;
+		bRealTimeMode = false;
+		bEnableDebug = false;
+		iSelectRoleIndex = 0;
+	}
+
 	std::unique_ptr<juce::XmlElement> xml(new juce::XmlElement("Config"));
 	xml->setAttribute("fMaxSliceLength", (double)fMaxSliceLength);
 	xml->setAttribute("fMaxSliceLengthForRealTimeMode", (double)fMaxSliceLengthForRealTimeMode);
@@ -330,7 +343,7 @@ void NetProcessJUCEVersionAudioProcessor::getStateInformation (juce::MemoryBlock
 }
 
 void NetProcessJUCEVersionAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
-{
+{	
 	// load last state
 	std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
 
@@ -359,17 +372,6 @@ void NetProcessJUCEVersionAudioProcessor::initThis()
 	else {
 		OutputDebugStringA("samplerate.dll load Error!");
 	}
-
-	// default value
-	fMaxSliceLength = 1.0f;
-	fMaxSliceLengthForRealTimeMode = fMaxSliceLength;
-	fMaxSliceLengthForSentenceMode = fMaxSliceLength;
-	fLowVolumeDetectTime = 0.4f;
-	lMaxSliceLengthSampleNumber = static_cast<long>(getSampleRate() * fMaxSliceLength);
-	fPitchChange = 1.0f;
-	bRealTimeMode = false;
-	bEnableDebug = false;
-	iSelectRoleIndex = 0;
 
 	// ∂¡»°JSON≈‰÷√Œƒº˛
 	std::ifstream t_pc_file(sJsonConfigFileName, std::ios::binary);
