@@ -15,8 +15,7 @@
 /**
 */
 class NetProcessJUCEVersionAudioProcessorEditor  : public juce::AudioProcessorEditor,
-    private juce::Slider::Listener,
-    private juce::Value::Listener
+    private juce::Slider::Listener
 {
 public:
     NetProcessJUCEVersionAudioProcessorEditor (NetProcessJUCEVersionAudioProcessor&);
@@ -32,7 +31,6 @@ private:
     NetProcessJUCEVersionAudioProcessor& audioProcessor;
     
     void sliderValueChanged(juce::Slider* slider) override;
-    void valueChanged(juce::Value& value) override;
 
     juce::ToggleButton tToggleRealTimeMode;
     juce::ToggleButton tToggleDebugMode;

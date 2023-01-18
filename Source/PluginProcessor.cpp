@@ -85,8 +85,8 @@ void func_do_voice_transfer_worker(
 	bool* bEnableDebug,
 	juce::Value vServerUseTime,
 
-	bool* bWorkerNeedExit					// 占位符，表示worker线程需要退出
-	//std::mutex* mWorkerSafeExit				// 互斥锁，表示worker线程已经安全退出
+	bool* bWorkerNeedExit,					// 占位符，表示worker线程需要退出
+	std::mutex* mWorkerSafeExit				// 互斥锁，表示worker线程已经安全退出
 ) {
 	char buff[100];
 	long long tTime1;
@@ -101,7 +101,7 @@ void func_do_voice_transfer_worker(
 	std::string sCalcPitchError;
 	std::string sEnablePreResample;
 
-	//mWorkerSafeExit->lock();
+	mWorkerSafeExit->lock();
 	while (!*bWorkerNeedExit) {
 		// 轮训检查标志位
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -269,7 +269,7 @@ void func_do_voice_transfer_worker(
 
 			tTime2 = func_get_timestamp();
 			tUseTime = tTime2 - tTime1;
-			vServerUseTime.setValue(tUseTime);
+			vServerUseTime.setValue(juce::String(tUseTime) + "ms");
 			if (*bEnableDebug) {
 				snprintf(buff, sizeof(buff), "调用HTTP接口耗时:%lldms\n", tUseTime);
 				OutputDebugStringA(buff);
@@ -367,7 +367,7 @@ void func_do_voice_transfer_worker(
 			}
 		}
 	}
-	//mWorkerSafeExit->unlock();
+	mWorkerSafeExit->unlock();
 }
 
 //==============================================================================
@@ -456,12 +456,19 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+	initThis();
+	runWorker();
 }
 
 void NetProcessJUCEVersionAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+	bWorkerNeedExit = true;
+	// 当子线程还在运行时，这个锁是锁上的，此时主线程还不能退出
+	// 主线程通过将退出信号发给子线程，等待子线程安全退出后，释放锁，主线程再退出
+	mWorkerSafeExit.lock();
+	mWorkerSafeExit.unlock();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -667,9 +674,6 @@ juce::AudioProcessorEditor* NetProcessJUCEVersionAudioProcessor::createEditor()
 //==============================================================================
 void NetProcessJUCEVersionAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
 	std::unique_ptr<juce::XmlElement> xml(new juce::XmlElement("Config"));
 	xml->setAttribute("fMaxSliceLength", (double)fMaxSliceLength);
 	xml->setAttribute("fMaxSliceLengthForRealTimeMode", (double)fMaxSliceLengthForRealTimeMode);
@@ -684,20 +688,6 @@ void NetProcessJUCEVersionAudioProcessor::getStateInformation (juce::MemoryBlock
 
 void NetProcessJUCEVersionAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
-
-	// default value
-	fMaxSliceLength = 1.0f;
-	fMaxSliceLengthForRealTimeMode = fMaxSliceLength;
-	fMaxSliceLengthForSentenceMode = fMaxSliceLength;
-	fLowVolumeDetectTime = 0.4f;
-	lMaxSliceLengthSampleNumber = static_cast<long>(getSampleRate() * fMaxSliceLength);
-	fPitchChange = 1.0f;
-	bRealTimeMode = false;
-	bEnableDebug = false;
-	iSelectRoleIndex = 0;
-
 	// load last state
 	std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
 
@@ -713,6 +703,84 @@ void NetProcessJUCEVersionAudioProcessor::setStateInformation (const void* data,
 			bEnableDebug = (bool)xmlState->getBoolAttribute("bEnableDebug", false);
 			iSelectRoleIndex = (int)xmlState->getIntAttribute("iSelectRoleIndex", 0);
 		}
+}
+
+void NetProcessJUCEVersionAudioProcessor::initThis()
+{
+	std::wstring sDllPath = L"C:/Program Files/Common Files/VST3/samplerate.dll";
+	auto dllClient = LoadLibraryW(sDllPath.c_str());
+	if (dllClient != NULL) {
+		dllFuncSrcSimple = (FUNC_SRC_SIMPLE)GetProcAddress(dllClient, "src_simple");
+	}
+	else {
+		OutputDebugStringA("samplerate.dll load Error!");
+	}
+
+	// default value
+	fMaxSliceLength = 1.0f;
+	fMaxSliceLengthForRealTimeMode = fMaxSliceLength;
+	fMaxSliceLengthForSentenceMode = fMaxSliceLength;
+	fLowVolumeDetectTime = 0.4f;
+	lMaxSliceLengthSampleNumber = static_cast<long>(getSampleRate() * fMaxSliceLength);
+	fPitchChange = 1.0f;
+	bRealTimeMode = false;
+	bEnableDebug = false;
+	iSelectRoleIndex = 0;
+
+	// 读取JSON配置文件
+	std::ifstream t_pc_file(sJsonConfigFileName, std::ios::binary);
+	std::stringstream buffer_pc_file;
+	buffer_pc_file << t_pc_file.rdbuf();
+
+	juce::var jsonVar;
+	if (juce::JSON::parse(buffer_pc_file.str(), jsonVar).wasOk()) {
+		auto& props = jsonVar.getDynamicObject()->getProperties();
+		bEnableSOVITSPreResample = props["bEnableSOVITSPreResample"];
+		iSOVITSModelInputSamplerate = props["iSOVITSModelInputSamplerate"];
+		bEnableHUBERTPreResample = props["bEnableHUBERTPreResample"];
+		iHUBERTInputSampleRate = props["iHUBERTInputSampleRate"];
+		fSampleVolumeWorkActiveVal = props["fSampleVolumeWorkActiveVal"];
+
+		roleList.clear();
+		auto jsonRoleList = props["roleList"];
+		int iRoleSize = jsonRoleList.size();
+		for (int i = 0; i < iRoleSize; i++) {
+			auto& roleListI = jsonRoleList[i].getDynamicObject()->getProperties();
+			std::string apiUrl = roleListI["apiUrl"].toString().toStdString();
+			std::string name = roleListI["name"].toString().toStdString();
+			std::string speakId = roleListI["speakId"].toString().toStdString();
+			roleStruct role;
+			role.sSpeakId = speakId;
+			role.sName = name;
+			role.sApiUrl = apiUrl;
+			roleList.push_back(role);
+		}
+		if (iSelectRoleIndex + 1 > iRoleSize || iSelectRoleIndex < 0) {
+			iSelectRoleIndex = 0;
+		}
+	}
+	else {
+		// error read json
+	};
+
+	iNumberOfChanel = 1;
+	lNoOutputCount = 0;
+	bDoItSignal = false;
+
+	// 初始化线程间交换数据的缓冲区，120s的缓冲区足够大
+	float fModelInputOutputBufferSecond = 120.f;
+	lModelInputOutputBufferSize = fModelInputOutputBufferSecond * getSampleRate();
+	fModeulInputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelInputOutputBufferSize));
+	fModeulOutputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelInputOutputBufferSize));
+	lModelInputSampleBufferReadPos = 0;
+	lModelInputSampleBufferWritePos = 0;
+	lModelOutputSampleBufferReadPos = 0;
+	lModelOutputSampleBufferWritePos = 0;
+
+	// worker线程安全退出相关信号
+	bWorkerNeedExit = false;
+
+	initDone = true;
 }
 
 void NetProcessJUCEVersionAudioProcessor::runWorker()
@@ -748,8 +816,8 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
 		&bEnableDebug,
 		vServerUseTime,
 
-        &bWorkerNeedExit					// 占位符，表示worker线程需要退出
-        //&mWorkerSafeExit					// 互斥锁，表示worker线程已经安全退出
+        &bWorkerNeedExit,					// 占位符，表示worker线程需要退出
+        &mWorkerSafeExit					// 互斥锁，表示worker线程已经安全退出
     ).detach();
 
 

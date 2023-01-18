@@ -96,6 +96,7 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+	void initThis();
 	void runWorker();
 
 	RECORD_STATE kRecordState;
@@ -147,7 +148,7 @@ public:
 	float fLowVolumeDetectTime;
 
 	// 工作线程状态
-	//std::mutex mWorkerSafeExit;
+	std::mutex mWorkerSafeExit;
 	bool bWorkerNeedExit;
 
 	// Model state
