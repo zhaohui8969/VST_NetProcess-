@@ -200,42 +200,43 @@ void NetProcessJUCEVersionAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
-    int ilabelColumnWidth = 200;
+    int ilabelColumnWidth = 150;
     int iRowHeight = 20;
+    int iRowMargin = 1;
     auto localArea = getLocalBounds();
     localArea.reduce(5, 5);
 
-    auto realTimeModeArea = localArea.removeFromTop(iRowHeight).removeFromLeft(ilabelColumnWidth);
+    auto realTimeModeArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0).removeFromLeft(ilabelColumnWidth);
     tToggleRealTimeMode.setBounds(realTimeModeArea);
 
-    auto debugModeArea = localArea.removeFromTop(iRowHeight).removeFromLeft(ilabelColumnWidth);
+    auto debugModeArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0).removeFromLeft(ilabelColumnWidth);
     tToggleDebugMode.setBounds(debugModeArea);
 
-    auto sliceSizeArea = localArea.removeFromTop(iRowHeight);
+    auto sliceSizeArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
     auto sliceLabelArea = sliceSizeArea.removeFromLeft(ilabelColumnWidth);
     lSliceSizeLabel.setBounds(sliceLabelArea);
     auto sliceSizeSliderArea = sliceSizeArea;
     sSliceSizeSlider.setBounds(sliceSizeSliderArea);
 
-    auto pitchSizeArea = localArea.removeFromTop(iRowHeight);
+    auto pitchSizeArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
     auto pitchLabelArea = pitchSizeArea.removeFromLeft(ilabelColumnWidth);
     lPitchChangeLabel.setBounds(pitchLabelArea);
     auto pitchSliderArea = pitchSizeArea;
     sPitchChangeSlider.setBounds(pitchSliderArea);
 
-    auto lowVolumeLengthArea = localArea.removeFromTop(iRowHeight);
+    auto lowVolumeLengthArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
     auto lowVolumeLengthLabelArea = lowVolumeLengthArea.removeFromLeft(ilabelColumnWidth);
     lMaxLowVolumeLengthLabel.setBounds(lowVolumeLengthLabelArea);
     auto MaxLowVolumeLengthArea = lowVolumeLengthArea;
     sMaxLowVolumeLengthSlider.setBounds(MaxLowVolumeLengthArea);
 
-    auto changeRoleArea = localArea.removeFromTop(iRowHeight);
+    auto changeRoleArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
     auto changeRoleLabelArea = changeRoleArea.removeFromLeft(ilabelColumnWidth);
     lChangeRoleLabel.setBounds(changeRoleLabelArea);
     auto changeRoleButtonArea = changeRoleArea;
     bChangeRoleButton.setBounds(changeRoleButtonArea);
 
-    auto serverUseTimeArea = localArea.removeFromTop(iRowHeight);
+    auto serverUseTimeArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
     auto serverUseTimeLabelArea = serverUseTimeArea.removeFromLeft(ilabelColumnWidth);
     lServerUseTimeLabel.setBounds(serverUseTimeLabelArea);
     auto serverUseTimeLabelValArea = serverUseTimeArea;
