@@ -11,6 +11,8 @@
 #include "params.h"
 #include "AudioFile.h"
 #include "httplib.h"
+#include <pluginterfaces/base/ftypes.h>
+using namespace Steinberg;
 using namespace std::chrono;
 
 //==============================================================================
@@ -19,6 +21,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
     setSize(400, 160);
+    setResizable(false, false);
 
     // UI
     tToggleRealTimeMode.setButtonText("Real Time Mode");
@@ -167,3 +170,10 @@ void NetProcessJUCEVersionAudioProcessorEditor::resized()
     auto serverUseTimeLabelValArea = serverUseTimeArea;
     lServerUseTimeValLabel.setBounds(serverUseTimeLabelValArea);
 }
+
+/*
+tresult PLUGIN_API NetProcessJUCEVersionAudioProcessorEditor::checkSizeConstraint(ViewRect* rectToCheck)
+{
+    return kResultFalse;
+}
+*/

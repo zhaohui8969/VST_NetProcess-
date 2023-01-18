@@ -10,6 +10,9 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include <pluginterfaces/gui/iplugview.h>
+
+#define PLUGIN_API __stdcall
 
 //==============================================================================
 /**
@@ -24,6 +27,8 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+
+    //tresult PLUGIN_API checkSizeConstraint(ViewRect* rectToCheck);
 
 private:
     // This reference is provided as a quick way for your editor to

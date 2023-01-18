@@ -96,14 +96,14 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-	void initThis();
+	void loadConfig();
 	void runWorker();
 
 	RECORD_STATE kRecordState;
 	double fRecordIdleTime;
 	int iNumberOfChanel;
 
-	bool initDone = false;
+	bool bConfigLoadFinished = false;
 	bool bEnableDebug;
 
 	// 基于双指针缓冲区的线程数据交换机制
