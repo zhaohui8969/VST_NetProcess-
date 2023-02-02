@@ -6,6 +6,14 @@
 
 结合[AI猫雷](https://github.com/IceKyrin/sovits_f0_infer/tree/main)项目，可以将猫雷变声器集成到你的DAW中
 
+# 更新
+
+## 2023-02-02 v2.0
+
+使用JUCE框架重新开发，提高了在不同DAW里的兼容性，例如AU、StudioOne、Reaper
+
+！！！注意：更换了配置文件的路径！！！，新路径为`C:\Program Files\Common Files\VST3\NetProcessJUCEVersion\netProcessConfig.json`
+
 # 安装
 
 ## 文件复制
@@ -49,6 +57,7 @@
 | real time mode  | 关 | 实时模式（效果较差，别有太高期待） |
 | Debug mode  | 关 | Debug开关（保持关闭就行） |
 | Max audio slice length  | 0.8s | 最长音频切片 |
+| 文档我还没写完....  |  |  |
 
 ## DAW采样率
 
@@ -57,6 +66,8 @@ studioOne里工程的采样率应设置为44.1Khz
 ![44.1kHz](./docs/studioOneSampleRateSetting.png)
 
 # 兼容性测试
+
+文档我还没写完....
 
 ## 联系方式
 
