@@ -38,7 +38,7 @@
 
 插件安装完毕后会在StudioOne里按如下显示
 
-![studioOnePlugins](./doc/plugins.png)
+![studioOnePlugins](./docs/plugins.png)
 
 插件的界面如下
 
@@ -54,7 +54,7 @@
 
 studioOne里工程的采样率应设置为44.1Khz
 
-![44.1kHz](./doc/studioOneSampleRateSetting.png)
+![44.1kHz](./docs/studioOneSampleRateSetting.png)
 
 # 兼容性测试
 
