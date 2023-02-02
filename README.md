@@ -76,6 +76,7 @@ studioOne里工程的采样率应设置为44.1Khz
 ## Studio One
 
 Studio One版本：Windows 5.5.1.85792
+
 插件版本：v2.0
 
 ![Studio One兼容性测试](./docs/studio_one_test.png)
@@ -83,6 +84,7 @@ Studio One版本：Windows 5.5.1.85792
 ## AU
 
 AU版本：Windows 22.1.1.23
+
 插件版本：v2.0
 
 ![AU兼容性测试](./docs/au_test.png)
@@ -90,6 +92,7 @@ AU版本：Windows 22.1.1.23
 ## Reaper
 
 Reaper版本：Windows v6.45
+
 插件版本：v2.0
 
 ![Reaper兼容性测试](./docs/reaper_test.png)
@@ -97,6 +100,8 @@ Reaper版本：Windows v6.45
 ## 联系方式
 
 QQ:896919430
+
+Email:natas_hw@163.com
 
 Bilibili:[串串香火锅](https://space.bilibili.com/4958385)
 
