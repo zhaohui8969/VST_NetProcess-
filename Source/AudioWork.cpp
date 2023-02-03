@@ -158,6 +158,7 @@ void func_do_voice_transfer_worker(
 				for (int i = 0; i < iResampleNumbers; i++) {
 					modelInputAudioBuffer[0][i] = fReSampleOutBuffer[i];
 				}
+				free(fReSampleOutBuffer);
 
 				if (*bEnableHUBERTPreResample) {
 					// HUBERT输入音频重采样
@@ -172,6 +173,7 @@ void func_do_voice_transfer_worker(
 					for (int i = 0; i < iResampleNumbers; i++) {
 						HUBERTModelInputAudioBuffer[0][i] = fReSampleOutBuffer[i];
 					}
+					free(fReSampleOutBuffer);
 					AudioFile<double> HUBERTAudioFile;
 					HUBERTAudioFile.shouldLogErrorsToConsole(false);
 					HUBERTAudioFile.setAudioBuffer(HUBERTModelInputAudioBuffer);
@@ -305,12 +307,14 @@ void func_do_voice_transfer_worker(
 				for (int i = 0; i < iSliceSampleNumber; i++) {
 					fReSampleInBuffer[i] = static_cast<float>(fSliceSampleBuffer[i]);
 				}
+				free(fSliceSampleBuffer);
 				if (sampleRate != dProjectSampleRate) {
 					double fScaleRate = dProjectSampleRate / sampleRate;
 					iResampleNumbers = static_cast<int>(fScaleRate * iSliceSampleNumber);
 					fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
 					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, iSliceSampleNumber, iResampleNumbers);
 				}
+				free(fReSampleInBuffer);
 
 				tTime2 = func_get_timestamp();
 				tUseTime = tTime2 - tTime1;
@@ -351,6 +355,7 @@ void func_do_voice_transfer_worker(
 					}
 					// 注意，因为缓冲区应当尽可能的大，所以此处不考虑写指针追上读指针的情况
 				}
+				free(fReSampleOutBuffer);
 				// 将写指针指向新的位置
 				*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
 				if (*bEnableDebug) {
