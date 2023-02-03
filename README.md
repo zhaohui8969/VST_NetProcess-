@@ -97,6 +97,10 @@ Reaper版本：Windows v6.45
 
 ![Reaper兼容性测试](./docs/reaper_test.png)
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=zhaohui8969/VST_NetProcess-&type=Date)](https://star-history.com/#zhaohui8969/VST_NetProcess-&Date)
+
 ## 联系方式
 
 QQ:896919430
@@ -104,5 +108,3 @@ QQ:896919430
 Email:natas_hw@163.com
 
 Bilibili:[串串香火锅](https://space.bilibili.com/4958385)
-
-
