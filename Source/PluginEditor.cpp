@@ -22,6 +22,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
 {
     setSize(400, 250);
     setResizable(false, false);
+    juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(L"SiHei_otf");
 
     // UI
     tToggleRealTimeMode.setButtonText("Real Time Mode");
@@ -157,7 +158,7 @@ void NetProcessJUCEVersionAudioProcessorEditor::paint (juce::Graphics& g)
 
 void NetProcessJUCEVersionAudioProcessorEditor::resized()
 {
-    int ilabelColumnWidth = 150;
+    int ilabelColumnWidth = 180;
     int iRowHeight = 20;
     int iRowMargin = 1;
     auto localArea = getLocalBounds();
