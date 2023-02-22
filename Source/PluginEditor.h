@@ -47,8 +47,8 @@ private:
     juce::Slider sMaxLowVolumeLengthSlider;
     juce::Label lPrefixLengthLabel;
     juce::Slider sPrefixLengthSlider;
-    juce::Label lDropSuffixLengthLabel;
-    juce::Slider sDropSuffixLengthSlider;
+    //juce::Label lDropSuffixLengthLabel;
+    //juce::Slider sDropSuffixLengthSlider;
     juce::Label lChangeRoleLabel;
     juce::Label lServerUseTimeLabel;
     juce::Label lServerUseTimeValLabel;

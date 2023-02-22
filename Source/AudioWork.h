@@ -1,4 +1,7 @@
 #pragma once
+
+long long func_get_timestamp();
+
 // 用于计算一个读写缓存里的有效数据大小
 long func_cacl_read_write_buffer_data_size(long lBufferSize, long lReadPos, long lWritePos);
 
@@ -7,17 +10,17 @@ void func_do_voice_transfer_worker(
 	int iNumberOfChanel,					// 通道数量
 	double dProjectSampleRate,				// 项目采样率
 
-	long lModelInputOutputBufferSize,		// 模型输入输出缓冲区大小
-	float* fModeulInputSampleBuffer,		// 模型输入缓冲区
-	long* lModelInputSampleBufferReadPos,	// 模型输入缓冲区读指针
-	long* lModelInputSampleBufferWritePos,	// 模型输入缓冲区写指针
+	std::vector<std::vector<float>>* modelInputJobList, // 模型输入队列
+	std::mutex* modelInputJobListMutex,		// 模型输入队列锁
 
+	long lModelOutputBufferSize,			// 模型输出缓冲区大小
 	float* fModeulOutputSampleBuffer,		// 模型输出缓冲区
 	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
 	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-	float* fLastVoiceSampleBuffer,			// 最后输出音频缓冲区
-	long* lLastVoiceSampleBufferReadMaxPos, // 最后输出音频缓冲区实际数据量
+	std::mutex* lastVoiceSampleForCrossFadeVectorMutex,
+	std::vector<float>* lastVoiceSampleForCrossFadeVector, // 最后一条模型输出音频的尾部，用于交叉淡化处理
+	int* lastVoiceSampleCrossFadeSkipNumber,
 
 	float* fPrefixLength,					// 前导缓冲区时长(s)
 	float* fDropSuffixLength,				// 丢弃的尾部时长(s)

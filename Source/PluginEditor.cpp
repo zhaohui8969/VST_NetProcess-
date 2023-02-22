@@ -54,7 +54,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
 
     lSliceSizeLabel.setText("Max audio slice length:", juce::dontSendNotification);
     sSliceSizeSlider.setSliderStyle(juce::Slider::LinearBar);
-    sSliceSizeSlider.setRange(minMaxSliceLength, maxMaxSliceLength, 0.1);
+    sSliceSizeSlider.setRange(minMaxSliceLength, maxMaxSliceLength, 0.01);
     sSliceSizeSlider.setTextValueSuffix(" s");
     sSliceSizeSlider.setValue(audioProcessor.fMaxSliceLength);
     sSliceSizeSlider.addListener(this);
@@ -72,19 +72,23 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     lMaxLowVolumeLengthLabel.setText("Max low volume legth:", juce::dontSendNotification);
     sMaxLowVolumeLengthSlider.setSliderStyle(juce::Slider::LinearBar);
     sMaxLowVolumeLengthSlider.setRange(minLowVolumeDetectLength, maxLowVolumeDetectLength, 0.01);
+    sSliceSizeSlider.setTextValueSuffix(" s");
     sMaxLowVolumeLengthSlider.setValue(audioProcessor.fLowVolumeDetectTime);
     sMaxLowVolumeLengthSlider.addListener(this);
     addAndMakeVisible(&lMaxLowVolumeLengthLabel);
     addAndMakeVisible(&sMaxLowVolumeLengthSlider);
 
+   
     lPrefixLengthLabel.setText("Prefix audio length:", juce::dontSendNotification);
     sPrefixLengthSlider.setSliderStyle(juce::Slider::LinearBar);
     sPrefixLengthSlider.setRange(minPrefixAudioLength, maxPrefixAudioLength, 0.01);
+    sSliceSizeSlider.setTextValueSuffix(" s");
     sPrefixLengthSlider.setValue(audioProcessor.fPrefixLength);
     sPrefixLengthSlider.addListener(this);
     addAndMakeVisible(&lPrefixLengthLabel);
     addAndMakeVisible(&sPrefixLengthSlider);
-
+  
+    /*
     lDropSuffixLengthLabel.setText("Drop suffix audio legth:", juce::dontSendNotification);
     sDropSuffixLengthSlider.setSliderStyle(juce::Slider::LinearBar);
     sDropSuffixLengthSlider.setRange(minDropSuffixAudioLength, maxDropSuffixAudioLength, 0.01);
@@ -92,6 +96,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     sDropSuffixLengthSlider.addListener(this);
     addAndMakeVisible(&lDropSuffixLengthLabel);
     addAndMakeVisible(&sDropSuffixLengthSlider);
+    */
 
     lChangeRoleLabel.setText("Change role:", juce::dontSendNotification);
     bChangeRoleButton.setButtonText(audioProcessor.roleList[audioProcessor.iSelectRoleIndex].sName);
@@ -145,10 +150,10 @@ void NetProcessJUCEVersionAudioProcessorEditor::sliderValueChanged(juce::Slider*
         audioProcessor.fPrefixLength = val;
         audioProcessor.lPrefixLengthSampleNumber = static_cast<long>(val * audioProcessor.getSampleRate());
     }
-    else if (slider == &sDropSuffixLengthSlider) {
+    /*else if (slider == &sDropSuffixLengthSlider) {
         float val = slider->getValue();
         audioProcessor.fDropSuffixLength = val;
-    }
+    }*/
 }
 
 void NetProcessJUCEVersionAudioProcessorEditor::paint (juce::Graphics& g)
@@ -194,11 +199,13 @@ void NetProcessJUCEVersionAudioProcessorEditor::resized()
     auto PrefixLengthSliderArea = PrefixLengthArea;
     sPrefixLengthSlider.setBounds(PrefixLengthSliderArea);
 
+    /*
     auto DropSuffixLengthArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
     auto DropSuffixLengthLabelArea = DropSuffixLengthArea.removeFromLeft(ilabelColumnWidth);
     lDropSuffixLengthLabel.setBounds(DropSuffixLengthLabelArea);
     auto lowVolumeLengthSliderArea = DropSuffixLengthArea;
     sDropSuffixLengthSlider.setBounds(lowVolumeLengthSliderArea);
+    */
 
     auto changeRoleArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
     auto changeRoleLabelArea = changeRoleArea.removeFromLeft(ilabelColumnWidth);

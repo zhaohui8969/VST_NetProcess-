@@ -2,8 +2,6 @@
 #include "AudioFile.h"
 #include "httplib.h"
 #include "AudioWork.h"
-#include "DTW.h"
-#include "librosa/librosa.h"
 
 using namespace std::chrono;
 
@@ -69,17 +67,17 @@ void func_do_voice_transfer_worker(
 	int iNumberOfChanel,					// 通道数量
 	double dProjectSampleRate,				// 项目采样率
 
-	long lModelInputOutputBufferSize,		// 模型输入输出缓冲区大小
-	float* fModeulInputSampleBuffer,		// 模型输入缓冲区
-	long* lModelInputSampleBufferReadPos,	// 模型输入缓冲区读指针
-	long* lModelInputSampleBufferWritePos,	// 模型输入缓冲区写指针
+	std::vector<std::vector<float>>* modelInputJobList, // 模型输入队列
+	std::mutex* modelInputJobListMutex,		// 模型输入队列锁
 
+	long lModelOutputBufferSize,			// 模型输出缓冲区大小
 	float* fModeulOutputSampleBuffer,		// 模型输出缓冲区
 	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
 	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-	float* fLastVoiceSampleBuffer,			// 最后输出音频缓冲区
-	long* lLastVoiceSampleBufferReadMaxPos, // 最后输出音频缓冲区实际数据量
+	std::mutex* lastVoiceSampleForCrossFadeVectorMutex,
+	std::vector<float>* lastVoiceSampleForCrossFadeVector, // 最后一条模型输出音频的尾部，用于交叉淡化处理
+	int* lastVoiceSampleCrossFadeSkipNumber,
 
 	float* fPrefixLength,					// 前导缓冲区时长(s)
 	float* fDropSuffixLength,				// 丢弃的尾部时长(s)
@@ -122,41 +120,24 @@ void func_do_voice_transfer_worker(
 		// 轮训检查标志位
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		if (*bDoItSignal) {
-			// 有需要处理的信号，开始处理，并将标志位设置为false
-			// 此处考虑到性能问题，并未使用互斥锁实现原子操作
-			// 若同一时间产生了需要处理的信号，则等到下一个标志位为true时再处理也无妨
-			*bDoItSignal = false;
 			tStart = func_get_timestamp();
 			tTime1 = tStart;
 
+			// 有需要处理的信号，开始处理
+			// 1.模型输入队列加锁
+			// 2.标志位恢复
+			// 3.从模型输入队列中取出一个输入任务
+			// 4.释放锁
+			modelInputJobListMutex->lock();
+			*bDoItSignal = false;
+			auto vModelInputSampleBufferVector = modelInputJobList->at(0);
+			modelInputJobList->erase(modelInputJobList->begin());
+			modelInputJobListMutex->unlock();
 
 			roleStruct roleStruct = roleStructList[*iSelectRoleIndex];
 
-			// 保存音频数据到文件
-			// 获取当前写指针的位置
-			long lTmpModelInputSampleBufferWritePos = *lModelInputSampleBufferWritePos;
-
 			AudioFile<double>::AudioBuffer modelInputAudioBuffer;
 			modelInputAudioBuffer.resize(iNumberOfChanel);
-
-			// 从队列中取出所需的音频数据
-			std::vector<float> vModelInputSampleBufferVector;
-			if (*lModelInputSampleBufferReadPos < lTmpModelInputSampleBufferWritePos) {
-				for (int i = *lModelInputSampleBufferReadPos; i < lTmpModelInputSampleBufferWritePos; i++) {
-					vModelInputSampleBufferVector.push_back(fModeulInputSampleBuffer[i]);
-				}
-			}
-			else {
-				for (int i = *lModelInputSampleBufferReadPos; i < lModelInputOutputBufferSize; i++) {
-					vModelInputSampleBufferVector.push_back(fModeulInputSampleBuffer[i]);
-				}
-				for (int i = 0; i < lTmpModelInputSampleBufferWritePos; i++) {
-					vModelInputSampleBufferVector.push_back(fModeulInputSampleBuffer[i]);
-				}
-			}
-			// 读取完毕，将读指针指向最后写指针
-			*lModelInputSampleBufferReadPos = lTmpModelInputSampleBufferWritePos;
-			float readLength = 1.0 * vModelInputSampleBufferVector.size() / 44100;
 
 			if (*bEnableSOVITSPreResample) {
 				// 提前对音频重采样，C++重采样比Python端快
@@ -165,16 +146,6 @@ void func_do_voice_transfer_worker(
 				// SOVITS输入音频重采样
 				auto ReSampleOutputVector = func_audio_resample_vector_version(vModelInputSampleBufferVector, dProjectSampleRate, iSOVITSModelInputSamplerate, dllFuncSrcSimple);
 				long iResampleNumbers = ReSampleOutputVector.size();
-				//float* fReSampleInBuffer = vModelInputSampleBufferVector.data();
-				//float* fReSampleOutBuffer = fReSampleInBuffer;
-				//long iResampleNumbers = static_cast<long>(vModelInputSampleBufferVector.size());
-
-				//if (dProjectSampleRate != iSOVITSModelInputSamplerate) {
-				//	double fScaleRate = iSOVITSModelInputSamplerate / dProjectSampleRate;
-				//	iResampleNumbers = static_cast<long>(fScaleRate * iResampleNumbers);
-				//	fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-				//	func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, static_cast<long>(vModelInputSampleBufferVector.size()), iResampleNumbers);
-				//}
 
 				snprintf(sSOVITSSamplerateBuff, sizeof(sSOVITSSamplerateBuff), "%d", iSOVITSModelInputSamplerate);
 				modelInputAudioBuffer[0].resize(iResampleNumbers);
@@ -187,11 +158,6 @@ void func_do_voice_transfer_worker(
 					// HUBERT输入音频重采样
 					auto ReSampleOutputVector = func_audio_resample_vector_version(vModelInputSampleBufferVector, dProjectSampleRate, iHUBERTInputSampleRate, dllFuncSrcSimple);
 					long iResampleNumbers = ReSampleOutputVector.size();
-
-					//double fScaleRate = iHUBERTInputSampleRate / dProjectSampleRate;
-					//iResampleNumbers = static_cast<long>(fScaleRate * vModelInputSampleBufferVector.size());
-					//fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-					//func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, static_cast<long>(vModelInputSampleBufferVector.size()), iResampleNumbers);
 
 					AudioFile<double>::AudioBuffer HUBERTModelInputAudioBuffer;
 					HUBERTModelInputAudioBuffer.resize(iNumberOfChanel);
@@ -328,26 +294,27 @@ void func_do_voice_transfer_worker(
 				// 交叉淡化版本
 				std::vector<float> s3;
 				int iSliceSampleNumber = numSamples;
+				int overlapSampleNumber = static_cast<int>(*fPrefixLength * sampleRate);
 				float* fSliceSampleBuffer = currentVoiceVector.data();
-				if (*bRealTimeModel && *fPrefixLength > 0.01f && *lLastVoiceSampleBufferReadMaxPos > 0) {
+				lastVoiceSampleForCrossFadeVectorMutex->lock();
+				if (*bRealTimeModel && *fPrefixLength > 0.01f && lastVoiceSampleForCrossFadeVector->size() > 0) {
 					// 交叉淡化算法
 					// 上一个音频为S1，当前音频为S2，重合时间为overlap
 					// S1 S2 的overlap部分做交叉淡化 + S2的后半段
 					s3.clear();
-					int overlapSampleNumber = static_cast<int>(*fPrefixLength * sampleRate);
-					std::vector<float>lastVoiceVector(fLastVoiceSampleBuffer, fLastVoiceSampleBuffer + *lLastVoiceSampleBufferReadMaxPos);
-					int s1Length = lastVoiceVector.size();
+					int s1Length = lastVoiceSampleForCrossFadeVector->size();
 					int s2Length = currentVoiceVector.size();
 					
-					int fixOverlapSampleNumber = std::min({ overlapSampleNumber, s1Length, s2Length });
+					int fixOverlapSampleNumber = std::min({ overlapSampleNumber, s1Length, s2Length - *lastVoiceSampleCrossFadeSkipNumber });
 					float fStepAlpha = 1.0f / fixOverlapSampleNumber;
 
 					int s1OverlapStartIndex = s1Length - fixOverlapSampleNumber;
 					for (int i = 0; i < fixOverlapSampleNumber; i++) {
-						auto s1Sample = lastVoiceVector[i + s1OverlapStartIndex];
-						auto s2Sample = currentVoiceVector[i];
-						auto alpha = fStepAlpha * i;
-						auto s3Sample = s1Sample * (1.f - alpha) + s2Sample * alpha;
+						float s1Sample = lastVoiceSampleForCrossFadeVector->at(i + s1OverlapStartIndex);
+						// S1可能已经被预先取掉一部分，S2需要加上一个lastVoiceSampleCrossFadeSkipNumber偏移量，使得S1和S2能够对齐
+						float s2Sample = currentVoiceVector[i + *lastVoiceSampleCrossFadeSkipNumber];
+						float alpha = fStepAlpha * i;
+						float s3Sample = s1Sample * (1.f - alpha) + s2Sample * alpha;
 						s3.push_back(s3Sample);
 					}
 					for (int i = fixOverlapSampleNumber; i < s2Length; i++) {
@@ -356,140 +323,7 @@ void func_do_voice_transfer_worker(
 					iSliceSampleNumber = s3.size();
 					fSliceSampleBuffer = s3.data();
 				};
-
-				// DTWb版本
-
-				// hParam
-				/*int sr = sampleRate;
-				int n_fft = 1024;
-				int n_hop = 220;
-				std::string window = "hann";
-				bool center = false;
-				std::string pad_mode = "reflect";
-				float power = 2.f;
-				int n_mel = 128;
-				int fmin = 80;
-				int fmax = 17600;
-				int n_mfcc = 20;
-				bool norm = true;
-				int type = 2;
-				std::vector<std::vector<int>> path;
-				float hParamMaxShiftSeconds = 0.25f;
-				float meanVar;
-				float maxAllowShiftSeconds;
-				float minAllowShiftSeconds;
-				float shiftSeconds;
-				float fixShiftSeconds;
-				int shiftSampleNumber;
-				*/
-				/*if (*fPrefixLength > 0.01f && *lLastVoiceSampleBufferReadMaxPos > 0) {
-					// 这里引入一种音频信号对齐方法，使用DTW对当前音频和上一个音频进行对齐
-					// 对当前音频做处理
-					std::vector<float> currentVoiceVector(fOriginAudioBuffer.begin(), fOriginAudioBuffer.end());
-					std::vector<std::vector<float>> currentVoiceMels = librosa::Feature::melspectrogram(currentVoiceVector, sr, n_fft, n_hop, window, center, pad_mode, power, n_mel, fmin, fmax);
-
-					// 对上一个音频做处理
-					std::vector <float> lastVoiceVector(fLastVoiceSampleBuffer, fLastVoiceSampleBuffer + *lLastVoiceSampleBufferReadMaxPos);
-					std::vector<std::vector<float>> lastVoiceMels = librosa::Feature::melspectrogram(lastVoiceVector, sr, n_fft, n_hop, window, center, pad_mode, power, n_mel, fmin, fmax);
-
-					// 计算DTW路径
-					std::vector<std::vector<double>> dCurrentVoiceMels;
-					for (int i = 0; i < currentVoiceMels.size(); i++) {
-						std::vector<double> tmpV = std::vector<double>(currentVoiceMels[i].begin(), currentVoiceMels[i].end());
-						dCurrentVoiceMels.push_back(tmpV);
-					};
-					
-					std::vector<std::vector<double>> dLastVoiceMels;
-					for (int i = 0; i < lastVoiceMels.size(); i++) {
-						std::vector<double> tmpV = std::vector<double>(lastVoiceMels[i].begin(), lastVoiceMels[i].end());
-						dLastVoiceMels.push_back(tmpV);
-					};
-
-					double p = 2;
-					DTW::DTW MyDtw(dLastVoiceMels, dCurrentVoiceMels, p);
-					path = MyDtw.path();
-
-					// 获取偏移量
-					if (path.size() > 2) {
-						auto lastT1 = path[0][0];
-						auto lastT2 = path[0][1];
-						std::vector<int> shiftBlockVar;
-						for (int i = 1; i < path.size(); i++) {
-							auto t1 = path[i][0];
-							auto t2 = path[i][1];
-							// 根据斜率过滤首尾数据
-							if ((t2 != lastT2) && (abs(1.f * (t1 - lastT1) / (t2 - lastT2) - 1.f) < 0.1f)) {
-								shiftBlockVar.push_back(t1 - t2);
-							};
-							lastT1 = t1;
-							lastT2 = t2;
-						}
-						auto varLen = shiftBlockVar.size();
-						if (varLen > 2) {
-							int startIndex = varLen / 4;
-							int endIndex = varLen / 4 * 3;
-							if (endIndex == startIndex) {
-								endIndex += 1;
-							}
-							// 取中间50 % ，过滤噪声
-							auto sum = std::reduce(shiftBlockVar.begin() + startIndex, shiftBlockVar.begin() + endIndex);
-							// ? -1 ??
-							meanVar = abs(1.f * sum / (endIndex - startIndex));
-							shiftSeconds = 1.f * *lLastVoiceSampleBufferReadMaxPos / sampleRate - meanVar * n_hop / sampleRate;
-
-							// 限制偏移量的范围，避免算法出现离谱的错误
-							maxAllowShiftSeconds = *fPrefixLength + hParamMaxShiftSeconds;
-							minAllowShiftSeconds = std::max(0.f, * fPrefixLength - hParamMaxShiftSeconds);
-							fixShiftSeconds = std::max(minAllowShiftSeconds, std::min(maxAllowShiftSeconds, shiftSeconds));
-							shiftSampleNumber = static_cast<int>(fixShiftSeconds * sampleRate);
-							iSkipSamplePosStart = shiftSampleNumber;
-							if (*bEnableDebug) {
-								snprintf(buff, sizeof(buff), "fixShiftSeconds:%f\n", fixShiftSeconds);
-								OutputDebugStringA(buff);
-								snprintf(buff, sizeof(buff), "shiftSeconds:%f\n", shiftSeconds);
-								OutputDebugStringA(buff);
-								snprintf(buff, sizeof(buff), "meanVar:%f\n", meanVar);
-								OutputDebugStringA(buff);
-							}
-						}
-					};
-				}*/
-				/*
-				// 丢弃尾部信号
-				int iSkipSamplePosEnd = static_cast<int>(numSamples - (*fDropSuffixLength * sampleRate));
-				int iSliceSampleNumber = iSkipSamplePosEnd - iSkipSamplePosStart;
-				float* fSliceSampleBuffer = (float*)(std::malloc(sizeof(float) * iSliceSampleNumber));
-				int iSlicePos = 0;
-				for (int i = iSkipSamplePosStart; i < iSkipSamplePosEnd; i++) {
-					fSliceSampleBuffer[iSlicePos++] = static_cast<float>(fOriginAudioBuffer[i]);
-				}*/
-
-				//auto reSampleBufferSize = iSliceSampleNumber * sizeof(float);
-				//float* fReSampleInBuffer = (float*)malloc(reSampleBufferSize);
-				//int iResampleNumbers = iSliceSampleNumber;
-				//for (int i = 0; i < iSliceSampleNumber; i++) {
-				//	fReSampleInBuffer[i] = fSliceSampleBuffer[i];
-				//};
-				//float* fReSampleOutBuffer = (float*)malloc(reSampleBufferSize);
-				//memcpy(fReSampleOutBuffer, fReSampleInBuffer, reSampleBufferSize);
-
-				//free(fSliceSampleBuffer);
-				//if (sampleRate != dProjectSampleRate) {
-				//	double fScaleRate = dProjectSampleRate / sampleRate;
-				//	iResampleNumbers = static_cast<int>(fScaleRate * iSliceSampleNumber);
-				//	free(fReSampleOutBuffer);
-				//	fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-				//	func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, iSliceSampleNumber, iResampleNumbers);
-				//};
-				//free(fReSampleInBuffer);
-
-				tTime2 = func_get_timestamp();
-				tUseTime = tTime2 - tTime1;
-				/*if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "对模型输出重采样耗时:%lldms\n", tUseTime);
-					OutputDebugStringA(buff);
-				}*/
-				tTime1 = tTime2;
+				lastVoiceSampleForCrossFadeVectorMutex->unlock();
 
 				// 当启用了实时模式时，缓冲区的写指针需要特殊处理
 				// 例如：当出现延迟抖动时，接收到最新的数据时缓冲区还有旧数据，此时若直接丢弃数据，则声音有明显卡顿，因此设置了一个可以容忍的延迟抖动时长
@@ -501,9 +335,9 @@ void func_do_voice_transfer_worker(
 					// 计算出新的写指针位置：
 					// 1.当前旧数据大小 > 可容忍的延迟抖动，写指针前移定位在安全区尾部
 					// 2.当前旧数据大小 < 可容忍的延迟抖动，写指针前移定位在旧数据尾部（无任何操作，保持不变）
-					long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelInputOutputBufferSize, *lModelOutputSampleBufferReadPos, *lModelOutputSampleBufferWritePos);
+					long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelOutputBufferSize, *lModelOutputSampleBufferReadPos, *lModelOutputSampleBufferWritePos);
 					if (inputBufferSize > iAcceptableDelaySize) {
-						*lModelOutputSampleBufferWritePos = (*lModelOutputSampleBufferReadPos + iRealTimeModeBufferSafeZoneSize) % lModelInputOutputBufferSize;
+						*lModelOutputSampleBufferWritePos = (*lModelOutputSampleBufferReadPos + iRealTimeModeBufferSafeZoneSize) % lModelOutputBufferSize;
 						long lDropDataNumber = inputBufferSize - iRealTimeModeBufferSafeZoneSize;
 						long lDropDataLength = 1000 * lDropDataNumber / sampleRate;
 						vDropDataLength.setValue(juce::String(lDropDataLength) + "ms");
@@ -513,31 +347,33 @@ void func_do_voice_transfer_worker(
 					}
 				}
 
-				// 将当前句子保存到“最后一句缓冲区”
-				for (int i = 0; i < iSliceSampleNumber; i++) {
-					fLastVoiceSampleBuffer[i] = fSliceSampleBuffer[i];
-				};
-				*lLastVoiceSampleBufferReadMaxPos = iSliceSampleNumber;
-
 				// 从写指针标记的缓冲区位置开始写入新的音频数据
 				long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
 				// 预留一部分数据用作交叉淡化（不写入实时输出）
-				int overlapSampleNumber = 0;
+				overlapSampleNumber = 0;
 				if (*bRealTimeModel && (* fPrefixLength > 0.01f)) {
 					overlapSampleNumber = static_cast<int>(*fPrefixLength * sampleRate);
 					overlapSampleNumber = std::min(overlapSampleNumber, iSliceSampleNumber);
 				};
 				for (int i = 0; i < iSliceSampleNumber - overlapSampleNumber; i++) {
 					fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = fSliceSampleBuffer[i];
-					if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
+					if (lTmpModelOutputSampleBufferWritePos == lModelOutputBufferSize) {
 						lTmpModelOutputSampleBufferWritePos = 0;
 					}
 					// 注意，因为缓冲区应当尽可能的大，所以此处不考虑写指针追上读指针的情况
 				}
-				//free(fReSampleOutBuffer);
-
+				// 将当前句子的后半段保存到“最后一句缓冲区”，供后续交叉淡化流程使用
+				lastVoiceSampleForCrossFadeVectorMutex->lock();
+				lastVoiceSampleForCrossFadeVector->clear();
+				*lastVoiceSampleCrossFadeSkipNumber = 0;
+				for (int i = currentVoiceVector.size() - overlapSampleNumber; i < currentVoiceVector.size(); i++) {
+					lastVoiceSampleForCrossFadeVector->push_back(currentVoiceVector.at(i));
+				};
 				// 将写指针指向新的位置
 				*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
+				lastVoiceSampleForCrossFadeVectorMutex->unlock();
+				//free(fReSampleOutBuffer);
+
 				/*if (*bEnableDebug) {
 					snprintf(buff, sizeof(buff), "输出写指针:%ld\n", lTmpModelOutputSampleBufferWritePos);
 					OutputDebugStringA(buff);

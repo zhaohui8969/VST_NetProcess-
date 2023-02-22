@@ -109,17 +109,24 @@ public:
 	bool bConfigLoadFinished = false;
 	bool bEnableDebug;
 
-	// 基于双指针缓冲区的线程数据交换机制
-	long lModelInputOutputBufferSize;
-	float* fModeulInputSampleBuffer;
-	long lModelInputSampleBufferReadPos;
-	long lModelInputSampleBufferWritePos;
-	float* fLastVoiceSampleBuffer;
-	long lLastVoiceSampleBufferReadMaxPos;
-
+	// 基于线程安全队列的模型入参缓冲区
+	std::vector<std::vector<float>> modelInputJobList;
+	std::vector<float> prepareModelInputJob;
+	std::mutex modelInputJobListMutex;
+	
+	// 基于双指针缓冲区的线程数据交换机制，用于存放模型输出数据
+	// 初始化线程间交换数据的缓冲区，120s的缓冲区足够大
+	float fModelOutputBufferSecond = 120.f;
+	long lModelOutputBufferSize;
 	float* fModeulOutputSampleBuffer;
 	long lModelOutputSampleBufferReadPos;
 	long lModelOutputSampleBufferWritePos;
+	
+	// 最后一条模型输出音频的尾部，用于交叉淡化处理
+	std::mutex lastVoiceSampleForCrossFadeVectorMutex;
+	std::vector<float> lastVoiceSampleForCrossFadeVector;
+	// 实时模式下，为了避免输出空值，淡化样本会被提前输出，这里记录提前输出的样本数量
+	int lastVoiceSampleCrossFadeSkipNumber;
 
 	bool bCalcPitchError;
 	float fMaxSliceLength;
