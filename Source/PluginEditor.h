@@ -47,14 +47,14 @@ private:
     juce::Slider sMaxLowVolumeLengthSlider;
     juce::Label lPrefixLengthLabel;
     juce::Slider sPrefixLengthSlider;
-    //juce::Label lDropSuffixLengthLabel;
-    //juce::Slider sDropSuffixLengthSlider;
     juce::Label lChangeRoleLabel;
+    juce::TextButton bChangeRoleButton;
     juce::Label lServerUseTimeLabel;
     juce::Label lServerUseTimeValLabel;
     juce::Label lDropDataLengthLabel;
     juce::Label lDropDataLengthValLabel;
-    juce::TextButton bChangeRoleButton;
+    juce::Label lVersionLabel;
+    juce::Label lVersionValLabel;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NetProcessJUCEVersionAudioProcessorEditor)
 };

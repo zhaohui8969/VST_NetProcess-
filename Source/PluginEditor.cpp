@@ -25,7 +25,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(L"SiHei_otf");
 
     // UI
-    tToggleRealTimeMode.setButtonText("Real Time Mode");
+    tToggleRealTimeMode.setButtonText(L"实时模式");
     tToggleRealTimeMode.setToggleState(audioProcessor.bRealTimeMode, juce::dontSendNotification);
     tToggleRealTimeMode.onClick = [this] {
         auto val = tToggleRealTimeMode.getToggleState();
@@ -39,12 +39,12 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
             // off
             audioProcessor.fMaxSliceLengthForRealTimeMode = audioProcessor.fMaxSliceLength;
             sSliceSizeSlider.setValue(audioProcessor.fMaxSliceLengthForSentenceMode);
-            lDropDataLengthValLabel.setText("unCheck", juce::dontSendNotification);
+            lDropDataLengthValLabel.setText(L"未检查", juce::dontSendNotification);
         }
     };
     addAndMakeVisible(&tToggleRealTimeMode);
 
-    tToggleDebugMode.setButtonText("Debug Mode");
+    tToggleDebugMode.setButtonText(L"调试日志");
     tToggleDebugMode.setToggleState(audioProcessor.bEnableDebug, juce::dontSendNotification);
     tToggleDebugMode.onClick = [this] {
         auto val = tToggleDebugMode.getToggleState();
@@ -52,7 +52,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     };
     addAndMakeVisible(&tToggleDebugMode);
 
-    lSliceSizeLabel.setText("Max audio slice length:", juce::dontSendNotification);
+    lSliceSizeLabel.setText(L"最长音频切片时长:", juce::dontSendNotification);
     sSliceSizeSlider.setSliderStyle(juce::Slider::LinearBar);
     sSliceSizeSlider.setRange(minMaxSliceLength, maxMaxSliceLength, 0.01);
     sSliceSizeSlider.setTextValueSuffix(" s");
@@ -61,7 +61,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     addAndMakeVisible(&lSliceSizeLabel);
     addAndMakeVisible(&sSliceSizeSlider);
 
-    lPitchChangeLabel.setText("Pitch change:", juce::dontSendNotification);
+    lPitchChangeLabel.setText(L"变调:", juce::dontSendNotification);
     sPitchChangeSlider.setSliderStyle(juce::Slider::LinearBar);
     sPitchChangeSlider.setRange(minPitchChange, maxPitchChange, 0.1);
     sPitchChangeSlider.setValue(audioProcessor.fPitchChange);
@@ -69,36 +69,26 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     addAndMakeVisible(&lPitchChangeLabel);
     addAndMakeVisible(&sPitchChangeSlider);
 
-    lMaxLowVolumeLengthLabel.setText("Max low volume legth:", juce::dontSendNotification);
+    lMaxLowVolumeLengthLabel.setText(L"最长静音时长:", juce::dontSendNotification);
     sMaxLowVolumeLengthSlider.setSliderStyle(juce::Slider::LinearBar);
     sMaxLowVolumeLengthSlider.setRange(minLowVolumeDetectLength, maxLowVolumeDetectLength, 0.01);
-    sSliceSizeSlider.setTextValueSuffix(" s");
+    sMaxLowVolumeLengthSlider.setTextValueSuffix(" s");
     sMaxLowVolumeLengthSlider.setValue(audioProcessor.fLowVolumeDetectTime);
     sMaxLowVolumeLengthSlider.addListener(this);
     addAndMakeVisible(&lMaxLowVolumeLengthLabel);
     addAndMakeVisible(&sMaxLowVolumeLengthSlider);
 
    
-    lPrefixLengthLabel.setText("Prefix audio length:", juce::dontSendNotification);
+    lPrefixLengthLabel.setText(L"交叉淡化时长:", juce::dontSendNotification);
     sPrefixLengthSlider.setSliderStyle(juce::Slider::LinearBar);
     sPrefixLengthSlider.setRange(minPrefixAudioLength, maxPrefixAudioLength, 0.01);
-    sSliceSizeSlider.setTextValueSuffix(" s");
+    sPrefixLengthSlider.setTextValueSuffix(" s");
     sPrefixLengthSlider.setValue(audioProcessor.fPrefixLength);
     sPrefixLengthSlider.addListener(this);
     addAndMakeVisible(&lPrefixLengthLabel);
     addAndMakeVisible(&sPrefixLengthSlider);
-  
-    /*
-    lDropSuffixLengthLabel.setText("Drop suffix audio legth:", juce::dontSendNotification);
-    sDropSuffixLengthSlider.setSliderStyle(juce::Slider::LinearBar);
-    sDropSuffixLengthSlider.setRange(minDropSuffixAudioLength, maxDropSuffixAudioLength, 0.01);
-    sDropSuffixLengthSlider.setValue(audioProcessor.fDropSuffixLength);
-    sDropSuffixLengthSlider.addListener(this);
-    addAndMakeVisible(&lDropSuffixLengthLabel);
-    addAndMakeVisible(&sDropSuffixLengthSlider);
-    */
 
-    lChangeRoleLabel.setText("Change role:", juce::dontSendNotification);
+    lChangeRoleLabel.setText(L"切换角色:", juce::dontSendNotification);
     bChangeRoleButton.setButtonText(audioProcessor.roleList[audioProcessor.iSelectRoleIndex].sName);
     addAndMakeVisible(&lChangeRoleLabel);
     addAndMakeVisible(&bChangeRoleButton);
@@ -117,17 +107,22 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
         menu.showMenuAsync(juce::PopupMenu::Options{}.withTargetComponent(bChangeRoleButton));
     };
 
-    lServerUseTimeLabel.setText("Server use time:", juce::dontSendNotification);
+    lServerUseTimeLabel.setText(L"算法耗时:", juce::dontSendNotification);
     lServerUseTimeValLabel.getTextValue().referTo(audioProcessor.vServerUseTime);
-    lServerUseTimeValLabel.setText("unCheck", juce::dontSendNotification);
+    lServerUseTimeValLabel.setText(L"未检查", juce::dontSendNotification);
     addAndMakeVisible(&lServerUseTimeLabel);
     addAndMakeVisible(&lServerUseTimeValLabel);
 
-    lDropDataLengthLabel.setText("Drop data:", juce::dontSendNotification);
+    lDropDataLengthLabel.setText(L"丢弃数据时长:", juce::dontSendNotification);
     lDropDataLengthValLabel.getTextValue().referTo(audioProcessor.vDropDataLength);
-    lDropDataLengthValLabel.setText("unCheck", juce::dontSendNotification);
+    lDropDataLengthValLabel.setText(L"未检查", juce::dontSendNotification);
     addAndMakeVisible(&lDropDataLengthLabel);
     addAndMakeVisible(&lDropDataLengthValLabel);
+
+    lVersionLabel.setText(L"版本号:", juce::dontSendNotification);
+    lVersionValLabel.setText(L"V3.0", juce::dontSendNotification);
+    addAndMakeVisible(&lVersionLabel);
+    addAndMakeVisible(&lVersionValLabel);
 }
 
 NetProcessJUCEVersionAudioProcessorEditor::~NetProcessJUCEVersionAudioProcessorEditor()
@@ -150,10 +145,6 @@ void NetProcessJUCEVersionAudioProcessorEditor::sliderValueChanged(juce::Slider*
         audioProcessor.fPrefixLength = val;
         audioProcessor.lPrefixLengthSampleNumber = static_cast<long>(val * audioProcessor.getSampleRate());
     }
-    /*else if (slider == &sDropSuffixLengthSlider) {
-        float val = slider->getValue();
-        audioProcessor.fDropSuffixLength = val;
-    }*/
 }
 
 void NetProcessJUCEVersionAudioProcessorEditor::paint (juce::Graphics& g)
@@ -163,7 +154,7 @@ void NetProcessJUCEVersionAudioProcessorEditor::paint (juce::Graphics& g)
 
 void NetProcessJUCEVersionAudioProcessorEditor::resized()
 {
-    int ilabelColumnWidth = 180;
+    int ilabelColumnWidth = 160;
     int iRowHeight = 20;
     int iRowMargin = 1;
     auto localArea = getLocalBounds();
@@ -199,14 +190,6 @@ void NetProcessJUCEVersionAudioProcessorEditor::resized()
     auto PrefixLengthSliderArea = PrefixLengthArea;
     sPrefixLengthSlider.setBounds(PrefixLengthSliderArea);
 
-    /*
-    auto DropSuffixLengthArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
-    auto DropSuffixLengthLabelArea = DropSuffixLengthArea.removeFromLeft(ilabelColumnWidth);
-    lDropSuffixLengthLabel.setBounds(DropSuffixLengthLabelArea);
-    auto lowVolumeLengthSliderArea = DropSuffixLengthArea;
-    sDropSuffixLengthSlider.setBounds(lowVolumeLengthSliderArea);
-    */
-
     auto changeRoleArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
     auto changeRoleLabelArea = changeRoleArea.removeFromLeft(ilabelColumnWidth);
     lChangeRoleLabel.setBounds(changeRoleLabelArea);
@@ -224,4 +207,10 @@ void NetProcessJUCEVersionAudioProcessorEditor::resized()
     lDropDataLengthLabel.setBounds(DropDataLengthLabelArea);
     auto DropDataLengthLabelValArea = DropDataLengthArea;
     lDropDataLengthValLabel.setBounds(DropDataLengthLabelValArea);
+
+    auto VersionArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
+    auto VersionLabelArea = VersionArea.removeFromLeft(ilabelColumnWidth);
+    lVersionLabel.setBounds(VersionLabelArea);
+    auto VersionLabelValArea = VersionArea;
+    lVersionValLabel.setBounds(VersionLabelValArea);
 }
