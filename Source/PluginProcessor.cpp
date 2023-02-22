@@ -119,10 +119,12 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 	lModelInputOutputBufferSize = static_cast<long>(fModelInputOutputBufferSecond * sampleRate);
 	fModeulInputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelInputOutputBufferSize));
 	fModeulOutputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelInputOutputBufferSize));
+	fLastVoiceSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelInputOutputBufferSize));
 	lModelInputSampleBufferReadPos = 0;
 	lModelInputSampleBufferWritePos = 0;
 	lModelOutputSampleBufferReadPos = 0;
 	lModelOutputSampleBufferWritePos = 0;
+	lLastVoiceSampleBufferReadMaxPos = 0;
 
 	// worker线程安全退出相关信号
 	bWorkerNeedExit = false;
@@ -217,18 +219,18 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 		}
 		else {
 			fRecordIdleTime += 1.f * audioBuffer.getNumSamples() / getSampleRate();
-			if (bEnableDebug) {
+			/*if (bEnableDebug) {
 				snprintf(buff, sizeof(buff), "当前累积空闲时间:%f\n", fRecordIdleTime);
 				OutputDebugStringA(buff);
-			}
+			}*/
 		}
 
 		if (kRecordState == IDLE) {
 			// 当前是空闲状态
 			if (bVolumeDetectFine) {
-				if (bEnableDebug) {
+				/*if (bEnableDebug) {
 					OutputDebugStringA("切换到工作状态");
-				}
+				}*/
 				kRecordState = WORK;
 				int readCount = 0;
 
@@ -284,18 +286,18 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			// 退出条件1：音量过小且持续超过一定时间
 			if (fRecordIdleTime >= fLowVolumeDetectTime) {
 				bExitWorkState = true;
-				if (bEnableDebug) {
+				/*if (bEnableDebug) {
 					OutputDebugStringA("音量过小且持续超过一定时间，直接调用模型\n");
-				}
+				}*/
 			}
 
 			// 退出条件2：队列达到一定的大小
 			long inputBufferSize = func_cacl_read_write_buffer_data_size(lModelInputOutputBufferSize, lModelInputSampleBufferReadPos, lModelInputSampleBufferWritePos);
 			if (inputBufferSize > lMaxSliceLengthSampleNumber + lPrefixLengthSampleNumber) {
 				bExitWorkState = true;
-				if (bEnableDebug) {
+				/*if (bEnableDebug) {
 					OutputDebugStringA("队列大小达到预期，直接调用模型\n");
-				}
+				}*/
 			}
 
 			if (bExitWorkState) {
@@ -315,10 +317,10 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 		}
 
 		// 如果模型输出缓冲区还有数据的话，写入到输出信号中去
-		if (bEnableDebug) {
+		/*if (bEnableDebug) {
 			snprintf(buff, sizeof(buff), "输出读指针:%ld\n", lModelOutputSampleBufferReadPos);
 			OutputDebugStringA(buff);
-		}
+		}*/
 		if (lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos) {
 			bool bFinish = false;
 			for (int i = 0; i < audioBuffer.getNumSamples(); i++)
@@ -343,17 +345,17 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			}
 			if (bFinish) {
 				// 数据取完了
-				if (bEnableDebug) {
+				/*if (bEnableDebug) {
 					OutputDebugStringA("数据取完了\n");
-				}
+				}*/
 			}
 		}
 		else {
 			lNoOutputCount += 1;
-			if (bEnableDebug) {
+			/*if (bEnableDebug) {
 				snprintf(buff, sizeof(buff), "!!!!!!!!!!!!!!!!!!!!!!!输出缓冲空:%ld\n", lNoOutputCount);
 				OutputDebugStringA(buff);
-			}
+			}*/
 			for (juce::int32 i = 0; i < audioBuffer.getNumSamples(); i++) {
 				// 对输出静音
 				inputOutputL[i] = 0.0000000001f;
@@ -496,6 +498,9 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
         fModeulOutputSampleBuffer,			// 模型输出缓冲区
         &lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
         &lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
+
+		fLastVoiceSampleBuffer,				// 最后输出音频缓冲区
+		&lLastVoiceSampleBufferReadMaxPos,  // 最后输出音频缓冲区实际数据量
 
 		&fPrefixLength,						// 前导缓冲区时长(s)
 		&fDropSuffixLength,					// 丢弃的尾部时长(s)

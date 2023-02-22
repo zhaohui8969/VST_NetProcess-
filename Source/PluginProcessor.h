@@ -114,6 +114,8 @@ public:
 	float* fModeulInputSampleBuffer;
 	long lModelInputSampleBufferReadPos;
 	long lModelInputSampleBufferWritePos;
+	float* fLastVoiceSampleBuffer;
+	long lLastVoiceSampleBufferReadMaxPos;
 
 	float* fModeulOutputSampleBuffer;
 	long lModelOutputSampleBufferReadPos;

@@ -2,6 +2,9 @@
 #include "AudioFile.h"
 #include "httplib.h"
 #include "AudioWork.h"
+#include "DTW.h"
+#include "librosa/librosa.h"
+
 using namespace std::chrono;
 
 long long func_get_timestamp() {
@@ -18,6 +21,21 @@ int func_audio_resample(FUNC_SRC_SIMPLE dllFuncSrcSimple, float* fInBuffer, floa
 	data.data_out = fOutBuffer;
 	int error = dllFuncSrcSimple(&data, SRC_SINC_FASTEST, 1);
 	return error;
+}
+
+// 重采样
+std::vector<float> func_audio_resample_vector_version(std::vector<float> inputSampleV, int srcSampleRate, int destSampleRate, FUNC_SRC_SIMPLE dllFuncSrcSimple) {
+	if (srcSampleRate == destSampleRate) {
+		return inputSampleV;
+	}
+	else {
+		double fScaleRate = 1.f * destSampleRate / srcSampleRate;
+		long lInputSize = inputSampleV.size();
+		long lOutSize = static_cast<long>(fScaleRate * lInputSize);
+		float* fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * lOutSize));
+		func_audio_resample(dllFuncSrcSimple, inputSampleV.data(), fReSampleOutBuffer, fScaleRate, lInputSize, lOutSize);
+		return std::vector<float>(fReSampleOutBuffer, fReSampleOutBuffer + lOutSize);
+	}
 }
 
 // 用于计算一个读写缓存里的有效数据大小
@@ -59,6 +77,9 @@ void func_do_voice_transfer_worker(
 	float* fModeulOutputSampleBuffer,		// 模型输出缓冲区
 	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
 	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
+
+	float* fLastVoiceSampleBuffer,			// 最后输出音频缓冲区
+	long* lLastVoiceSampleBufferReadMaxPos, // 最后输出音频缓冲区实际数据量
 
 	float* fPrefixLength,					// 前导缓冲区时长(s)
 	float* fDropSuffixLength,				// 丢弃的尾部时长(s)
@@ -142,38 +163,43 @@ void func_do_voice_transfer_worker(
 				dSOVITSInputSamplerate = iSOVITSModelInputSamplerate;
 
 				// SOVITS输入音频重采样
-				float* fReSampleInBuffer = vModelInputSampleBufferVector.data();
-				float* fReSampleOutBuffer = fReSampleInBuffer;
-				long iResampleNumbers = static_cast<long>(vModelInputSampleBufferVector.size());
+				auto ReSampleOutputVector = func_audio_resample_vector_version(vModelInputSampleBufferVector, dProjectSampleRate, iSOVITSModelInputSamplerate, dllFuncSrcSimple);
+				long iResampleNumbers = ReSampleOutputVector.size();
+				//float* fReSampleInBuffer = vModelInputSampleBufferVector.data();
+				//float* fReSampleOutBuffer = fReSampleInBuffer;
+				//long iResampleNumbers = static_cast<long>(vModelInputSampleBufferVector.size());
 
-				if (dProjectSampleRate != iSOVITSModelInputSamplerate) {
-					double fScaleRate = iSOVITSModelInputSamplerate / dProjectSampleRate;
-					iResampleNumbers = static_cast<long>(fScaleRate * iResampleNumbers);
-					fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, static_cast<long>(vModelInputSampleBufferVector.size()), iResampleNumbers);
-				}
+				//if (dProjectSampleRate != iSOVITSModelInputSamplerate) {
+				//	double fScaleRate = iSOVITSModelInputSamplerate / dProjectSampleRate;
+				//	iResampleNumbers = static_cast<long>(fScaleRate * iResampleNumbers);
+				//	fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
+				//	func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, static_cast<long>(vModelInputSampleBufferVector.size()), iResampleNumbers);
+				//}
 
 				snprintf(sSOVITSSamplerateBuff, sizeof(sSOVITSSamplerateBuff), "%d", iSOVITSModelInputSamplerate);
 				modelInputAudioBuffer[0].resize(iResampleNumbers);
-				for (int i = 0; i < iResampleNumbers; i++) {
-					modelInputAudioBuffer[0][i] = fReSampleOutBuffer[i];
+				for (int i = 0; i < ReSampleOutputVector.size(); i++) {
+					modelInputAudioBuffer[0][i] = ReSampleOutputVector[i];
 				}
-				free(fReSampleOutBuffer);
+				//free(fReSampleOutBuffer);
 
 				if (*bEnableHUBERTPreResample) {
 					// HUBERT输入音频重采样
-					double fScaleRate = iHUBERTInputSampleRate / dProjectSampleRate;
-					iResampleNumbers = static_cast<long>(fScaleRate * vModelInputSampleBufferVector.size());
-					fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, static_cast<long>(vModelInputSampleBufferVector.size()), iResampleNumbers);
+					auto ReSampleOutputVector = func_audio_resample_vector_version(vModelInputSampleBufferVector, dProjectSampleRate, iHUBERTInputSampleRate, dllFuncSrcSimple);
+					long iResampleNumbers = ReSampleOutputVector.size();
+
+					//double fScaleRate = iHUBERTInputSampleRate / dProjectSampleRate;
+					//iResampleNumbers = static_cast<long>(fScaleRate * vModelInputSampleBufferVector.size());
+					//fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
+					//func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, static_cast<long>(vModelInputSampleBufferVector.size()), iResampleNumbers);
 
 					AudioFile<double>::AudioBuffer HUBERTModelInputAudioBuffer;
 					HUBERTModelInputAudioBuffer.resize(iNumberOfChanel);
 					HUBERTModelInputAudioBuffer[0].resize(iResampleNumbers);
 					for (int i = 0; i < iResampleNumbers; i++) {
-						HUBERTModelInputAudioBuffer[0][i] = fReSampleOutBuffer[i];
+						HUBERTModelInputAudioBuffer[0][i] = ReSampleOutputVector[i];
 					}
-					free(fReSampleOutBuffer);
+					//free(fReSampleOutBuffer);
 					AudioFile<double> HUBERTAudioFile;
 					HUBERTAudioFile.shouldLogErrorsToConsole(false);
 					HUBERTAudioFile.setAudioBuffer(HUBERTModelInputAudioBuffer);
@@ -215,10 +241,10 @@ void func_do_voice_transfer_worker(
 
 			tTime2 = func_get_timestamp();
 			tUseTime = tTime2 - tTime1;
-			if (*bEnableDebug) {
+			/*if (*bEnableDebug) {
 				snprintf(buff, sizeof(buff), "准备保存到音频文件耗时:%lldms\n", tUseTime);
 				OutputDebugStringA(buff);
-			}
+			}*/
 			tTime1 = tTime2;
 
 			// 保存音频文件到内存
@@ -227,10 +253,10 @@ void func_do_voice_transfer_worker(
 
 			tTime2 = func_get_timestamp();
 			tUseTime = tTime2 - tTime1;
-			if (*bEnableDebug) {
+			/*if (*bEnableDebug) {
 				snprintf(buff, sizeof(buff), "保存到音频文件耗时:%lldms\n", tUseTime);
 				OutputDebugStringA(buff);
-			}
+			}*/
 			tTime1 = tTime2;
 
 			// 调用AI模型进行声音处理
@@ -259,18 +285,18 @@ void func_do_voice_transfer_worker(
 				{ "sample", sModelInputString, "sample.wav", "audio/x-wav"},
 				{ "hubert_sample", sHUBERTSampleBuffer, "hubert_sample.wav", "audio/x-wav"},
 			};
-			if (*bEnableDebug) {
+			/*if (*bEnableDebug) {
 				OutputDebugStringA("算法模型\n");
-			}
+			}*/
 			auto res = cli.Post("/voiceChangeModel", items);
 
 			tTime2 = func_get_timestamp();
 			tUseTime = tTime2 - tTime1;
 			vServerUseTime.setValue(juce::String(tUseTime) + "ms");
-			if (*bEnableDebug) {
+			/*if (*bEnableDebug) {
 				snprintf(buff, sizeof(buff), "调用HTTP接口耗时:%lldms\n", tUseTime);
 				OutputDebugStringA(buff);
-			}
+			}*/
 			tTime1 = tTime2;
 
 			if (res.error() == httplib::Error::Success && res->status == 200) {
@@ -283,14 +309,152 @@ void func_do_voice_transfer_worker(
 				int sampleRate = tmpAudioFile.getSampleRate();
 				// int bitDepth = tmpAudioFile.getBitDepth();
 				int numSamples = tmpAudioFile.getNumSamplesPerChannel();
-				//double lengthInSeconds = tmpAudioFile.getLengthInSeconds();
+				double lengthInSeconds = tmpAudioFile.getLengthInSeconds();
 				// int numChannels = tmpAudioFile.getNumChannels();
 				//bool isMono = tmpAudioFile.isMono();
 
 				std::vector<double> fOriginAudioBuffer = tmpAudioFile.samples[0];
+				std::vector<float> currentVoiceVectorUnResample(fOriginAudioBuffer.begin(), fOriginAudioBuffer.end());
+
+
+				// 音频重采样
+				auto currentVoiceVector = func_audio_resample_vector_version(currentVoiceVectorUnResample, sampleRate, dProjectSampleRate, dllFuncSrcSimple);
+				numSamples = currentVoiceVector.size();
+				sampleRate = dProjectSampleRate;
 
 				// 跳过前导音频信号
 				int iSkipSamplePosStart = static_cast<int>(*fPrefixLength * sampleRate);
+
+				// 交叉淡化版本
+				std::vector<float> s3;
+				int iSliceSampleNumber = numSamples;
+				float* fSliceSampleBuffer = currentVoiceVector.data();
+				if (*bRealTimeModel && *fPrefixLength > 0.01f && *lLastVoiceSampleBufferReadMaxPos > 0) {
+					// 交叉淡化算法
+					// 上一个音频为S1，当前音频为S2，重合时间为overlap
+					// S1 S2 的overlap部分做交叉淡化 + S2的后半段
+					s3.clear();
+					int overlapSampleNumber = static_cast<int>(*fPrefixLength * sampleRate);
+					std::vector<float>lastVoiceVector(fLastVoiceSampleBuffer, fLastVoiceSampleBuffer + *lLastVoiceSampleBufferReadMaxPos);
+					int s1Length = lastVoiceVector.size();
+					int s2Length = currentVoiceVector.size();
+					
+					int fixOverlapSampleNumber = std::min({ overlapSampleNumber, s1Length, s2Length });
+					float fStepAlpha = 1.0f / fixOverlapSampleNumber;
+
+					int s1OverlapStartIndex = s1Length - fixOverlapSampleNumber;
+					for (int i = 0; i < fixOverlapSampleNumber; i++) {
+						auto s1Sample = lastVoiceVector[i + s1OverlapStartIndex];
+						auto s2Sample = currentVoiceVector[i];
+						auto alpha = fStepAlpha * i;
+						auto s3Sample = s1Sample * (1.f - alpha) + s2Sample * alpha;
+						s3.push_back(s3Sample);
+					}
+					for (int i = fixOverlapSampleNumber; i < s2Length; i++) {
+						s3.push_back(currentVoiceVector[i]);
+					};
+					iSliceSampleNumber = s3.size();
+					fSliceSampleBuffer = s3.data();
+				};
+
+				// DTWb版本
+
+				// hParam
+				/*int sr = sampleRate;
+				int n_fft = 1024;
+				int n_hop = 220;
+				std::string window = "hann";
+				bool center = false;
+				std::string pad_mode = "reflect";
+				float power = 2.f;
+				int n_mel = 128;
+				int fmin = 80;
+				int fmax = 17600;
+				int n_mfcc = 20;
+				bool norm = true;
+				int type = 2;
+				std::vector<std::vector<int>> path;
+				float hParamMaxShiftSeconds = 0.25f;
+				float meanVar;
+				float maxAllowShiftSeconds;
+				float minAllowShiftSeconds;
+				float shiftSeconds;
+				float fixShiftSeconds;
+				int shiftSampleNumber;
+				*/
+				/*if (*fPrefixLength > 0.01f && *lLastVoiceSampleBufferReadMaxPos > 0) {
+					// 这里引入一种音频信号对齐方法，使用DTW对当前音频和上一个音频进行对齐
+					// 对当前音频做处理
+					std::vector<float> currentVoiceVector(fOriginAudioBuffer.begin(), fOriginAudioBuffer.end());
+					std::vector<std::vector<float>> currentVoiceMels = librosa::Feature::melspectrogram(currentVoiceVector, sr, n_fft, n_hop, window, center, pad_mode, power, n_mel, fmin, fmax);
+
+					// 对上一个音频做处理
+					std::vector <float> lastVoiceVector(fLastVoiceSampleBuffer, fLastVoiceSampleBuffer + *lLastVoiceSampleBufferReadMaxPos);
+					std::vector<std::vector<float>> lastVoiceMels = librosa::Feature::melspectrogram(lastVoiceVector, sr, n_fft, n_hop, window, center, pad_mode, power, n_mel, fmin, fmax);
+
+					// 计算DTW路径
+					std::vector<std::vector<double>> dCurrentVoiceMels;
+					for (int i = 0; i < currentVoiceMels.size(); i++) {
+						std::vector<double> tmpV = std::vector<double>(currentVoiceMels[i].begin(), currentVoiceMels[i].end());
+						dCurrentVoiceMels.push_back(tmpV);
+					};
+					
+					std::vector<std::vector<double>> dLastVoiceMels;
+					for (int i = 0; i < lastVoiceMels.size(); i++) {
+						std::vector<double> tmpV = std::vector<double>(lastVoiceMels[i].begin(), lastVoiceMels[i].end());
+						dLastVoiceMels.push_back(tmpV);
+					};
+
+					double p = 2;
+					DTW::DTW MyDtw(dLastVoiceMels, dCurrentVoiceMels, p);
+					path = MyDtw.path();
+
+					// 获取偏移量
+					if (path.size() > 2) {
+						auto lastT1 = path[0][0];
+						auto lastT2 = path[0][1];
+						std::vector<int> shiftBlockVar;
+						for (int i = 1; i < path.size(); i++) {
+							auto t1 = path[i][0];
+							auto t2 = path[i][1];
+							// 根据斜率过滤首尾数据
+							if ((t2 != lastT2) && (abs(1.f * (t1 - lastT1) / (t2 - lastT2) - 1.f) < 0.1f)) {
+								shiftBlockVar.push_back(t1 - t2);
+							};
+							lastT1 = t1;
+							lastT2 = t2;
+						}
+						auto varLen = shiftBlockVar.size();
+						if (varLen > 2) {
+							int startIndex = varLen / 4;
+							int endIndex = varLen / 4 * 3;
+							if (endIndex == startIndex) {
+								endIndex += 1;
+							}
+							// 取中间50 % ，过滤噪声
+							auto sum = std::reduce(shiftBlockVar.begin() + startIndex, shiftBlockVar.begin() + endIndex);
+							// ? -1 ??
+							meanVar = abs(1.f * sum / (endIndex - startIndex));
+							shiftSeconds = 1.f * *lLastVoiceSampleBufferReadMaxPos / sampleRate - meanVar * n_hop / sampleRate;
+
+							// 限制偏移量的范围，避免算法出现离谱的错误
+							maxAllowShiftSeconds = *fPrefixLength + hParamMaxShiftSeconds;
+							minAllowShiftSeconds = std::max(0.f, * fPrefixLength - hParamMaxShiftSeconds);
+							fixShiftSeconds = std::max(minAllowShiftSeconds, std::min(maxAllowShiftSeconds, shiftSeconds));
+							shiftSampleNumber = static_cast<int>(fixShiftSeconds * sampleRate);
+							iSkipSamplePosStart = shiftSampleNumber;
+							if (*bEnableDebug) {
+								snprintf(buff, sizeof(buff), "fixShiftSeconds:%f\n", fixShiftSeconds);
+								OutputDebugStringA(buff);
+								snprintf(buff, sizeof(buff), "shiftSeconds:%f\n", shiftSeconds);
+								OutputDebugStringA(buff);
+								snprintf(buff, sizeof(buff), "meanVar:%f\n", meanVar);
+								OutputDebugStringA(buff);
+							}
+						}
+					};
+				}*/
+				/*
 				// 丢弃尾部信号
 				int iSkipSamplePosEnd = static_cast<int>(numSamples - (*fDropSuffixLength * sampleRate));
 				int iSliceSampleNumber = iSkipSamplePosEnd - iSkipSamplePosStart;
@@ -298,36 +462,40 @@ void func_do_voice_transfer_worker(
 				int iSlicePos = 0;
 				for (int i = iSkipSamplePosStart; i < iSkipSamplePosEnd; i++) {
 					fSliceSampleBuffer[iSlicePos++] = static_cast<float>(fOriginAudioBuffer[i]);
-				}
+				}*/
 
-				// 音频重采样
-				float* fReSampleInBuffer = (float*)malloc(iSliceSampleNumber * sizeof(float));
-				float* fReSampleOutBuffer = fReSampleInBuffer;
-				int iResampleNumbers = iSliceSampleNumber;
-				for (int i = 0; i < iSliceSampleNumber; i++) {
-					fReSampleInBuffer[i] = static_cast<float>(fSliceSampleBuffer[i]);
-				}
-				free(fSliceSampleBuffer);
-				if (sampleRate != dProjectSampleRate) {
-					double fScaleRate = dProjectSampleRate / sampleRate;
-					iResampleNumbers = static_cast<int>(fScaleRate * iSliceSampleNumber);
-					fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
-					func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, iSliceSampleNumber, iResampleNumbers);
-				}
-				free(fReSampleInBuffer);
+				//auto reSampleBufferSize = iSliceSampleNumber * sizeof(float);
+				//float* fReSampleInBuffer = (float*)malloc(reSampleBufferSize);
+				//int iResampleNumbers = iSliceSampleNumber;
+				//for (int i = 0; i < iSliceSampleNumber; i++) {
+				//	fReSampleInBuffer[i] = fSliceSampleBuffer[i];
+				//};
+				//float* fReSampleOutBuffer = (float*)malloc(reSampleBufferSize);
+				//memcpy(fReSampleOutBuffer, fReSampleInBuffer, reSampleBufferSize);
+
+				//free(fSliceSampleBuffer);
+				//if (sampleRate != dProjectSampleRate) {
+				//	double fScaleRate = dProjectSampleRate / sampleRate;
+				//	iResampleNumbers = static_cast<int>(fScaleRate * iSliceSampleNumber);
+				//	free(fReSampleOutBuffer);
+				//	fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * iResampleNumbers));
+				//	func_audio_resample(dllFuncSrcSimple, fReSampleInBuffer, fReSampleOutBuffer, fScaleRate, iSliceSampleNumber, iResampleNumbers);
+				//};
+				//free(fReSampleInBuffer);
 
 				tTime2 = func_get_timestamp();
 				tUseTime = tTime2 - tTime1;
-				if (*bEnableDebug) {
+				/*if (*bEnableDebug) {
 					snprintf(buff, sizeof(buff), "对模型输出重采样耗时:%lldms\n", tUseTime);
 					OutputDebugStringA(buff);
-				}
+				}*/
 				tTime1 = tTime2;
 
 				// 当启用了实时模式时，缓冲区的写指针需要特殊处理
 				// 例如：当出现延迟抖动时，接收到最新的数据时缓冲区还有旧数据，此时若直接丢弃数据，则声音有明显卡顿，因此设置了一个可以容忍的延迟抖动时长
+				bool bDelayFix = true;
 				const long iAcceptableDelaySize = static_cast<long>(0.03f * sampleRate);
-				if (*bRealTimeModel) {
+				if (*bRealTimeModel && bDelayFix) {
 					// 安全区大小，因为现在读写线程并非线程安全，因此这里设置一个安全区大小，避免数据出现问题
 					const int iRealTimeModeBufferSafeZoneSize = 16;
 					// 计算出新的写指针位置：
@@ -345,44 +513,56 @@ void func_do_voice_transfer_worker(
 					}
 				}
 
+				// 将当前句子保存到“最后一句缓冲区”
+				for (int i = 0; i < iSliceSampleNumber; i++) {
+					fLastVoiceSampleBuffer[i] = fSliceSampleBuffer[i];
+				};
+				*lLastVoiceSampleBufferReadMaxPos = iSliceSampleNumber;
+
 				// 从写指针标记的缓冲区位置开始写入新的音频数据
 				long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
-
-				for (int i = 0; i < iResampleNumbers; i++) {
-					fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = fReSampleOutBuffer[i];
+				// 预留一部分数据用作交叉淡化（不写入实时输出）
+				int overlapSampleNumber = 0;
+				if (*bRealTimeModel && (* fPrefixLength > 0.01f)) {
+					overlapSampleNumber = static_cast<int>(*fPrefixLength * sampleRate);
+					overlapSampleNumber = std::min(overlapSampleNumber, iSliceSampleNumber);
+				};
+				for (int i = 0; i < iSliceSampleNumber - overlapSampleNumber; i++) {
+					fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = fSliceSampleBuffer[i];
 					if (lTmpModelOutputSampleBufferWritePos == lModelInputOutputBufferSize) {
 						lTmpModelOutputSampleBufferWritePos = 0;
 					}
 					// 注意，因为缓冲区应当尽可能的大，所以此处不考虑写指针追上读指针的情况
 				}
-				free(fReSampleOutBuffer);
+				//free(fReSampleOutBuffer);
+
 				// 将写指针指向新的位置
 				*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
-				if (*bEnableDebug) {
+				/*if (*bEnableDebug) {
 					snprintf(buff, sizeof(buff), "输出写指针:%ld\n", lTmpModelOutputSampleBufferWritePos);
 					OutputDebugStringA(buff);
-				}
+				}*/
 
 				tTime2 = func_get_timestamp();
 				tUseTime = tTime2 - tTime1;
-				if (*bEnableDebug) {
+				/*if (*bEnableDebug) {
 					snprintf(buff, sizeof(buff), "写缓冲区耗时:%lldms\n", tUseTime);
 					OutputDebugStringA(buff);
-				}
+				}*/
 				tTime1 = tTime2;
 			}
 			else {
 				auto err = res.error();
-				if (*bEnableDebug) {
+				/*if (*bEnableDebug) {
 					snprintf(buff, sizeof(buff), "算法服务错误:%d\n", err);
 					OutputDebugStringA(buff);
-				}
+				}*/
 			}
 			tUseTime = func_get_timestamp() - tStart;
-			if (*bEnableDebug) {
+			/*if (*bEnableDebug) {
 				snprintf(buff, sizeof(buff), "该次woker轮训总耗时:%lld\n", tUseTime);
 				OutputDebugStringA(buff);
-			}
+			}*/
 		}
 	}
 	mWorkerSafeExit->unlock();

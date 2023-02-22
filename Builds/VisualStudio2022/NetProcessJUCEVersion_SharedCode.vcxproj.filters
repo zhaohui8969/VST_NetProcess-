@@ -2783,6 +2783,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\DTW.h">
+      <Filter>NetProcessJUCEVersion\Source</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\AudioWork.h">
       <Filter>NetProcessJUCEVersion\Source</Filter>
     </ClInclude>

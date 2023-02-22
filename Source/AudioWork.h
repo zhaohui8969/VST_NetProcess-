@@ -16,6 +16,9 @@ void func_do_voice_transfer_worker(
 	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
 	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
+	float* fLastVoiceSampleBuffer,			// 最后输出音频缓冲区
+	long* lLastVoiceSampleBufferReadMaxPos, // 最后输出音频缓冲区实际数据量
+
 	float* fPrefixLength,					// 前导缓冲区时长(s)
 	float* fDropSuffixLength,				// 丢弃的尾部时长(s)
 	float* fPitchChange,					// 音调变化数值
