@@ -133,6 +133,7 @@ public:
 	float fMaxSliceLengthForRealTimeMode;
 	float fMaxSliceLengthForSentenceMode;
 	long lMaxSliceLengthSampleNumber;
+	long lRemainNeedSliceSampleNumber;
 	float fPitchChange;
 
 	// 前导信号缓冲区
@@ -157,7 +158,6 @@ public:
 	int iSOVITSModelInputSamplerate;
 	bool bEnableHUBERTPreResample;
 	int iHUBERTInputSampleRate;
-	bool bDoItSignal;
 
 	// 实时模式
 	bool bRealTimeMode;

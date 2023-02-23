@@ -136,6 +136,7 @@ void NetProcessJUCEVersionAudioProcessorEditor::sliderValueChanged(juce::Slider*
         float val = slider->getValue();
         audioProcessor.fMaxSliceLength = val;
         audioProcessor.lMaxSliceLengthSampleNumber = audioProcessor.getSampleRate() * val;
+        audioProcessor.lRemainNeedSliceSampleNumber = audioProcessor.lMaxSliceLengthSampleNumber;
     } else if (slider == &sPitchChangeSlider) {
         float val = slider->getValue();
         audioProcessor.fPitchChange = val;

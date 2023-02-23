@@ -94,7 +94,6 @@ void func_do_voice_transfer_worker(
 	int iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
 	bool* bRealTimeModel,					// 占位符，实时模式
-	bool* bDoItSignal,						// 占位符，表示该worker有待处理的数据
 	bool* bEnableDebug,						// 占位符，启用DEBUG输出
 	juce::Value vServerUseTime,				// UI变量，显示服务调用耗时
 	juce::Value vDropDataLength,			// UI变量，显示实时模式下丢弃的音频数据长度
@@ -119,17 +118,18 @@ void func_do_voice_transfer_worker(
 	while (!*bWorkerNeedExit) {
 		// 轮训检查标志位
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		if (*bDoItSignal) {
+
+		modelInputJobListMutex->lock();
+		auto queueSize = modelInputJobList->size();
+		if (*bEnableDebug) {
+			snprintf(buff, sizeof(buff), "queueSize:%lld\n", queueSize);
+			OutputDebugStringA(buff);
+		}
+		modelInputJobListMutex->unlock();
+		if (queueSize > 0) {
 			tStart = func_get_timestamp();
 			tTime1 = tStart;
-
-			// 有需要处理的信号，开始处理
-			// 1.模型输入队列加锁
-			// 2.标志位恢复
-			// 3.从模型输入队列中取出一个输入任务
-			// 4.释放锁
 			modelInputJobListMutex->lock();
-			*bDoItSignal = false;
 			auto vModelInputSampleBufferVector = modelInputJobList->at(0);
 			modelInputJobList->erase(modelInputJobList->begin());
 			modelInputJobListMutex->unlock();

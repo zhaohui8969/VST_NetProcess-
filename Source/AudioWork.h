@@ -37,7 +37,6 @@ void func_do_voice_transfer_worker(
 	int iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
 	bool* bRealTimeModel,					// 占位符，实时模式
-	bool* bDoItSignal,						// 占位符，表示该worker有待处理的数据
 	bool* bEnableDebug,						// 占位符，启用DEBUG输出
 	juce::Value vServerUseTime,				// UI变量，显示服务调用耗时
 	juce::Value vDropDataLength,			// UI变量，显示实时模式下丢弃的音频数据长度
