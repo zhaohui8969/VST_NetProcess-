@@ -113,6 +113,7 @@ void func_do_voice_transfer_worker(
 	std::string sHUBERTSampleBuffer;
 	std::string sCalcPitchError;
 	std::string sEnablePreResample;
+	std::vector<float> vModelInputSampleBufferVector;
 
 	mWorkerSafeExit->lock();
 	while (!*bWorkerNeedExit) {
@@ -121,19 +122,18 @@ void func_do_voice_transfer_worker(
 
 		modelInputJobListMutex->lock();
 		auto queueSize = modelInputJobList->size();
-		if (*bEnableDebug) {
-			snprintf(buff, sizeof(buff), "queueSize:%lld\n", queueSize);
-			OutputDebugStringA(buff);
+		if (queueSize > 0) {
+			vModelInputSampleBufferVector = modelInputJobList->at(0);
+			modelInputJobList->erase(modelInputJobList->begin());
 		}
 		modelInputJobListMutex->unlock();
+		/*if (*bEnableDebug) {
+			snprintf(buff, sizeof(buff), "queueSize:%lld\n", queueSize);
+			OutputDebugStringA(buff);
+		}*/
 		if (queueSize > 0) {
 			tStart = func_get_timestamp();
 			tTime1 = tStart;
-			modelInputJobListMutex->lock();
-			auto vModelInputSampleBufferVector = modelInputJobList->at(0);
-			modelInputJobList->erase(modelInputJobList->begin());
-			modelInputJobListMutex->unlock();
-
 			roleStruct roleStruct = roleStructList[*iSelectRoleIndex];
 
 			AudioFile<double>::AudioBuffer modelInputAudioBuffer;

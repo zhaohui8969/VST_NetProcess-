@@ -116,16 +116,30 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 	lModelOutputBufferSize = static_cast<long>(fModelOutputBufferSecond * sampleRate);
 	fModeulOutputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelOutputBufferSize));
 	lModelOutputSampleBufferReadPos = 0;
-	lastVoiceSampleCrossFadeSkipNumber = 0;
 	lModelOutputSampleBufferWritePos = 0;
 
-	modelInputJobList.clear();
-	prepareModelInputJob.clear();
+	clearState();
 
 	// worker线程安全退出相关信号
 	bWorkerNeedExit = false;
 	kRecordState = IDLE;
-	runWorker();
+	// todo 单例
+	workStart = false;
+	if (!workStart) {
+		runWorker();
+		workStart = true;
+	}
+}
+
+void NetProcessJUCEVersionAudioProcessor::clearState()
+{
+	// 清除前导缓冲和旧的模型输入缓冲区
+	lastVoiceSampleForCrossFadeVectorMutex.lock();
+	lastVoiceSampleCrossFadeSkipNumber = 0;
+	modelInputJobList.clear();
+	prepareModelInputJob.clear();
+	lastVoiceSampleForCrossFadeVector.clear();
+	lastVoiceSampleForCrossFadeVectorMutex.unlock();
 }
 
 void NetProcessJUCEVersionAudioProcessor::releaseResources()
@@ -205,24 +219,31 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				// 从IDLE切换到WORD，表示需要一段新的模型输入
 				// 将前导缓冲区的数据写入到模型入参缓冲区中
 				// 从前导缓冲区当前位置向前寻找lPrefixLengthSampleNumber个数据
+				std::vector<float> prefixSampleVector;
 				int readPosStart = lPrefixBufferPos - lPrefixLengthSampleNumber;
 				int readPosEnd = lPrefixBufferPos;
 				if (readPosStart >= 0) {
 					// 场景1：[.....start......end...]，直接从中间读取需要的数据
 					for (int i = readPosStart; i < readPosEnd; i++) {
-						prepareModelInputJob.push_back(fPrefixBuffer[i]);
+						prefixSampleVector.push_back(fPrefixBuffer[i]);
 					}
 				}
 				else {
 					// 场景2：[.....end......start...]，需要从循环缓冲区尾部获取一些数据，然后再从头部读取一些数据
 					readPosStart = lPrefixBufferSize + readPosStart - 1;
 					for (int i = readPosStart; i < lPrefixBufferSize; i++) {
-						prepareModelInputJob.push_back(fPrefixBuffer[i]);
+						prefixSampleVector.push_back(fPrefixBuffer[i]);
 					}
 					for (int i = 0; i < readPosEnd; i++) {
-						prepareModelInputJob.push_back(fPrefixBuffer[i]);
+						prefixSampleVector.push_back(fPrefixBuffer[i]);
 					}
 				};
+
+				// 将前导缓冲的数据写入到模型输入缓冲区中，写入前先检查一下交叉淡入缓冲区大小，并调整前导长度，使得前导长度不会超过交叉淡入缓冲区大小
+				int fixPrefixSliceStartIndex = max(0, prefixSampleVector.size() - lastVoiceSampleForCrossFadeVector.size());
+				for (int i = fixPrefixSliceStartIndex; i < prefixSampleVector.size(); i++) {
+					prepareModelInputJob.push_back(prefixSampleVector[i]);
+				}
 
 				// 将当前的音频数据写入到模型输入缓冲区中
 				for (int i = 0; i < currentBlockVector.size(); i++) {
@@ -297,10 +318,10 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				//peekDataSize = 0;
 				lastVoiceSampleCrossFadeSkipNumber += peekDataSize;
 				if (peekDataSize > 0) {
-					if (bEnableDebug) {
+					/*if (bEnableDebug) {
 						snprintf(buff, sizeof(buff), "!!!!!!!!!!!!!!!!!!!!!!!实时模式-使用交叉淡化数据提前输出，避免空输出:%ld\n", lNoOutputCount);
 						OutputDebugStringA(buff);
-					}
+					}*/
 					for (int i = 0; i < peekDataSize; i++) {
 						auto peekSample = lastVoiceSampleForCrossFadeVector.at(0);
 						lastVoiceSampleForCrossFadeVector.erase(lastVoiceSampleForCrossFadeVector.begin());
@@ -317,10 +338,10 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					// 还有空输出，此时已经没有数据可以用了
 					// 输出静音
 					lNoOutputCount += 1;
-					if (bEnableDebug) {
+					/*if (bEnableDebug) {
 						snprintf(buff, sizeof(buff), "!!!!!!!!!!!!!!!!!!!!!!!实时模式-输出缓冲空:%ld\n", lNoOutputCount);
 						OutputDebugStringA(buff);
-					}
+					}*/
 					for (juce::int32 i = outputWritePos; i < currentBlockVector.size(); i++) {
 						// 对输出静音
 						inputOutputL[i] = 0.0000000001f;

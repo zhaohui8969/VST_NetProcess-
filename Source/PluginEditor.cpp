@@ -28,6 +28,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     tToggleRealTimeMode.setButtonText(L"ʵʱģʽ");
     tToggleRealTimeMode.setToggleState(audioProcessor.bRealTimeMode, juce::dontSendNotification);
     tToggleRealTimeMode.onClick = [this] {
+        audioProcessor.clearState();
         auto val = tToggleRealTimeMode.getToggleState();
         audioProcessor.bRealTimeMode = val;
         if (val) {

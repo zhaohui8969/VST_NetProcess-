@@ -98,6 +98,7 @@ public:
 
 	void loadConfig();
 	void runWorker();
+	void clearState();
 
 	// 用来保存日志
 	char buff[100];
@@ -167,6 +168,7 @@ public:
 	float fLowVolumeDetectTime;
 
 	// 工作线程状态
+	bool workStart;
 	std::mutex mWorkerSafeExit;
 	bool bWorkerNeedExit;
 
