@@ -136,6 +136,8 @@ void NetProcessJUCEVersionAudioProcessor::clearState()
 	// 清除前导缓冲和旧的模型输入缓冲区
 	lastVoiceSampleForCrossFadeVectorMutex.lock();
 	lastVoiceSampleCrossFadeSkipNumber = 0;
+	lMaxAllowEmptySampleNumber = getSampleRate() * 0.5;
+	lEmptySampleNumberCounter = 0;
 	modelInputJobList.clear();
 	prepareModelInputJob.clear();
 	lastVoiceSampleForCrossFadeVector.clear();
@@ -279,6 +281,15 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					// 5.模型输入队列锁释放
 					std::vector<float> newPrepareModelInputJob;
 					modelInputJobListMutex.lock();
+					// 对于实时模式，旧数据还未处理的可以直接丢掉
+					if (bEnableDebug) {
+						auto dropModelInputJobListSize = modelInputJobList.size();
+						if (dropModelInputJobListSize > 0) {
+							snprintf(buff, sizeof(buff), "对于实时模式，旧数据还未处理的可以直接丢掉:%lld\n", dropModelInputJobListSize);
+							OutputDebugStringA(buff);
+						}
+					}
+					modelInputJobList.clear();
 					modelInputJobList.push_back(prepareModelInputJob);
 					prepareModelInputJob = newPrepareModelInputJob;
 					kRecordState = IDLE;
@@ -287,9 +298,45 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				}
 			};
 
+			// 检查之前是否存在因为延迟导致的空输出（检查计数器），并按照计数器大小丢弃一部分数据
+			bool bHasMoreData;
+			// 先从输出缓冲区丢弃数据
+			if (lEmptySampleNumberCounter > lMaxAllowEmptySampleNumber) {
+				for (int i = 0; i < lEmptySampleNumberCounter - lMaxAllowEmptySampleNumber; i++) {
+					bHasMoreData = lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos;
+					if (bHasMoreData) {
+						lModelOutputSampleBufferReadPos++;
+						if (lModelOutputSampleBufferReadPos == lModelOutputBufferSize) {
+							lModelOutputSampleBufferReadPos = 0;
+						}
+						lEmptySampleNumberCounter--;
+					}
+					else {
+						break;
+					}
+				};
+			};
+			// 再从待交叉淡化的数据中丢数据
+			if (lEmptySampleNumberCounter > lMaxAllowEmptySampleNumber) {
+				lastVoiceSampleForCrossFadeVectorMutex.lock();
+				int peekDataSize = min(lEmptySampleNumberCounter - lMaxAllowEmptySampleNumber, lastVoiceSampleForCrossFadeVector.size());
+				lastVoiceSampleCrossFadeSkipNumber += peekDataSize;
+				if (peekDataSize > 0) {
+					/*if (bEnableDebug) {
+						snprintf(buff, sizeof(buff), "!!!!!!!!!!!!!!!!!!!!!!!实时模式-使用交叉淡化数据提前输出，避免空输出:%ld\n", lNoOutputCount);
+						OutputDebugStringA(buff);
+					}*/
+					for (int i = 0; i < peekDataSize; i++) {
+						lEmptySampleNumberCounter--;
+						lastVoiceSampleForCrossFadeVector.erase(lastVoiceSampleForCrossFadeVector.begin());
+					}
+				};
+				lastVoiceSampleForCrossFadeVectorMutex.unlock();
+			};
+
 			// 模型输出写到VST输出中
 			int outputWritePos = 0;
-			bool bHasMoreData = lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos;
+			bHasMoreData = lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos;
 			if (bHasMoreData) {
 				for (int i = 0; i < currentBlockVector.size(); i++)
 				{
@@ -336,6 +383,9 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				hasEmptyBlock = outputWritePos != currentBlockVector.size();
 				if (hasEmptyBlock) {
 					// 还有空输出，此时已经没有数据可以用了
+					// 将计数器累加（通常是延迟抖动，导致无音频输出，此处记录空了多久，在后续有音频输出的时候，为了防止延迟累加，需要丢弃掉一部分数据）
+					auto emptySampleNumber = currentBlockVector.size() - outputWritePos;
+					lEmptySampleNumberCounter += emptySampleNumber;
 					// 输出静音
 					lNoOutputCount += 1;
 					/*if (bEnableDebug) {

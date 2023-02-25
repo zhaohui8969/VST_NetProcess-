@@ -177,6 +177,10 @@ public:
 	// 实时模式下丢弃的音频数据长度
 	juce::Value vDropDataLength;
 
+	// 实时模式空音频计数器
+	long lMaxAllowEmptySampleNumber;
+	long lEmptySampleNumberCounter;
+
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NetProcessJUCEVersionAudioProcessor)

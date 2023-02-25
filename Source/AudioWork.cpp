@@ -318,6 +318,7 @@ void func_do_voice_transfer_worker(
 				int processedSampleNumber = processedSampleVector.size();
 				lastVoiceSampleForCrossFadeVectorMutex->unlock();
 
+				/*
 				// 当启用了实时模式时，缓冲区的写指针需要特殊处理
 				// 例如：当出现延迟抖动时，接收到最新的数据时缓冲区还有旧数据，此时若直接丢弃数据，则声音有明显卡顿，因此设置了一个可以容忍的延迟抖动时长
 				bool bDelayFix = true;
@@ -339,6 +340,7 @@ void func_do_voice_transfer_worker(
 						vDropDataLength.setValue(juce::String("0") + "ms");
 					}
 				}
+				*/
 
 				// 从写指针标记的缓冲区位置开始写入新的音频数据
 				long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
