@@ -32,6 +32,18 @@ enum
 	SRC_LINEAR = 4,
 };
 
+enum JOB_TYPE
+{
+	JOB_EMPTY, JOB_WORK
+};
+
+typedef struct
+{
+	JOB_TYPE jobType;
+	long emptySampleNumber;
+	std::vector<float> modelInputSampleVector;
+} INPUT_JOB_STRUCT;
+
 typedef int(*FUNC_SRC_SIMPLE)(SRC_DATA* data, int converter_type, int channels);
 
 enum RECORD_STATE
@@ -111,8 +123,8 @@ public:
 	bool bEnableDebug;
 
 	// 基于线程安全队列的模型入参缓冲区
-	std::vector<std::vector<float>> modelInputJobList;
-	std::vector<float> prepareModelInputJob;
+	std::vector<INPUT_JOB_STRUCT> modelInputJobList;
+	std::vector<float> prepareModelInputSample;
 	std::mutex modelInputJobListMutex;
 	
 	// 基于双指针缓冲区的线程数据交换机制，用于存放模型输出数据
@@ -179,6 +191,7 @@ public:
 
 	// 实时模式空音频计数器
 	long lMaxAllowEmptySampleNumber;
+	float fMaxAllowEmptySampleLength;
 	long lEmptySampleNumberCounter;
 
 private:

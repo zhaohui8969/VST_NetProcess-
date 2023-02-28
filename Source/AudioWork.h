@@ -10,7 +10,7 @@ void func_do_voice_transfer_worker(
 	int iNumberOfChanel,					// 通道数量
 	double dProjectSampleRate,				// 项目采样率
 
-	std::vector<std::vector<float>>* modelInputJobList, // 模型输入队列
+	std::vector<INPUT_JOB_STRUCT>* modelInputJobList, // 模型输入队列
 	std::mutex* modelInputJobListMutex,		// 模型输入队列锁
 
 	long lModelOutputBufferSize,			// 模型输出缓冲区大小
