@@ -1,19 +1,18 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.3.32922.545
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetProcessJUCEVersion_StandalonePlugin", "NetProcessJUCEVersion_StandalonePlugin.vcxproj", "{FD173A9D-AB17-12FF-9644-F825624F7C04}"
+
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetProcessJUCEVersion - Standalone Plugin", "NetProcessJUCEVersion_StandalonePlugin.vcxproj", "{FD173A9D-AB17-12FF-9644-F825624F7C04}"
 	ProjectSection(ProjectDependencies) = postProject
 		{C3416F23-57BB-C46D-4717-5C5A1C3F7D57} = {C3416F23-57BB-C46D-4717-5C5A1C3F7D57}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetProcessJUCEVersion_VST3", "NetProcessJUCEVersion_VST3.vcxproj", "{45E1BAE8-AEBC-B982-8F93-423DFE9BFE26}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetProcessJUCEVersion - VST3", "NetProcessJUCEVersion_VST3.vcxproj", "{45E1BAE8-AEBC-B982-8F93-423DFE9BFE26}"
 	ProjectSection(ProjectDependencies) = postProject
 		{C3416F23-57BB-C46D-4717-5C5A1C3F7D57} = {C3416F23-57BB-C46D-4717-5C5A1C3F7D57}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetProcessJUCEVersion_SharedCode", "NetProcessJUCEVersion_SharedCode.vcxproj", "{C3416F23-57BB-C46D-4717-5C5A1C3F7D57}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetProcessJUCEVersion - Shared Code", "NetProcessJUCEVersion_SharedCode.vcxproj", "{C3416F23-57BB-C46D-4717-5C5A1C3F7D57}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,14 +20,14 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{FD173A9D-AB17-12FF-9644-F825624F7C04}.Debug|x64.ActiveCfg = Debug|x64
-		{FD173A9D-AB17-12FF-9644-F825624F7C04}.Debug|x64.Build.0 = Debug|x64
-		{FD173A9D-AB17-12FF-9644-F825624F7C04}.Release|x64.ActiveCfg = Release|x64
-		{FD173A9D-AB17-12FF-9644-F825624F7C04}.Release|x64.Build.0 = Release|x64
 		{45E1BAE8-AEBC-B982-8F93-423DFE9BFE26}.Debug|x64.ActiveCfg = Debug|x64
 		{45E1BAE8-AEBC-B982-8F93-423DFE9BFE26}.Debug|x64.Build.0 = Debug|x64
 		{45E1BAE8-AEBC-B982-8F93-423DFE9BFE26}.Release|x64.ActiveCfg = Release|x64
 		{45E1BAE8-AEBC-B982-8F93-423DFE9BFE26}.Release|x64.Build.0 = Release|x64
+		{FD173A9D-AB17-12FF-9644-F825624F7C04}.Debug|x64.ActiveCfg = Debug|x64
+		{FD173A9D-AB17-12FF-9644-F825624F7C04}.Debug|x64.Build.0 = Debug|x64
+		{FD173A9D-AB17-12FF-9644-F825624F7C04}.Release|x64.ActiveCfg = Release|x64
+		{FD173A9D-AB17-12FF-9644-F825624F7C04}.Release|x64.Build.0 = Release|x64
 		{C3416F23-57BB-C46D-4717-5C5A1C3F7D57}.Debug|x64.ActiveCfg = Debug|x64
 		{C3416F23-57BB-C46D-4717-5C5A1C3F7D57}.Debug|x64.Build.0 = Debug|x64
 		{C3416F23-57BB-C46D-4717-5C5A1C3F7D57}.Release|x64.ActiveCfg = Release|x64
@@ -36,8 +35,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {DA2EEF07-02B4-42E1-9EE5-2D9E7D93718A}
 	EndGlobalSection
 EndGlobal

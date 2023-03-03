@@ -11,7 +11,6 @@
     <GROUP id="{56F8911A-B8B9-BC12-9502-7AF0B0AAB9EC}" name="Source">
       <FILE id="tF2TSU" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
-      <FILE id="QGruRg" name="DTW.hpp" compile="0" resource="0" file="Source/DTW.hpp"/>
       <FILE id="mMSxgm" name="AudioWork.h" compile="0" resource="0" file="Source/AudioWork.h"/>
       <FILE id="aw0tyh" name="AudioWork.cpp" compile="1" resource="0" file="Source/AudioWork.cpp"/>
       <FILE id="IXLAuK" name="PluginProcessor.h" compile="0" resource="0"
