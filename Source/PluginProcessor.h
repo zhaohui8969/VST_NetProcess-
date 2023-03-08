@@ -59,6 +59,8 @@ struct roleStruct {
 	std::string sName;
 	// 服务URL
 	std::string sApiUrl;
+	// hop size
+	int iHopSize;
 
 };
 
@@ -148,6 +150,7 @@ public:
 	long lMaxSliceLengthSampleNumber;
 	long lRemainNeedSliceSampleNumber;
 	float fPitchChange;
+	int iHopSize;
 
 	// 前导信号缓冲区
 	float* fPrefixBuffer;
@@ -156,6 +159,10 @@ public:
 	float fPrefixLength;
 	long lPrefixLengthSampleNumber;
 	float fDropSuffixLength;
+	
+	// 安全区大小，当没有声音信号输出的时候，插入一个这么大的静音
+	float fSafeZoneLength;
+	long lSafeZoneSize;
 
 	// JSON配置
 	std::vector<roleStruct> roleList;

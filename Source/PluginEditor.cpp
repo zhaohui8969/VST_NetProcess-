@@ -28,9 +28,9 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     tToggleRealTimeMode.setButtonText(L"实时模式");
     tToggleRealTimeMode.setToggleState(audioProcessor.bRealTimeMode, juce::dontSendNotification);
     tToggleRealTimeMode.onClick = [this] {
-        audioProcessor.clearState();
         auto val = tToggleRealTimeMode.getToggleState();
         audioProcessor.bRealTimeMode = val;
+        audioProcessor.clearState();
         if (val) {
             // on
             audioProcessor.fMaxSliceLengthForSentenceMode = audioProcessor.fMaxSliceLength;
@@ -137,6 +137,8 @@ void NetProcessJUCEVersionAudioProcessorEditor::sliderValueChanged(juce::Slider*
         float val = slider->getValue();
         audioProcessor.fMaxSliceLength = val;
         audioProcessor.lMaxSliceLengthSampleNumber = audioProcessor.getSampleRate() * val;
+        // hop对齐
+        audioProcessor.lMaxSliceLengthSampleNumber = ceil(1.0 * audioProcessor.lMaxSliceLengthSampleNumber / audioProcessor.iHopSize) * audioProcessor.iHopSize;
         audioProcessor.lRemainNeedSliceSampleNumber = audioProcessor.lMaxSliceLengthSampleNumber;
     } else if (slider == &sPitchChangeSlider) {
         float val = slider->getValue();
@@ -145,7 +147,9 @@ void NetProcessJUCEVersionAudioProcessorEditor::sliderValueChanged(juce::Slider*
     else if (slider == &sPrefixLengthSlider) {
         float val = slider->getValue();
         audioProcessor.fPrefixLength = val;
-        audioProcessor.lPrefixLengthSampleNumber = static_cast<long>(val * audioProcessor.getSampleRate());
+        audioProcessor.lPrefixLengthSampleNumber = static_cast<long>(audioProcessor.fPrefixLength * audioProcessor.getSampleRate());
+        // hop对齐
+        audioProcessor.lPrefixLengthSampleNumber = ceil(1.0 * audioProcessor.lPrefixLengthSampleNumber / audioProcessor.iHopSize) * audioProcessor.iHopSize;
     }
 }
 
