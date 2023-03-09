@@ -18,12 +18,9 @@ void func_do_voice_transfer_worker(
 	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
 	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-	std::mutex* lastVoiceSampleForCrossFadeVectorMutex,
+	long lCrossFadeLength,
 	std::vector<float>* lastVoiceSampleForCrossFadeVector, // 最后一条模型输出音频的尾部，用于交叉淡化处理
-	int* lastVoiceSampleCrossFadeSkipNumber,
 
-	float* fPrefixLength,					// 前导缓冲区时长(s)
-	float* fDropSuffixLength,				// 丢弃的尾部时长(s)
 	float* fPitchChange,					// 音调变化数值
 	bool* bCalcPitchError,					// 启用音调误差检测
 
@@ -36,9 +33,9 @@ void func_do_voice_transfer_worker(
 	bool* bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
 	int iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
-	bool* bRealTimeModel,					// 占位符，实时模式
 	bool* bEnableDebug,						// 占位符，启用DEBUG输出
 	juce::Value vServerUseTime,				// UI变量，显示服务调用耗时
+	float *fServerUseTime,
 	juce::Value vDropDataLength,			// UI变量，显示实时模式下丢弃的音频数据长度
 
 	bool* bWorkerNeedExit,					// 占位符，表示worker线程需要退出

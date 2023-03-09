@@ -37,11 +37,16 @@ enum JOB_TYPE
 	JOB_EMPTY, JOB_WORK
 };
 
+// 一个切片的参数
 typedef struct
 {
 	JOB_TYPE jobType;
 	long emptySampleNumber;
 	std::vector<float> modelInputSampleVector;
+	// 前导缓冲区时长(s)
+	long lPrefixLength;
+	// 占位符，实时模式
+	bool bRealTimeModel;
 } INPUT_JOB_STRUCT;
 
 typedef int(*FUNC_SRC_SIMPLE)(SRC_DATA* data, int converter_type, int channels);
@@ -138,10 +143,9 @@ public:
 	long lModelOutputSampleBufferWritePos;
 	
 	// 最后一条模型输出音频的尾部，用于交叉淡化处理
-	std::mutex lastVoiceSampleForCrossFadeVectorMutex;
+	float fCrossFadeLength;
+	long lCrossFadeLength;
 	std::vector<float> lastVoiceSampleForCrossFadeVector;
-	// 实时模式下，为了避免输出空值，淡化样本会被提前输出，这里记录提前输出的样本数量
-	int lastVoiceSampleCrossFadeSkipNumber;
 
 	bool bCalcPitchError;
 	float fMaxSliceLength;
@@ -193,13 +197,9 @@ public:
 
 	// Model state
 	juce::Value vServerUseTime;
+	float fServerUseTime;
 	// 实时模式下丢弃的音频数据长度
 	juce::Value vDropDataLength;
-
-	// 实时模式空音频计数器
-	long lMaxAllowEmptySampleNumber;
-	float fMaxAllowEmptySampleLength;
-	long lEmptySampleNumberCounter;
 
 private:
     //==============================================================================

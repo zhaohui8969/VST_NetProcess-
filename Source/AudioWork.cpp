@@ -2,6 +2,7 @@
 #include "AudioFile.h"
 #include "httplib.h"
 #include "AudioWork.h"
+#define M_PI 3.14159265358979323846
 
 using namespace std::chrono;
 
@@ -61,6 +62,53 @@ std::string func_bool_to_string(bool bVal) {
 	}
 }
 
+using namespace std;
+vector<float> hanning(int n) {
+	vector<float> win(n);
+	for (int i = 0; i < n; i++) {
+		win[i] = 0.5 * (1 - cos(2 * M_PI * i / (n - 1)));
+	}
+	return win;
+}
+
+vector<float> hanning_crossfade(const vector<float>& x1, const vector<float>& x2, const vector<float> hanningWindow) {
+	int lCrossFadeLength = x1.size();
+	vector<float> s3(lCrossFadeLength);
+	float x1Sample;
+	float x2Sample;
+	float x3Sample;
+	float w1;
+	float w2;
+	for (int i = 0; i < lCrossFadeLength; i++) {
+		x1Sample = x1.at(i);
+		x2Sample = x2.at(i);
+		w1 = hanningWindow[i + lCrossFadeLength];
+		w2 = hanningWindow[i];
+		x3Sample = x1Sample * w1 + x2Sample * w2;
+		s3[i] = x3Sample;
+	}
+	return s3;
+}
+
+
+vector<float> my_crossfade(const vector<float>& x1, const vector<float>& x2) {
+	int lCrossFadeLength = x1.size();
+	vector<float> s3(lCrossFadeLength);
+	float x1Sample;
+	float x2Sample;
+	float x3Sample;
+	float alpha;
+	float fStepAlpha = 1.0f / lCrossFadeLength;
+
+	for (int i = 0; i < lCrossFadeLength; i++) {
+		x1Sample = x1.at(i);
+		x2Sample = x2.at(i);
+		alpha = fStepAlpha * i;
+		x3Sample = x1Sample * (1.f - alpha) + x2Sample * alpha;
+		s3[i] = x3Sample;
+	}
+	return s3;
+}
 
 // 进行声音处理，较为耗时，在单独的线程里进行，避免主线程卡顿爆音
 void func_do_voice_transfer_worker(
@@ -75,12 +123,9 @@ void func_do_voice_transfer_worker(
 	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
 	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-	std::mutex* lastVoiceSampleForCrossFadeVectorMutex,
+	long lCrossFadeLength,
 	std::vector<float>* lastVoiceSampleForCrossFadeVector, // 最后一条模型输出音频的尾部，用于交叉淡化处理
-	int* lastVoiceSampleCrossFadeSkipNumber,
 
-	float* fPrefixLength,					// 前导缓冲区时长(s)
-	float* fDropSuffixLength,				// 丢弃的尾部时长(s)
 	float* fPitchChange,					// 音调变化数值
 	bool* bCalcPitchError,					// 启用音调误差检测
 
@@ -93,9 +138,9 @@ void func_do_voice_transfer_worker(
 	bool* bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
 	int iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
-	bool* bRealTimeModel,					// 占位符，实时模式
 	bool* bEnableDebug,						// 占位符，启用DEBUG输出
 	juce::Value vServerUseTime,				// UI变量，显示服务调用耗时
+	float *fServerUseTime,
 	juce::Value vDropDataLength,			// UI变量，显示实时模式下丢弃的音频数据长度
 
 	bool* bWorkerNeedExit,					// 占位符，表示worker线程需要退出
@@ -110,6 +155,7 @@ void func_do_voice_transfer_worker(
 	double dSOVITSInputSamplerate;
 	char sSOVITSSamplerateBuff[100];
 	char cPitchBuff[100];
+	char cSafePrefixPadLength[100];
 	std::string sHUBERTSampleBuffer;
 	std::string sCalcPitchError;
 	std::string sEnablePreResample;
@@ -118,6 +164,9 @@ void func_do_voice_transfer_worker(
 	int currentVoiceSampleNumber = 0;
 	int iHopSize;
 	INPUT_JOB_STRUCT jobStruct;
+	long lPrefixLength;
+	bool bRealTimeModel;
+	auto hanningWindow = hanning(2 * lCrossFadeLength);
 
 	mWorkerSafeExit->lock();
 	while (!*bWorkerNeedExit) {
@@ -130,6 +179,17 @@ void func_do_voice_transfer_worker(
 			modelInputJobList->erase(modelInputJobList->begin());
 		}
 		modelInputJobListMutex->unlock();
+		lPrefixLength = jobStruct.lPrefixLength;
+		bRealTimeModel = jobStruct.bRealTimeModel;
+
+		iHopSize = 512;
+		long lOverlap1 = lPrefixLength;
+		long lOverlap2 = lCrossFadeLength;
+		long lOverlap3 = lOverlap1 - lOverlap2;
+		float fOverlap1 = 1.0 * lOverlap1 / dProjectSampleRate;
+		float fOverlap2 = 1.0 * lOverlap2 / dProjectSampleRate;
+		float fOverlap3 = 1.0 * lOverlap3 / dProjectSampleRate;
+
 		/*if (*bEnableDebug) {
 			snprintf(buff, sizeof(buff), "queueSize:%lld\n", queueSize);
 			OutputDebugStringA(buff);
@@ -138,7 +198,7 @@ void func_do_voice_transfer_worker(
 			tStart = func_get_timestamp();
 			tTime1 = tStart;
 			roleStruct roleStruct = roleStructList[*iSelectRoleIndex];
-			iHopSize = roleStruct.iHopSize;
+			//iHopSize = roleStruct.iHopSize;
 
 			if (jobStruct.jobType == JOB_EMPTY) {
 				// 这个输入块是静音的，直接准备相等长度的静音输出
@@ -257,13 +317,14 @@ void func_do_voice_transfer_worker(
 
 				// 准备HTTP请求参数
 				snprintf(cPitchBuff, sizeof(cPitchBuff), "%f", *fPitchChange);
+				snprintf(cSafePrefixPadLength, sizeof(cSafePrefixPadLength), "%f", 1.0 * lOverlap3 / dProjectSampleRate);
 				sCalcPitchError = func_bool_to_string(*bCalcPitchError);
 				sEnablePreResample = func_bool_to_string(*bEnableSOVITSPreResample);
-
 				httplib::MultipartFormDataItems items = {
 					{ "sSpeakId", roleStruct.sSpeakId, "", ""},
 					{ "sName", roleStruct.sName, "", ""},
 					{ "fPitchChange", cPitchBuff, "", ""},
+					{ "fSafePrefixPadLength", cSafePrefixPadLength, "", ""},
 					{ "sampleRate", sSOVITSSamplerateBuff, "", ""},
 					{ "bCalcPitchError", sCalcPitchError.c_str(), "", ""},
 					{ "bEnablePreResample", sEnablePreResample.c_str(), "", ""},
@@ -277,6 +338,7 @@ void func_do_voice_transfer_worker(
 
 				tTime2 = func_get_timestamp();
 				tUseTime = tTime2 - tTime1;
+				*fServerUseTime = tUseTime / 1000.0f;
 				vServerUseTime.setValue(juce::String(tUseTime) + "ms");
 				/*if (*bEnableDebug) {
 					snprintf(buff, sizeof(buff), "调用HTTP接口耗时:%lldms\n", tUseTime);
@@ -315,6 +377,7 @@ void func_do_voice_transfer_worker(
 					for (int i = 0; i < jobStruct.modelInputSampleVector.size(); i++) {
 						currentVoiceVector.push_back(0.f);
 					}
+					currentVoiceSampleNumber = currentVoiceVector.size();
 					auto err = res.error();
 					if (*bEnableDebug) {
 						snprintf(buff, sizeof(buff), "算法服务错误:%d\n", err);
@@ -336,7 +399,7 @@ void func_do_voice_transfer_worker(
 				currentVoiceSampleNumber = currentVoiceVector.size();
 
 				if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "模型输出样本数不足，补充静音长度:%d，时长 : %.1fms\n", padNumber, 1.0f * padNumber / dProjectSampleRate * 1000);
+					snprintf(buff, sizeof(buff), "模型输出样本数不足，补充静音长度:%d，时长 : %.0fms\n", padNumber, 1.0f * padNumber / dProjectSampleRate * 1000);
 					OutputDebugStringA(buff);
 				}
 			}
@@ -354,35 +417,23 @@ void func_do_voice_transfer_worker(
 			
 			std::vector<float> processedSampleVector = currentVoiceVector;
 			
-			lastVoiceSampleForCrossFadeVectorMutex->lock();
-			
-			float fOverlap1 = *fPrefixLength;
-			long lOverlap1 = fOverlap1 * dProjectSampleRate;
-			float fOverlap2 = 0.08f;
-			long lOverlap2 = fOverlap2 * dProjectSampleRate;
-			lOverlap2 = ceil(1.0 * lOverlap2 / iHopSize) * iHopSize;
-			float fOverlap3 = fOverlap1 - fOverlap2;
-			long lOverlap3 = fOverlap3 * dProjectSampleRate;
-
-			if (*bRealTimeModel && *fPrefixLength > 0.01f) {
-
-				int S1f_skip = *lastVoiceSampleCrossFadeSkipNumber;
-
+			if (bRealTimeModel && lPrefixLength> iHopSize) {
 				auto s1f = *lastVoiceSampleForCrossFadeVector;
 				// 对s1f针对hop做对齐，从首部修剪它，修剪大小为S1f_skip_more_skip
-				auto s1fMatchHopSize = floor(1.0 * s1f.size() / iHopSize) * iHopSize;
-				int S1f_skip_more_skip = s1f.size() - s1fMatchHopSize;
-				S1f_skip += S1f_skip_more_skip;
-				s1f = std::vector<float>(s1f.end() - s1fMatchHopSize, s1f.end());
+				//auto s1fMatchHopSize = floor(1.0 * s1f.size() / iHopSize) * iHopSize;
+				//int S1f_skip_more_skip = s1f.size() - s1fMatchHopSize;
+				//S1f_skip += S1f_skip_more_skip;
+				//s1f = std::vector<float>(s1f.end() - s1fMatchHopSize, s1f.end());
 
 				auto lCrossFadeLength = s1f.size();
-				auto s2 = std::vector<float>(currentVoiceVector.begin() + S1f_skip + lOverlap3, currentVoiceVector.end());
+				auto s2 = std::vector<float>(currentVoiceVector.begin() + lOverlap3, currentVoiceVector.end());
 
-				std::vector<float> s3;
-				auto s3b = std::vector<float>(s2.begin() + lCrossFadeLength, s2.end());
+				auto s2a = std::vector<float>(s2.begin(), s2.begin() + lCrossFadeLength);
+				auto s2b = std::vector<float>(s2.begin() + lCrossFadeLength, s2.end());
+				//auto s3 = my_crossfade(s1f, s2a);
+				auto s3 = hanning_crossfade(s1f, s2a, hanningWindow);
 
-				float fStepAlpha = 1.0f / lCrossFadeLength;
-
+				/*
 				for (int i = 0; i < lCrossFadeLength; i++) {
 					float s1Sample = s1f.at(i);
 					float s3Sample;
@@ -396,25 +447,25 @@ void func_do_voice_transfer_worker(
 						s3Sample = s1Sample * (1.f - alpha) + s2Sample * alpha;
 					}
 					s3.push_back(s3Sample);
-				}
-				for (int i = 0; i < s3b.size(); i++) {
-					s3.push_back(s3b.at(i));
+				}*/
+				for (int i = 0; i < s2b.size(); i++) {
+					s3.push_back(s2b.at(i));
 				};
 				processedSampleVector = s3;
 
 				if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "fOverlap1:%.0fms\tfOverlap2:%.0fms\tfOverlap3:%.0fms\tS1f_skip:%d\tlCrossFadeLength:%d\n",
-						fOverlap1 * 1000, fOverlap2 * 1000, fOverlap3 * 1000, S1f_skip, lCrossFadeLength);
+					snprintf(buff, sizeof(buff), "fOverlap1:%.0fms\tfOverlap2:%.0fms\tfOverlap3:%.0fms\tlCrossFadeLength:%d\n",
+						fOverlap1 * 1000, fOverlap2 * 1000, fOverlap3 * 1000, lCrossFadeLength);
 					OutputDebugStringA(buff);
 				}
 			};
 			int processedSampleNumber = processedSampleVector.size();
-			//lastVoiceSampleForCrossFadeVectorMutex->unlock();
+			int outputSampleNumber = processedSampleNumber - lOverlap2;
 
 			// 从写指针标记的缓冲区位置开始写入新的音频数据
 			long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
 			// 预留一部分数据用作交叉淡化（不写入实时输出），长度为overlap2
-			for (int i = 0; i < processedSampleNumber - lOverlap2; i++) {
+			for (int i = 0; i < outputSampleNumber; i++) {
 				// 注意，因为输出缓冲区应当尽可能的大，所以此处不考虑写指针追上读指针的情况
 				fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = processedSampleVector.at(i);
 				if (lTmpModelOutputSampleBufferWritePos == lModelOutputBufferSize) {
@@ -422,31 +473,29 @@ void func_do_voice_transfer_worker(
 				}
 			};
 			// 将当前句子的尾部lOverlap2长度保存到“最后一句缓冲区”，供后续交叉淡化流程使用
-			//lastVoiceSampleForCrossFadeVectorMutex->lock();
 			lastVoiceSampleForCrossFadeVector->clear();
-			*lastVoiceSampleCrossFadeSkipNumber = 0;
-			for (int i = currentVoiceSampleNumber - lOverlap2; i < currentVoiceSampleNumber; i++) {
-				lastVoiceSampleForCrossFadeVector->push_back(currentVoiceVector.at(i));
+			for (int i = outputSampleNumber; i < processedSampleNumber; i++) {
+				lastVoiceSampleForCrossFadeVector->push_back(processedSampleVector.at(i));
 			};
 			// 将写指针指向新的位置
 			*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
-			lastVoiceSampleForCrossFadeVectorMutex->unlock();
 
 			if (*bEnableDebug) {
 				snprintf(buff, sizeof(buff), "输出样本数:%d，时长:%.1fms，保留用于淡化样本数：%d，时长:%.1fms\n", 
-					processedSampleNumber, 
-					1.0f * processedSampleNumber / dProjectSampleRate * 1000,
+					outputSampleNumber,
+					1.0f * outputSampleNumber / dProjectSampleRate * 1000,
 					lOverlap2, 
 					1.0f * lOverlap2 / dProjectSampleRate * 1000);
 				OutputDebugStringA(buff);
 			}
 
 			tUseTime = func_get_timestamp() - tStart;
-			/*if (*bEnableDebug) {
-				snprintf(buff, sizeof(buff), "该次woker轮训总耗时:%lld\n", tUseTime);
+			if (*bEnableDebug) {
+				snprintf(buff, sizeof(buff), "该次woker轮训总耗时:%lldms\n", tUseTime);
 				OutputDebugStringA(buff);
-			}*/
+			}
 		}
 	}
 	mWorkerSafeExit->unlock();
 }
+

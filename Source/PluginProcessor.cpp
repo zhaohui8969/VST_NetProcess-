@@ -113,16 +113,17 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixBufferSize);
 	lPrefixBufferPos = 0;
 	// hopSize先写死
-	iHopSize = 512;
+	fServerUseTime = 0.f;
+	lCrossFadeLength = ceil(1.0 * fCrossFadeLength * getSampleRate() / iHopSize) * iHopSize;
 
 	lModelOutputBufferSize = static_cast<long>(fModelOutputBufferSecond * sampleRate);
 	fModeulOutputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelOutputBufferSize));
 	lModelOutputSampleBufferReadPos = 0;
 	lModelOutputSampleBufferWritePos = 0;
-
-	fSafeZoneLength = 0.12f;
-	lSafeZoneSize = ceil(1.0f * fSafeZoneLength * getSampleRate() / iHopSize) * iHopSize;
-
+	lastVoiceSampleForCrossFadeVector.clear();
+	for (int i = 0;i < lCrossFadeLength; i++) {
+		lastVoiceSampleForCrossFadeVector.push_back(0.f);
+	}
 	clearState();
 
 	// worker线程安全退出相关信号
@@ -139,14 +140,10 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 void NetProcessJUCEVersionAudioProcessor::clearState()
 {
 	// 清除前导缓冲和旧的模型输入缓冲区
-	lastVoiceSampleForCrossFadeVectorMutex.lock();
-	lastVoiceSampleCrossFadeSkipNumber = 0;
-	lMaxAllowEmptySampleNumber = getSampleRate() * fMaxAllowEmptySampleLength;
-	lEmptySampleNumberCounter = 0;
 	modelInputJobList.clear();
 	prepareModelInputSample.clear();
-	lastVoiceSampleForCrossFadeVector.clear();
-	lastVoiceSampleForCrossFadeVectorMutex.unlock();
+	lRemainNeedSliceSampleNumber = lMaxSliceLengthSampleNumber;
+	kRecordState = IDLE;
 }
 
 void NetProcessJUCEVersionAudioProcessor::releaseResources()
@@ -215,7 +212,14 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			inputOutputR = inputOutputL;
 		}
 		auto currentBlockVector = std::vector(inputOutputL, inputOutputL + processerSampleBlockSize);
-		if (bRealTimeMode) {
+		bool bHasMoreData;
+		int dropCount = 0;
+		bool bRealTimeModeNow = bRealTimeMode;
+		float fPrefixLengthNow = fPrefixLength;
+		long lPrefixLengthSampleNumberNow = lPrefixLengthSampleNumber;
+
+
+		if (bRealTimeModeNow) {
 			// 实时模式
 			if (kRecordState == IDLE) {
 				// 当前是空闲状态
@@ -228,7 +232,7 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				// 将前导缓冲区的数据写入到模型入参缓冲区中
 				// 从前导缓冲区当前位置向前寻找lPrefixLengthSampleNumber个数据
 				std::vector<float> prefixSampleVector;
-				int readPosStart = lPrefixBufferPos - lPrefixLengthSampleNumber;
+				int readPosStart = lPrefixBufferPos - lPrefixLengthSampleNumberNow;
 				int readPosEnd = lPrefixBufferPos;
 				if (readPosStart >= 0) {
 					// 场景1：[.....start......end...]，直接从中间读取需要的数据
@@ -301,18 +305,25 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					bVolumeDetectFine = fSampleMax >= fSampleVolumeWorkActiveVal;
 					bVolumeDetectFine = true;
 					modelInputJobListMutex.lock();
-					// 对于实时模式，旧数据还未处理的可以直接丢掉
-					if (bEnableDebug) {
-						auto dropModelInputJobListSize = modelInputJobList.size();
-						if (dropModelInputJobListSize > 0) {
+
+					// 对于实时模式，未处理的数据积累到一定量的时候，可以丢弃
+					auto dropModelInputJobListSize = modelInputJobList.size();
+					if (dropModelInputJobListSize > 1) {
+						modelInputJobList.clear();
+						if (bEnableDebug) {
 							snprintf(buff, sizeof(buff), "对于实时模式，旧数据还未处理的可以直接丢掉:%lld\n", dropModelInputJobListSize);
 							OutputDebugStringA(buff);
 						}
 					}
 					modelInputJobList.clear();
 					INPUT_JOB_STRUCT inputJobStruct;
+					inputJobStruct.bRealTimeModel = true;
 					long prepareModelInputMatchHopSize = floor(1.0 * prepareModelInputSample.size() / iHopSize) * iHopSize;
 					auto prepareModelInputMatchHopSample = std::vector<float>(prepareModelInputSample.begin(), prepareModelInputSample.begin() + prepareModelInputMatchHopSize);
+					// 因为hop对齐的原因，发送的数据是Hop的整数倍，因此本次切片的前导音频时长会比配置的少一点
+					//long lRemainSampleSize = prepareModelInputSample.size() - prepareModelInputMatchHopSize;
+					//inputJobStruct.lPrefixLength = lPrefixLengthSampleNumberNow - lRemainSampleSize;
+					inputJobStruct.lPrefixLength = lPrefixLengthSampleNumberNow;
 					if (bVolumeDetectFine) {
 						inputJobStruct.jobType = JOB_WORK;
 						inputJobStruct.modelInputSampleVector = prepareModelInputMatchHopSample;
@@ -327,56 +338,13 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					prepareModelInputSample = newprepareModelInputSample;
 					kRecordState = IDLE;
 					lRemainNeedSliceSampleNumber = lMaxSliceLengthSampleNumber - newprepareModelInputSample.size();
-					modelInputJobListMutex.unlock();
-				}
-			};
-
-			// 检查之前是否存在因为延迟导致的空输出（检查计数器），并按照计数器大小丢弃一部分数据
-			bool bHasMoreData;
-			// 先从输出缓冲区丢弃数据
-			int dropCount = 0;
-			if (lEmptySampleNumberCounter > lMaxAllowEmptySampleNumber) {
-				for (int i = 0; i < lEmptySampleNumberCounter - lMaxAllowEmptySampleNumber; i++) {
-					bHasMoreData = lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos;
-					if (bHasMoreData) {
-						lModelOutputSampleBufferReadPos++;
-						if (lModelOutputSampleBufferReadPos == lModelOutputBufferSize) {
-							lModelOutputSampleBufferReadPos = 0;
-						}
-						lEmptySampleNumberCounter--;
-						dropCount++;
-					}
-					else {
-						break;
-					}
-				};
-				if (bEnableDebug) {
-					snprintf(buff, sizeof(buff), "实时模式 - 因为延迟抖动而从输出缓冲区丢弃数据:%d\n", dropCount);
-					OutputDebugStringA(buff);
-				}
-			};
-
-			dropCount = 0;
-			// 再从待交叉淡化的数据中丢数据
-			if (lEmptySampleNumberCounter > lMaxAllowEmptySampleNumber) {
-				lastVoiceSampleForCrossFadeVectorMutex.lock();
-				int peekDataSize = min(lEmptySampleNumberCounter - lMaxAllowEmptySampleNumber, lastVoiceSampleForCrossFadeVector.size());
-				if (peekDataSize > 0) {
-					lastVoiceSampleCrossFadeSkipNumber += peekDataSize;
 					if (bEnableDebug) {
-						snprintf(buff, sizeof(buff), "实时模式 - 使用交叉淡化数据提前输出，避免空输出:%ld\n", lNoOutputCount);
+						snprintf(buff, sizeof(buff), "实时模式 - 因为帧对齐，留给下次处理的数据：:%lld 时长：%.0fms\n", 
+							newprepareModelInputSample.size(),
+							1.0f * newprepareModelInputSample.size() / getSampleRate() * 1000);
 						OutputDebugStringA(buff);
 					}
-					for (int i = 0; i < peekDataSize; i++) {
-						lEmptySampleNumberCounter--;
-						dropCount++;
-						lastVoiceSampleForCrossFadeVector.erase(lastVoiceSampleForCrossFadeVector.begin());
-					}
-				};
-				lastVoiceSampleForCrossFadeVectorMutex.unlock();
-				if (bEnableDebug) {
-					snprintf(buff, sizeof(buff), "!!!!!!!!!!!!!!!!!!!!!!!实时模式-因为延迟抖动而从待交叉淡化的数据中丢数据:%d\n", dropCount);
-					OutputDebugStringA(buff);
+					modelInputJobListMutex.unlock();
 				}
 			};
 
@@ -404,64 +372,34 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			// 判断当前是否有空输出
 			bool hasEmptyBlock = outputWritePos != currentBlockVector.size();
 			if (hasEmptyBlock) {
-				// 从“待交叉淡化数据”中先取出一部分数据
-				int blockRemainNeedSampleNumber = currentBlockVector.size() - outputWritePos;
-				lastVoiceSampleForCrossFadeVectorMutex.lock();
-				int peekDataSize = min(blockRemainNeedSampleNumber, lastVoiceSampleForCrossFadeVector.size());
-				if (peekDataSize > 0) {
-					lastVoiceSampleCrossFadeSkipNumber += peekDataSize;
-					dropCount = 0;
-					for (int i = 0; i < peekDataSize; i++) {
-						auto peekSample = lastVoiceSampleForCrossFadeVector.at(0);
-						lastVoiceSampleForCrossFadeVector.erase(lastVoiceSampleForCrossFadeVector.begin());
-						inputOutputL[outputWritePos] = static_cast<float>(peekSample);
-						if (bHasRightChanel) {
-							inputOutputR[outputWritePos] = static_cast<float>(peekSample);
-						};
-						outputWritePos++;
-						dropCount++;
+				// 输出静音
+				lNoOutputCount += 1;
+				dropCount = 0;
+				for (juce::int32 i = outputWritePos; i < currentBlockVector.size(); i++) {
+					dropCount++;
+					inputOutputL[i] = 0.0000000001f;
+					if (bHasRightChanel) {
+						inputOutputR[i] = 0.0000000001f;
 					}
-					if (bEnableDebug) {
-						snprintf(buff, sizeof(buff), "实时模式 - 避免空输出，使用交叉淡化数据提前输出，使用的数据量:%d，时长 : %.1fms\n", dropCount, 1.0f * dropCount / getSampleRate()*1000);
-						OutputDebugStringA(buff);
+				}
+				long lSilenceLength = currentBlockVector.size() - outputWritePos;
+				// 入不敷出了，插入一个安全区
+				lSafeZoneSize = ceil(fSafeZoneLength * getSampleRate() / iHopSize) * iHopSize;
+				for (int i = 0; i < lSafeZoneSize; i++) {
+					fModeulOutputSampleBuffer[lModelOutputSampleBufferWritePos++] = 0.f;
+					if (lModelOutputSampleBufferWritePos == lModelOutputBufferSize) {
+						lModelOutputSampleBufferWritePos = 0;
 					}
 				};
-				lastVoiceSampleForCrossFadeVectorMutex.unlock();
-				hasEmptyBlock = outputWritePos != currentBlockVector.size();
-				if (hasEmptyBlock) {
-					// 还有空输出，此时已经没有数据可以用了
-					// 将计数器累加（通常是延迟抖动，导致无音频输出，此处记录空了多久，在后续有音频输出的时候，为了防止延迟累加，需要丢弃掉一部分数据）
-					auto emptySampleNumber = currentBlockVector.size() - outputWritePos;
-					lEmptySampleNumberCounter += emptySampleNumber;
-					// 输出静音
-					lNoOutputCount += 1;
-					dropCount = 0;
-					for (juce::int32 i = outputWritePos; i < currentBlockVector.size(); i++) {
-						// 对输出静音
-						dropCount++;
-						inputOutputL[i] = 0.0000000001f;
-						if (bHasRightChanel) {
-							inputOutputR[i] = 0.0000000001f;
-						}
-					}
-					// 入不敷出了，插入一个安全区
-					lastVoiceSampleForCrossFadeVectorMutex.lock();
-					for (int i = 0; i < lSafeZoneSize; i++) {
-						fModeulOutputSampleBuffer[lModelOutputSampleBufferWritePos++] = 0.f;
-						if (lModelOutputSampleBufferWritePos == lModelOutputBufferSize) {
-							lModelOutputSampleBufferWritePos = 0;
-						}
-					};
-					lastVoiceSampleForCrossFadeVectorMutex.unlock();
 
-					if (bEnableDebug) {
-						snprintf(buff, sizeof(buff), "实时模式 - 输出缓冲空，次数:%ld，空白数据量：%d，时长: %.1f，插入安全区：%d\n", 
-							lNoOutputCount,
-							dropCount, 
-							1.0f * dropCount / getSampleRate() * 1000,
-							lSafeZoneSize);
-						OutputDebugStringA(buff);
-					}
+				if (bEnableDebug) {
+					snprintf(buff, sizeof(buff), "实时模式 - 输出缓冲空，次数:%ld，空白数据量：%d，时长: %.1fms，插入安全区：%d时长:%.0fms\n",
+						lNoOutputCount,
+						dropCount,
+						1.0f * dropCount / getSampleRate() * 1000,
+						lSafeZoneSize,
+						1.0 * lSafeZoneSize / getSampleRate() * 1000);
+					OutputDebugStringA(buff);
 				}
 			}
 		}
@@ -540,6 +478,8 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					INPUT_JOB_STRUCT jobStruct;
 					jobStruct.jobType = JOB_WORK;
 					jobStruct.modelInputSampleVector = prepareModelInputSample;
+					jobStruct.bRealTimeModel = false;
+					jobStruct.lPrefixLength = lPrefixLengthSampleNumberNow;
 					modelInputJobListMutex.lock();
 					modelInputJobList.push_back(jobStruct);
 					prepareModelInputSample = newprepareModelInputSample;
@@ -619,7 +559,6 @@ void NetProcessJUCEVersionAudioProcessor::getStateInformation (juce::MemoryBlock
 	xml->setAttribute("fMaxSliceLengthForSentenceMode", (double)fMaxSliceLengthForSentenceMode);
 	xml->setAttribute("fLowVolumeDetectTime", (double)fLowVolumeDetectTime);
 	xml->setAttribute("fPrefixLength", (double)fPrefixLength);
-	xml->setAttribute("fDropSuffixLength", (double)fDropSuffixLength);
 	xml->setAttribute("fPitchChange", (double)fPitchChange);
 	xml->setAttribute("bRealTimeMode", bRealTimeMode);
 	xml->setAttribute("bEnableDebug", bEnableDebug);
@@ -641,7 +580,6 @@ void NetProcessJUCEVersionAudioProcessor::setStateInformation (const void* data,
 			lRemainNeedSliceSampleNumber = lMaxSliceLengthSampleNumber;
 			fLowVolumeDetectTime = (float)xmlState->getDoubleAttribute("fLowVolumeDetectTime", 0.4);
 			fPrefixLength = (float)xmlState->getDoubleAttribute("fPrefixLength", 0.0);
-			fDropSuffixLength = (float)xmlState->getDoubleAttribute("fDropSuffixLength", 0.0);
 			fPitchChange = (float)xmlState->getDoubleAttribute("fPitchChange", 1.0);
 			bRealTimeMode = (bool)xmlState->getBoolAttribute("bRealTimeMode", false);
 			bEnableDebug = (bool)xmlState->getBoolAttribute("bEnableDebug", false);
@@ -661,13 +599,15 @@ void NetProcessJUCEVersionAudioProcessor::loadConfig()
 		fMaxSliceLengthForSentenceMode = fMaxSliceLength;
 		fLowVolumeDetectTime = 0.4f;
 		fPrefixLength = 0.0f;
-		fDropSuffixLength = 0.0f;
 		lMaxSliceLengthSampleNumber = static_cast<long>(getSampleRate() * fMaxSliceLength);
 		lRemainNeedSliceSampleNumber = lMaxSliceLengthSampleNumber;
 		fPitchChange = 0.0f;
 		bRealTimeMode = false;
 		bEnableDebug = false;
 		iSelectRoleIndex = 0;
+		fSafeZoneLength = 0.05f;
+		fCrossFadeLength = 0.f;
+		iHopSize = 512;
 
 		auto dllClient = LoadLibraryW(sDllPath.c_str());
 		if (dllClient != NULL) {
@@ -690,7 +630,9 @@ void NetProcessJUCEVersionAudioProcessor::loadConfig()
 			bEnableHUBERTPreResample = props["bEnableHUBERTPreResample"];
 			iHUBERTInputSampleRate = props["iHUBERTInputSampleRate"];
 			fSampleVolumeWorkActiveVal = props["fSampleVolumeWorkActiveVal"];
-			fMaxAllowEmptySampleLength = props["fMaxAllowEmptySampleLength"];
+			fSafeZoneLength = props["fSafeZoneLength"];
+			fCrossFadeLength = props["fCrossFadeLength"];
+			iHopSize = props["iHopSize"];
 
 			roleList.clear();
 			auto jsonRoleList = props["roleList"];
@@ -734,12 +676,9 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
         &lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
         &lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
 
-		&lastVoiceSampleForCrossFadeVectorMutex,
+		lCrossFadeLength,
 		&lastVoiceSampleForCrossFadeVector, //最后一条模型输出音频的尾部，用于交叉淡化处理
-		&lastVoiceSampleCrossFadeSkipNumber,
 
-		&fPrefixLength,						// 前导缓冲区时长(s)
-		&fDropSuffixLength,					// 丢弃的尾部时长(s)
         &fPitchChange,						// 音调变化数值
         &bCalcPitchError,					// 启用音调误差检测
 
@@ -752,9 +691,9 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
         &bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
         iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
-        &bRealTimeMode,					    // 占位符，实时模式
 		&bEnableDebug,						// 占位符，启用DEBUG输出
 		vServerUseTime,						// UI变量，显示服务调用耗时
+		&fServerUseTime,
 		vDropDataLength,					// UI变量，显示实时模式下丢弃的音频数据长度
 
         &bWorkerNeedExit,					// 占位符，表示worker线程需要退出
