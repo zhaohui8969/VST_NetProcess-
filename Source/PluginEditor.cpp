@@ -121,7 +121,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     addAndMakeVisible(&lDropDataLengthValLabel);
 
     lVersionLabel.setText(L"°æ±¾ºÅ:", juce::dontSendNotification);
-    lVersionValLabel.setText(L"V3.0", juce::dontSendNotification);
+    lVersionValLabel.setText(L"V3.2", juce::dontSendNotification);
     addAndMakeVisible(&lVersionLabel);
     addAndMakeVisible(&lVersionValLabel);
 }
