@@ -41,13 +41,17 @@ enum JOB_TYPE
 typedef struct
 {
 	JOB_TYPE jobType;
-	long emptySampleNumber;
-	std::vector<float> modelInputSampleVector;
-	// 前导缓冲区时长(s)
-	long lPrefixLength;
 	// 占位符，实时模式
 	bool bRealTimeModel;
-} INPUT_JOB_STRUCT;
+	// 前导缓冲区时长(s)
+	long lPrefixLength;
+	std::vector<float> modelInputSampleVector;
+	std::vector<float> modelOutputSampleVector;
+	juce::int64 bornTimeStamp;
+	// 输出中保留的部分，用于交叉淡化，在计算延迟的时候应当考虑这个值
+	long lSuffixlOverlap2;
+} JOB_STRUCT;
+
 
 typedef int(*FUNC_SRC_SIMPLE)(SRC_DATA* data, int converter_type, int channels);
 
@@ -118,6 +122,7 @@ public:
 	void loadConfig();
 	void runWorker();
 	void clearState();
+	void tryGetFromModelOutputJobList();
 
 	// 用来保存日志
 	char buff[100];
@@ -130,22 +135,18 @@ public:
 	bool bEnableDebug;
 
 	// 基于线程安全队列的模型入参缓冲区
-	std::vector<INPUT_JOB_STRUCT> modelInputJobList;
+	std::vector<JOB_STRUCT> modelInputJobList;
 	std::vector<float> prepareModelInputSample;
-	std::mutex modelInputJobListMutex;
-	
-	// 基于双指针缓冲区的线程数据交换机制，用于存放模型输出数据
-	// 初始化线程间交换数据的缓冲区，120s的缓冲区足够大
-	float fModelOutputBufferSecond = 120.f;
-	long lModelOutputBufferSize;
-	float* fModeulOutputSampleBuffer;
-	long lModelOutputSampleBufferReadPos;
-	long lModelOutputSampleBufferWritePos;
-	
+	juce::CriticalSection modelInputJobListLock;
+
+	std::vector<JOB_STRUCT> modelOutputJobList;
+	JOB_STRUCT modelOutputJob;
+	juce::CriticalSection modelOutputJobListLock;
+	bool bHasMoreData;
+		
 	// 最后一条模型输出音频的尾部，用于交叉淡化处理
 	float fCrossFadeLength;
 	long lCrossFadeLength;
-	std::vector<float> lastVoiceSampleForCrossFadeVector;
 
 	bool bCalcPitchError;
 	float fMaxSliceLength;
@@ -185,6 +186,7 @@ public:
 
 	// 实时模式
 	bool bRealTimeMode;
+	bool bRealTimeECO;
 
 	// 音量检测
 	bool bVolumeDetectFine;

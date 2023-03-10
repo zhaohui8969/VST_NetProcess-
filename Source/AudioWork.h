@@ -10,16 +10,13 @@ void func_do_voice_transfer_worker(
 	int iNumberOfChanel,					// 通道数量
 	double dProjectSampleRate,				// 项目采样率
 
-	std::vector<INPUT_JOB_STRUCT>* modelInputJobList, // 模型输入队列
-	std::mutex* modelInputJobListMutex,		// 模型输入队列锁
-
-	long lModelOutputBufferSize,			// 模型输出缓冲区大小
-	float* fModeulOutputSampleBuffer,		// 模型输出缓冲区
-	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
-	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
+	std::vector<JOB_STRUCT>* modelInputJobList, // 模型输入队列
+	juce::CriticalSection* modelInputJobListLock,		// 模型输入队列锁
+	
+	std::vector<JOB_STRUCT>* modelOutputJobList, // 模型输出队列
+	juce::CriticalSection* modelOutputJobListLock,		// 模型输出队列锁
 
 	long lCrossFadeLength,
-	std::vector<float>* lastVoiceSampleForCrossFadeVector, // 最后一条模型输出音频的尾部，用于交叉淡化处理
 
 	float* fPitchChange,					// 音调变化数值
 	bool* bCalcPitchError,					// 启用音调误差检测

@@ -99,9 +99,6 @@ void NetProcessJUCEVersionAudioProcessor::changeProgramName (int index, const ju
 //==============================================================================
 void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
-	// reset state and buffer
 	iNumberOfChanel = 1;
 	lNoOutputCount = 0;
 
@@ -112,18 +109,10 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 	lPrefixLengthSampleNumber = static_cast<long>(fPrefixLength * sampleRate);
 	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixBufferSize);
 	lPrefixBufferPos = 0;
-	// hopSize先写死
+
 	fServerUseTime = 0.f;
 	lCrossFadeLength = ceil(1.0 * fCrossFadeLength * getSampleRate() / iHopSize) * iHopSize;
 
-	lModelOutputBufferSize = static_cast<long>(fModelOutputBufferSecond * sampleRate);
-	fModeulOutputSampleBuffer = (float*)(std::malloc(sizeof(float) * lModelOutputBufferSize));
-	lModelOutputSampleBufferReadPos = 0;
-	lModelOutputSampleBufferWritePos = 0;
-	lastVoiceSampleForCrossFadeVector.clear();
-	for (int i = 0;i < lCrossFadeLength; i++) {
-		lastVoiceSampleForCrossFadeVector.push_back(0.f);
-	}
 	clearState();
 
 	// worker线程安全退出相关信号
@@ -140,8 +129,10 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 void NetProcessJUCEVersionAudioProcessor::clearState()
 {
 	// 清除前导缓冲和旧的模型输入缓冲区
-	modelInputJobList.clear();
-	prepareModelInputSample.clear();
+	JOB_STRUCT inputJobStruct;
+	modelOutputJob = inputJobStruct;
+	modelOutputJob.modelOutputSampleVector = std::vector<float>();
+	bHasMoreData = false;
 	lRemainNeedSliceSampleNumber = lMaxSliceLengthSampleNumber;
 	kRecordState = IDLE;
 }
@@ -151,6 +142,13 @@ void NetProcessJUCEVersionAudioProcessor::releaseResources()
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 	bWorkerNeedExit = true;
+	modelInputJobList.clear();
+	modelInputJobList.reserve(8);
+	prepareModelInputSample.clear();
+	prepareModelInputSample.reserve(lMaxSliceLengthSampleNumber);
+	modelOutputJobList.clear();
+	modelOutputJobList.reserve(8);
+	free(fPrefixBuffer);
 	// 当子线程还在运行时，这个锁是锁上的，此时主线程还不能退出
 	// 主线程通过将退出信号发给子线程，等待子线程安全退出后，释放锁，主线程再退出
 	mWorkerSafeExit.lock();
@@ -212,7 +210,6 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			inputOutputR = inputOutputL;
 		}
 		auto currentBlockVector = std::vector(inputOutputL, inputOutputL + processerSampleBlockSize);
-		bool bHasMoreData;
 		int dropCount = 0;
 		bool bRealTimeModeNow = bRealTimeMode;
 		float fPrefixLengthNow = fPrefixLength;
@@ -231,23 +228,24 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				// 从IDLE切换到WORD，表示需要一段新的模型输入
 				// 将前导缓冲区的数据写入到模型入参缓冲区中
 				// 从前导缓冲区当前位置向前寻找lPrefixLengthSampleNumber个数据
-				std::vector<float> prefixSampleVector;
+				std::vector<float> prefixSampleVector(lPrefixLengthSampleNumberNow);
+				int prefixSampleVectorWritePos = 0;
 				int readPosStart = lPrefixBufferPos - lPrefixLengthSampleNumberNow;
 				int readPosEnd = lPrefixBufferPos;
 				if (readPosStart >= 0) {
 					// 场景1：[.....start......end...]，直接从中间读取需要的数据
 					for (int i = readPosStart; i < readPosEnd; i++) {
-						prefixSampleVector.push_back(fPrefixBuffer[i]);
+						prefixSampleVector[prefixSampleVectorWritePos++] = fPrefixBuffer[i];
 					}
 				}
 				else {
 					// 场景2：[.....end......start...]，需要从循环缓冲区尾部获取一些数据，然后再从头部读取一些数据
-					readPosStart = lPrefixBufferSize + readPosStart - 1;
+					readPosStart = lPrefixBufferSize + readPosStart;
 					for (int i = readPosStart; i < lPrefixBufferSize; i++) {
-						prefixSampleVector.push_back(fPrefixBuffer[i]);
+						prefixSampleVector[prefixSampleVectorWritePos++] = fPrefixBuffer[i];
 					}
 					for (int i = 0; i < readPosEnd; i++) {
-						prefixSampleVector.push_back(fPrefixBuffer[i]);
+						prefixSampleVector[prefixSampleVectorWritePos++] = fPrefixBuffer[i];
 					}
 				};
 
@@ -293,19 +291,37 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					// 4.设置标记位，供消费者检查
 					// 5.模型输入队列锁释放
 					// 音量检查，如果整体是静音，则不需要经过模型处理什么，直接输出静音，避免静音进入模型后输出奇怪的声音
-					double fSampleMax = -9999;
-					for (juce::int32 i = 0; i < currentBlockVector.size(); i++) {
-						// 获取当前块的最大音量
-						float fCurrentSample = currentBlockVector[i];
-						float fSampleAbs = std::abs(fCurrentSample);
-						if (fSampleAbs > fSampleMax) {
-							fSampleMax = fSampleAbs;
+					if (bRealTimeECO) {
+						double fSampleMax = -9999;
+						for (juce::int32 i = 0; i < currentBlockVector.size(); i++) {
+							// 获取当前块的最大音量
+							float fCurrentSample = currentBlockVector[i];
+							float fSampleAbs = std::abs(fCurrentSample);
+							if (fSampleAbs > fSampleMax) {
+								fSampleMax = fSampleAbs;
+							}
 						}
+						bVolumeDetectFine = fSampleMax >= fSampleVolumeWorkActiveVal;
 					}
-					bVolumeDetectFine = fSampleMax >= fSampleVolumeWorkActiveVal;
-					bVolumeDetectFine = true;
-					modelInputJobListMutex.lock();
+					else {
+						bVolumeDetectFine = true;
+					}
 
+					// 准备模型所需入参
+					JOB_STRUCT inputJobStruct;
+					inputJobStruct.bRealTimeModel = true;
+					long prepareModelInputMatchHopSize = floor(1.0 * prepareModelInputSample.size() / iHopSize) * iHopSize;
+					auto prepareModelInputMatchHopSample = std::vector<float>(prepareModelInputSample.begin(), prepareModelInputSample.begin() + prepareModelInputMatchHopSize);
+					inputJobStruct.lPrefixLength = lPrefixLengthSampleNumberNow;
+					inputJobStruct.modelInputSampleVector = prepareModelInputMatchHopSample;
+					inputJobStruct.bornTimeStamp = juce::Time::currentTimeMillis();
+					if (bVolumeDetectFine) {
+						inputJobStruct.jobType = JOB_WORK;
+					}
+					else {
+						inputJobStruct.jobType = JOB_EMPTY;
+					}
+					modelInputJobListLock.enter();
 					// 对于实时模式，未处理的数据积累到一定量的时候，可以丢弃
 					auto dropModelInputJobListSize = modelInputJobList.size();
 					if (dropModelInputJobListSize > 1) {
@@ -315,26 +331,9 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 							OutputDebugStringA(buff);
 						}
 					}
-					modelInputJobList.clear();
-					INPUT_JOB_STRUCT inputJobStruct;
-					inputJobStruct.bRealTimeModel = true;
-					long prepareModelInputMatchHopSize = floor(1.0 * prepareModelInputSample.size() / iHopSize) * iHopSize;
-					auto prepareModelInputMatchHopSample = std::vector<float>(prepareModelInputSample.begin(), prepareModelInputSample.begin() + prepareModelInputMatchHopSize);
-					// 因为hop对齐的原因，发送的数据是Hop的整数倍，因此本次切片的前导音频时长会比配置的少一点
-					//long lRemainSampleSize = prepareModelInputSample.size() - prepareModelInputMatchHopSize;
-					//inputJobStruct.lPrefixLength = lPrefixLengthSampleNumberNow - lRemainSampleSize;
-					inputJobStruct.lPrefixLength = lPrefixLengthSampleNumberNow;
-					if (bVolumeDetectFine) {
-						inputJobStruct.jobType = JOB_WORK;
-						inputJobStruct.modelInputSampleVector = prepareModelInputMatchHopSample;
-						modelInputJobList.push_back(inputJobStruct);
-					}
-					else {
-						inputJobStruct.jobType = JOB_EMPTY;
-						inputJobStruct.emptySampleNumber = prepareModelInputMatchHopSample.size();
-						modelInputJobList.push_back(inputJobStruct);
-					}
+					modelInputJobList.push_back(inputJobStruct);
 					std::vector<float> newprepareModelInputSample = std::vector<float>(prepareModelInputSample.begin() + prepareModelInputMatchHopSize, prepareModelInputSample.end());
+					newprepareModelInputSample.reserve(lMaxSliceLengthSampleNumber);
 					prepareModelInputSample = newprepareModelInputSample;
 					kRecordState = IDLE;
 					lRemainNeedSliceSampleNumber = lMaxSliceLengthSampleNumber - newprepareModelInputSample.size();
@@ -344,53 +343,59 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 							1.0f * newprepareModelInputSample.size() / getSampleRate() * 1000);
 						OutputDebugStringA(buff);
 					}
-					modelInputJobListMutex.unlock();
+					modelInputJobListLock.exit();
 				}
 			};
-
 			// 模型输出写到VST输出中
-			int outputWritePos = 0;
-			bHasMoreData = lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos;
-			if (bHasMoreData) {
-				for (int i = 0; i < currentBlockVector.size(); i++)
+			tryGetFromModelOutputJobList();
+
+			int outputWriteCount = 0;
+			// 一直输出，直到没有数据可用，或者当前chunk写满
+			bool bNeedOutput = bHasMoreData && outputWriteCount != currentBlockVector.size();
+			while (bNeedOutput) {
+				long lCanReadSize = min(modelOutputJob.modelOutputSampleVector.size(), currentBlockVector.size() - outputWriteCount);
+				for (int i = 0; i < lCanReadSize; i++)
 				{
-					bHasMoreData = lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos;
-					if (!bHasMoreData) {
-						break;
-					}
-					double currentSample = fModeulOutputSampleBuffer[lModelOutputSampleBufferReadPos++];
-					if (lModelOutputSampleBufferReadPos == lModelOutputBufferSize) {
-						lModelOutputSampleBufferReadPos = 0;
-					}
-					inputOutputL[i] = static_cast<float>(currentSample);
+					double currentSample = modelOutputJob.modelOutputSampleVector[i];
+					inputOutputL[outputWriteCount] = static_cast<float>(currentSample);
 					if (bHasRightChanel) {
-						inputOutputR[i] = static_cast<float>(currentSample);
+						inputOutputR[outputWriteCount] = static_cast<float>(currentSample);
 					};
-					outputWritePos = i + 1;
+					outputWriteCount++;
 				}
+				// 删除已经使用过的数据
+				modelOutputJob.modelOutputSampleVector = std::vector<float>(modelOutputJob.modelOutputSampleVector.begin() + lCanReadSize, modelOutputJob.modelOutputSampleVector.end());
+				tryGetFromModelOutputJobList();
+				bNeedOutput = bHasMoreData && outputWriteCount != currentBlockVector.size();
 			}
+
 			// 判断当前是否有空输出
-			bool hasEmptyBlock = outputWritePos != currentBlockVector.size();
+			bool hasEmptyBlock = outputWriteCount != currentBlockVector.size();
 			if (hasEmptyBlock) {
 				// 输出静音
 				lNoOutputCount += 1;
 				dropCount = 0;
-				for (juce::int32 i = outputWritePos; i < currentBlockVector.size(); i++) {
+				for (juce::int32 i = outputWriteCount; i < currentBlockVector.size(); i++) {
 					dropCount++;
 					inputOutputL[i] = 0.0000000001f;
 					if (bHasRightChanel) {
 						inputOutputR[i] = 0.0000000001f;
 					}
 				}
-				long lSilenceLength = currentBlockVector.size() - outputWritePos;
+
+				
+				long lSilenceLength = currentBlockVector.size() - outputWriteCount;
 				// 入不敷出了，插入一个安全区
 				lSafeZoneSize = ceil(fSafeZoneLength * getSampleRate() / iHopSize) * iHopSize;
-				for (int i = 0; i < lSafeZoneSize; i++) {
-					fModeulOutputSampleBuffer[lModelOutputSampleBufferWritePos++] = 0.f;
-					if (lModelOutputSampleBufferWritePos == lModelOutputBufferSize) {
-						lModelOutputSampleBufferWritePos = 0;
-					}
-				};
+
+				
+				JOB_STRUCT safeJob;
+				safeJob.modelOutputSampleVector = std::vector<float>(lSafeZoneSize);
+				safeJob.bornTimeStamp = juce::Time::currentTimeMillis();
+				modelOutputJobListLock.enter();
+				//modelOutputJobList.insert(modelOutputJobList.begin(), safeJob);
+				modelOutputJobList.push_back(safeJob);
+				modelOutputJobListLock.exit();
 
 				if (bEnableDebug) {
 					snprintf(buff, sizeof(buff), "实时模式 - 输出缓冲空，次数:%ld，空白数据量：%d，时长: %.1fms，插入安全区：%d时长:%.0fms\n",
@@ -475,43 +480,45 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					// 4.设置标记位，供消费者检查
 					// 5.模型输入队列锁释放
 					std::vector<float> newprepareModelInputSample;
-					INPUT_JOB_STRUCT jobStruct;
+					JOB_STRUCT jobStruct;
 					jobStruct.jobType = JOB_WORK;
 					jobStruct.modelInputSampleVector = prepareModelInputSample;
 					jobStruct.bRealTimeModel = false;
 					jobStruct.lPrefixLength = lPrefixLengthSampleNumberNow;
-					modelInputJobListMutex.lock();
+					modelInputJobListLock.enter();
 					modelInputJobList.push_back(jobStruct);
 					prepareModelInputSample = newprepareModelInputSample;
 					kRecordState = IDLE;
 					lRemainNeedSliceSampleNumber = lMaxSliceLengthSampleNumber;
-					modelInputJobListMutex.unlock();
+					modelInputJobListLock.exit();
 				}
 			};
 
 			// 模型输出写到VST输出中
-			int outputWritePos = 0;
-			bool bHasMoreData = lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos;
-			if (bHasMoreData) {
-				for (int i = 0; i < currentBlockVector.size(); i++)
+			tryGetFromModelOutputJobList();
+
+			int outputWriteCount = 0;
+			// 一直输出，直到没有数据可用，或者当前chunk写满
+			bool bNeedOutput = bHasMoreData && outputWriteCount != currentBlockVector.size();
+			while (bNeedOutput) {
+				long lCanReadSize = min(modelOutputJob.modelOutputSampleVector.size(), currentBlockVector.size() - outputWriteCount);
+				for (int i = 0; i < lCanReadSize; i++)
 				{
-					bHasMoreData = lModelOutputSampleBufferReadPos != lModelOutputSampleBufferWritePos;
-					if (!bHasMoreData) {
-						break;
-					}
-					double currentSample = fModeulOutputSampleBuffer[lModelOutputSampleBufferReadPos++];
-					if (lModelOutputSampleBufferReadPos == lModelOutputBufferSize) {
-						lModelOutputSampleBufferReadPos = 0;
-					}
-					inputOutputL[i] = static_cast<float>(currentSample);
+					double currentSample = modelOutputJob.modelOutputSampleVector[i];
+					inputOutputL[outputWriteCount] = static_cast<float>(currentSample);
 					if (bHasRightChanel) {
-						inputOutputR[i] = static_cast<float>(currentSample);
+						inputOutputR[outputWriteCount] = static_cast<float>(currentSample);
 					};
-					outputWritePos = i + 1;
+					outputWriteCount++;
 				}
+				// 删除已经使用过的数据
+				modelOutputJob.modelOutputSampleVector = std::vector<float>(modelOutputJob.modelOutputSampleVector.begin() + lCanReadSize, modelOutputJob.modelOutputSampleVector.end());
+				tryGetFromModelOutputJobList();
+				bNeedOutput = bHasMoreData && outputWriteCount != currentBlockVector.size();
 			}
+
 			// 判断当前是否有空输出
-			bool hasEmptyBlock = outputWritePos != currentBlockVector.size();
+			bool hasEmptyBlock = outputWriteCount != currentBlockVector.size();
 			if (hasEmptyBlock) {
 				// 无数据可以取了，输出静音
 				lNoOutputCount += 1;
@@ -519,7 +526,7 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					snprintf(buff, sizeof(buff), "!!!!!!!!!!!!!!!!!!!!!!!分句模式-输出缓冲空:%ld\n", lNoOutputCount);
 					OutputDebugStringA(buff);
 				}
-				for (juce::int32 i = outputWritePos; i < processerSampleBlockSize; i++) {
+				for (juce::int32 i = outputWriteCount; i < processerSampleBlockSize; i++) {
 					// 对输出静音
 					inputOutputL[i] = 0.0000000001f;
 					if (bHasRightChanel) {
@@ -587,6 +594,46 @@ void NetProcessJUCEVersionAudioProcessor::setStateInformation (const void* data,
 		}
 }
 
+void NetProcessJUCEVersionAudioProcessor::tryGetFromModelOutputJobList() {
+	if (modelOutputJob.modelOutputSampleVector.size() > 0) {
+		bHasMoreData = true;
+		/*
+		if (bEnableDebug) {
+			snprintf(buff, sizeof(buff), "实时模式 - tryGetFromModelOutputJobList 当前job还有数据\n");
+			OutputDebugStringA(buff);
+		}*/
+	}
+	else {
+		// 当前chunk数据取完了，按照job里的时间戳可以计算出当前整体延迟
+		auto timeNow = juce::Time::currentTimeMillis();
+		auto latencySample = (timeNow - modelOutputJob.bornTimeStamp) * getSampleRate() / 1000;
+		if (modelOutputJob.bRealTimeModel) {
+			latencySample += modelOutputJob.lSuffixlOverlap2;
+		}
+		setLatencySamples(latencySample);
+		if (modelOutputJobList.size() > 0) {
+			bHasMoreData = true;
+			modelOutputJobListLock.enter();
+			modelOutputJob = modelOutputJobList.at(0);
+			modelOutputJobList.erase(modelOutputJobList.begin());
+			modelOutputJobListLock.exit();
+			/*
+			if (bEnableDebug) {
+				snprintf(buff, sizeof(buff), "实时模式 - tryGetFromModelOutputJobList 当前job没数据，从list拿一个job\n");
+				OutputDebugStringA(buff);
+			}*/
+		}
+		else {
+			bHasMoreData = false;
+			/*
+			if (bEnableDebug) {
+				snprintf(buff, sizeof(buff), "实时模式 - tryGetFromModelOutputJobList 当前job无数据，List空\n");
+				OutputDebugStringA(buff);
+			}*/
+		}
+	}
+}
+
 void NetProcessJUCEVersionAudioProcessor::loadConfig()
 {
 	std::wstring sDllPath = L"C:/Program Files/Common Files/VST3/NetProcessJUCEVersion/samplerate.dll";
@@ -633,6 +680,7 @@ void NetProcessJUCEVersionAudioProcessor::loadConfig()
 			fSafeZoneLength = props["fSafeZoneLength"];
 			fCrossFadeLength = props["fCrossFadeLength"];
 			iHopSize = props["iHopSize"];
+			bRealTimeECO = props["bRealTimeECO"];
 
 			roleList.clear();
 			auto jsonRoleList = props["roleList"];
@@ -669,15 +717,12 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
         getSampleRate(),		            // 项目采样率
 
 		&modelInputJobList,					// 模型输入队列
-		&modelInputJobListMutex,			// 模型输入队列锁
+		&modelInputJobListLock,			// 模型输入队列锁
 
-		lModelOutputBufferSize,				// 模型输出缓冲区大小
-        fModeulOutputSampleBuffer,			// 模型输出缓冲区
-        &lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
-        &lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
+		&modelOutputJobList,				// 模型输出队列
+		&modelOutputJobListLock,			// 模型输出队列锁
 
 		lCrossFadeLength,
-		&lastVoiceSampleForCrossFadeVector, //最后一条模型输出音频的尾部，用于交叉淡化处理
 
         &fPitchChange,						// 音调变化数值
         &bCalcPitchError,					// 启用音调误差检测

@@ -115,16 +115,13 @@ void func_do_voice_transfer_worker(
 	int iNumberOfChanel,					// 通道数量
 	double dProjectSampleRate,				// 项目采样率
 
-	std::vector<INPUT_JOB_STRUCT>* modelInputJobList, // 模型输入队列
-	std::mutex* modelInputJobListMutex,		// 模型输入队列锁
+	std::vector<JOB_STRUCT>* modelInputJobList, // 模型输入队列
+	juce::CriticalSection* modelInputJobListLock,		// 模型输入队列锁
 
-	long lModelOutputBufferSize,			// 模型输出缓冲区大小
-	float* fModeulOutputSampleBuffer,		// 模型输出缓冲区
-	long* lModelOutputSampleBufferReadPos,	// 模型输出缓冲区读指针
-	long* lModelOutputSampleBufferWritePos,	// 模型输出缓冲区写指针
+	std::vector<JOB_STRUCT>* modelOutputJobList, // 模型输出队列
+	juce::CriticalSection* modelOutputJobListLock,		// 模型输出队列锁
 
 	long lCrossFadeLength,
-	std::vector<float>* lastVoiceSampleForCrossFadeVector, // 最后一条模型输出音频的尾部，用于交叉淡化处理
 
 	float* fPitchChange,					// 音调变化数值
 	bool* bCalcPitchError,					// 启用音调误差检测
@@ -163,24 +160,28 @@ void func_do_voice_transfer_worker(
 	std::vector<float> currentVoiceVector;
 	int currentVoiceSampleNumber = 0;
 	int iHopSize;
-	INPUT_JOB_STRUCT jobStruct;
+	JOB_STRUCT jobStruct;
 	long lPrefixLength;
 	bool bRealTimeModel;
 	auto hanningWindow = hanning(2 * lCrossFadeLength);
+	// 最后一条模型输出音频，用于交叉淡化处理
+	std::vector<float> lastOutputVoiceSample(44100 * 120);
+	std::vector<float> lastOutputVoiceSampleForCrossFadeVector;
 
 	mWorkerSafeExit->lock();
 	while (!*bWorkerNeedExit) {
 		// 轮训检查标志位
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		modelInputJobListMutex->lock();
+		modelInputJobListLock->enter();
 		auto queueSize = modelInputJobList->size();
 		if (queueSize > 0) {
 			jobStruct = modelInputJobList->at(0); 
 			modelInputJobList->erase(modelInputJobList->begin());
 		}
-		modelInputJobListMutex->unlock();
+		modelInputJobListLock->exit();
 		lPrefixLength = jobStruct.lPrefixLength;
 		bRealTimeModel = jobStruct.bRealTimeModel;
+		currentVoiceSampleNumber = jobStruct.modelInputSampleVector.size();
 
 		iHopSize = 512;
 		long lOverlap1 = lPrefixLength;
@@ -201,12 +202,14 @@ void func_do_voice_transfer_worker(
 			//iHopSize = roleStruct.iHopSize;
 
 			if (jobStruct.jobType == JOB_EMPTY) {
-				// 这个输入块是静音的，直接准备相等长度的静音输出
+				// 这个输入块中增量部分是静音数据，无需调用模型，直接用上一次输出的声音
 				currentVoiceVector.clear();
-				for (int i = 0; i < jobStruct.emptySampleNumber; i++) {
+				for (int i = 0; i < currentVoiceSampleNumber; i++) {
 					currentVoiceVector.push_back(0.f);
 				}
-				currentVoiceSampleNumber = jobStruct.emptySampleNumber;
+				for (int i = 0;i < lPrefixLength; i++) {
+					currentVoiceVector[i] = lastOutputVoiceSample[lastOutputVoiceSample.size() - lPrefixLength + i];
+				}
 			}
 			else {
 				vModelInputSampleBufferVector = jobStruct.modelInputSampleVector;
@@ -403,6 +406,18 @@ void func_do_voice_transfer_worker(
 					OutputDebugStringA(buff);
 				}
 			}
+			else if (currentVoiceSampleNumber > vModelInputSampleBufferVector.size()) {
+				int removeNumber = currentVoiceSampleNumber - vModelInputSampleBufferVector.size();
+				for (int i = 0;i < removeNumber;i++) {
+					currentVoiceVector.erase(currentVoiceVector.begin());
+				}
+				currentVoiceSampleNumber = currentVoiceVector.size();
+
+				if (*bEnableDebug) {
+					snprintf(buff, sizeof(buff), "模型输出样本数过多，切除首部:%d，时长 : %.0fms\n", removeNumber, 1.0f * removeNumber / dProjectSampleRate * 1000);
+					OutputDebugStringA(buff);
+				}
+			}
 
 			// 交叉淡化，缓解前后两个音频衔接的破音
 			// 交叉淡化算法
@@ -418,36 +433,21 @@ void func_do_voice_transfer_worker(
 			std::vector<float> processedSampleVector = currentVoiceVector;
 			
 			if (bRealTimeModel && lPrefixLength> iHopSize) {
-				auto s1f = *lastVoiceSampleForCrossFadeVector;
+				lastOutputVoiceSampleForCrossFadeVector = std::vector<float>(lastOutputVoiceSample.end() - lCrossFadeLength, lastOutputVoiceSample.end());
+
 				// 对s1f针对hop做对齐，从首部修剪它，修剪大小为S1f_skip_more_skip
 				//auto s1fMatchHopSize = floor(1.0 * s1f.size() / iHopSize) * iHopSize;
 				//int S1f_skip_more_skip = s1f.size() - s1fMatchHopSize;
 				//S1f_skip += S1f_skip_more_skip;
 				//s1f = std::vector<float>(s1f.end() - s1fMatchHopSize, s1f.end());
 
-				auto lCrossFadeLength = s1f.size();
 				auto s2 = std::vector<float>(currentVoiceVector.begin() + lOverlap3, currentVoiceVector.end());
 
 				auto s2a = std::vector<float>(s2.begin(), s2.begin() + lCrossFadeLength);
 				auto s2b = std::vector<float>(s2.begin() + lCrossFadeLength, s2.end());
 				//auto s3 = my_crossfade(s1f, s2a);
-				auto s3 = hanning_crossfade(s1f, s2a, hanningWindow);
+				auto s3 = hanning_crossfade(lastOutputVoiceSampleForCrossFadeVector, s2a, hanningWindow);
 
-				/*
-				for (int i = 0; i < lCrossFadeLength; i++) {
-					float s1Sample = s1f.at(i);
-					float s3Sample;
-					if (jobStruct.jobType == JOB_EMPTY) {
-						// 如果当前为静音块，则不需要对上一句结尾做交叉淡化
-						s3Sample = s1Sample;
-					}
-					else {
-						float s2Sample = s2.at(i);
-						float alpha = fStepAlpha * i;
-						s3Sample = s1Sample * (1.f - alpha) + s2Sample * alpha;
-					}
-					s3.push_back(s3Sample);
-				}*/
 				for (int i = 0; i < s2b.size(); i++) {
 					s3.push_back(s2b.at(i));
 				};
@@ -462,6 +462,7 @@ void func_do_voice_transfer_worker(
 			int processedSampleNumber = processedSampleVector.size();
 			int outputSampleNumber = processedSampleNumber - lOverlap2;
 
+			/*
 			// 从写指针标记的缓冲区位置开始写入新的音频数据
 			long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
 			// 预留一部分数据用作交叉淡化（不写入实时输出），长度为overlap2
@@ -472,13 +473,19 @@ void func_do_voice_transfer_worker(
 					lTmpModelOutputSampleBufferWritePos = 0;
 				}
 			};
-			// 将当前句子的尾部lOverlap2长度保存到“最后一句缓冲区”，供后续交叉淡化流程使用
-			lastVoiceSampleForCrossFadeVector->clear();
-			for (int i = outputSampleNumber; i < processedSampleNumber; i++) {
-				lastVoiceSampleForCrossFadeVector->push_back(processedSampleVector.at(i));
-			};
+
 			// 将写指针指向新的位置
 			*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
+			*/
+
+			jobStruct.modelOutputSampleVector = std::vector<float>(processedSampleVector.begin(), processedSampleVector.begin() + outputSampleNumber);
+			jobStruct.lSuffixlOverlap2 = lOverlap2;
+			modelOutputJobListLock->enter();
+			modelOutputJobList->push_back(jobStruct);
+			modelOutputJobListLock->exit();
+
+			// 保留当前句子的输出，供后续交叉淡化流程使用
+			lastOutputVoiceSample = currentVoiceVector;
 
 			if (*bEnableDebug) {
 				snprintf(buff, sizeof(buff), "输出样本数:%d，时长:%.1fms，保留用于淡化样本数：%d，时长:%.1fms\n", 

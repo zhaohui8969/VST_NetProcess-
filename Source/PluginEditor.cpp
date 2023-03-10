@@ -53,7 +53,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     };
     addAndMakeVisible(&tToggleDebugMode);
 
-    lSliceSizeLabel.setText(L"最长音频切片时长:", juce::dontSendNotification);
+    lSliceSizeLabel.setText(L"最长增量音频切片时长:", juce::dontSendNotification);
     sSliceSizeSlider.setSliderStyle(juce::Slider::LinearBar);
     sSliceSizeSlider.setRange(minMaxSliceLength, maxMaxSliceLength, 0.01);
     sSliceSizeSlider.setTextValueSuffix(" s");
@@ -80,7 +80,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     addAndMakeVisible(&sMaxLowVolumeLengthSlider);
 
    
-    lPrefixLengthLabel.setText(L"交叉淡化时长:", juce::dontSendNotification);
+    lPrefixLengthLabel.setText(L"切片前Pad时长:", juce::dontSendNotification);
     sPrefixLengthSlider.setSliderStyle(juce::Slider::LinearBar);
     sPrefixLengthSlider.setRange(minPrefixAudioLength, maxPrefixAudioLength, 0.01);
     sPrefixLengthSlider.setTextValueSuffix(" s");
