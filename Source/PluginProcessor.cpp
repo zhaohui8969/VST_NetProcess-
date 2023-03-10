@@ -602,6 +602,9 @@ void NetProcessJUCEVersionAudioProcessor::tryGetFromModelOutputJobList() {
 		// 当前chunk数据取完了，按照job里的时间戳可以计算出当前整体延迟
 		auto timeNow = juce::Time::currentTimeMillis();
 		auto latencySample = (timeNow - modelOutputJob.bornTimeStamp) * getSampleRate() / 1000;
+		if (latencySample > 9999999) {
+			latencySample = 0;
+		}
 		if (modelOutputJob.bRealTimeModel) {
 			latencySample += modelOutputJob.lSuffixlOverlap2;
 		}
