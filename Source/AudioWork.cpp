@@ -210,6 +210,7 @@ void func_do_voice_transfer_worker(
 				for (int i = 0;i < lPrefixLength; i++) {
 					currentVoiceVector[i] = lastOutputVoiceSample[lastOutputVoiceSample.size() - lPrefixLength + i];
 				}
+				vModelInputSampleBufferVector = jobStruct.modelInputSampleVector;
 			}
 			else {
 				vModelInputSampleBufferVector = jobStruct.modelInputSampleVector;
