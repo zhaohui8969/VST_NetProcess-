@@ -2,8 +2,7 @@
 
 long long func_get_timestamp();
 
-// 用于计算一个读写缓存里的有效数据大小
-long func_cacl_read_write_buffer_data_size(long lBufferSize, long lReadPos, long lWritePos);
+std::vector<float> hanning(int n);
 
 // 进行声音处理，较为耗时，在单独的线程里进行，避免主线程卡顿爆音
 void func_do_voice_transfer_worker(
@@ -17,6 +16,7 @@ void func_do_voice_transfer_worker(
 	juce::CriticalSection* modelOutputJobListLock,		// 模型输出队列锁
 
 	long lCrossFadeLength,
+	std::vector<float>* hanningWindow,
 
 	float* fPitchChange,					// 音调变化数值
 	bool* bCalcPitchError,					// 启用音调误差检测

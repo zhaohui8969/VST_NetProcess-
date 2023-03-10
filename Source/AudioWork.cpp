@@ -37,21 +37,6 @@ std::vector<float> func_audio_resample_vector_version(std::vector<float> inputSa
 	}
 }
 
-// 用于计算一个读写缓存里的有效数据大小
-long func_cacl_read_write_buffer_data_size(long lBufferSize, long lReadPos, long lWritePos) {
-	long inputBufferSize;
-	if (lReadPos == lWritePos) {
-		return 0;
-	}
-	if (lReadPos < lWritePos) {
-		inputBufferSize = lWritePos - lReadPos;
-	}
-	else {
-		inputBufferSize = lWritePos + lBufferSize - lReadPos;
-	}
-	return inputBufferSize;
-}
-
 // bool值序列化为字符串
 std::string func_bool_to_string(bool bVal) {
 	if (bVal) {
@@ -71,7 +56,7 @@ vector<float> hanning(int n) {
 	return win;
 }
 
-vector<float> hanning_crossfade(const vector<float>& x1, const vector<float>& x2, const vector<float> hanningWindow) {
+vector<float> hanning_crossfade(const vector<float>& x1, const vector<float>& x2, const vector<float>& hanningWindow) {
 	int lCrossFadeLength = x1.size();
 	vector<float> s3(lCrossFadeLength);
 	float x1Sample;
@@ -91,25 +76,6 @@ vector<float> hanning_crossfade(const vector<float>& x1, const vector<float>& x2
 }
 
 
-vector<float> my_crossfade(const vector<float>& x1, const vector<float>& x2) {
-	int lCrossFadeLength = x1.size();
-	vector<float> s3(lCrossFadeLength);
-	float x1Sample;
-	float x2Sample;
-	float x3Sample;
-	float alpha;
-	float fStepAlpha = 1.0f / lCrossFadeLength;
-
-	for (int i = 0; i < lCrossFadeLength; i++) {
-		x1Sample = x1.at(i);
-		x2Sample = x2.at(i);
-		alpha = fStepAlpha * i;
-		x3Sample = x1Sample * (1.f - alpha) + x2Sample * alpha;
-		s3[i] = x3Sample;
-	}
-	return s3;
-}
-
 // 进行声音处理，较为耗时，在单独的线程里进行，避免主线程卡顿爆音
 void func_do_voice_transfer_worker(
 	int iNumberOfChanel,					// 通道数量
@@ -122,6 +88,7 @@ void func_do_voice_transfer_worker(
 	juce::CriticalSection* modelOutputJobListLock,		// 模型输出队列锁
 
 	long lCrossFadeLength,
+	std::vector<float>* hanningWindow,
 
 	float* fPitchChange,					// 音调变化数值
 	bool* bCalcPitchError,					// 启用音调误差检测
@@ -163,7 +130,7 @@ void func_do_voice_transfer_worker(
 	JOB_STRUCT jobStruct;
 	long lPrefixLength;
 	bool bRealTimeModel;
-	auto hanningWindow = hanning(2 * lCrossFadeLength);
+
 	// 最后一条模型输出音频，用于交叉淡化处理
 	std::vector<float> lastOutputVoiceSample(44100 * 120);
 	std::vector<float> lastOutputVoiceSampleForCrossFadeVector;
@@ -447,7 +414,7 @@ void func_do_voice_transfer_worker(
 				auto s2a = std::vector<float>(s2.begin(), s2.begin() + lCrossFadeLength);
 				auto s2b = std::vector<float>(s2.begin() + lCrossFadeLength, s2.end());
 				//auto s3 = my_crossfade(s1f, s2a);
-				auto s3 = hanning_crossfade(lastOutputVoiceSampleForCrossFadeVector, s2a, hanningWindow);
+				auto s3 = hanning_crossfade(lastOutputVoiceSampleForCrossFadeVector, s2a, *hanningWindow);
 
 				for (int i = 0; i < s2b.size(); i++) {
 					s3.push_back(s2b.at(i));

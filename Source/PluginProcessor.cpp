@@ -27,6 +27,20 @@ NetProcessJUCEVersionAudioProcessor::NetProcessJUCEVersionAudioProcessor()
 #endif
 {
 	loadConfig();
+	
+	// 安全缓冲区
+	lSafeZoneSize = ceil(fSafeZoneLength * iDAWSampleRate / iHopSize) * iHopSize;
+	safeJob.modelOutputSampleVector = std::vector<float>(lSafeZoneSize);
+
+	// 前导缓冲区缓存初始化
+	// 准备20s的缓冲区
+	lPrefixBufferSize = static_cast<long>(20.0f * iDAWSampleRate);
+	// 前导缓冲长度
+	fPrefixBuffer = std::vector<float>(lPrefixBufferSize);
+	lPrefixBufferPos = 0;
+
+	lCrossFadeLength = ceil(1.0 * fCrossFadeLength * iDAWSampleRate / iHopSize) * iHopSize;
+	hanningWindow = hanning(2 * lCrossFadeLength);
 }
 
 NetProcessJUCEVersionAudioProcessor::~NetProcessJUCEVersionAudioProcessor()
@@ -100,19 +114,11 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 {
 	iNumberOfChanel = 1;
 	lNoOutputCount = 0;
-
-	// 前导缓冲区缓存初始化
-	// 准备20s的缓冲区
-	lPrefixBufferSize = static_cast<long>(20.0f * sampleRate);
-	// 前导缓冲长度
-	lPrefixLengthSampleNumber = static_cast<long>(fPrefixLength * sampleRate);
-	fPrefixBuffer = (float*)std::malloc(sizeof(float) * lPrefixBufferSize);
-	lPrefixBufferPos = 0;
-
 	fServerUseTime = 0.f;
-	lCrossFadeLength = ceil(1.0 * fCrossFadeLength * getSampleRate() / iHopSize) * iHopSize;
 
 	clearState();
+
+	lPrefixLengthSampleNumber = static_cast<long>(fPrefixLength * iDAWSampleRate);
 
 	// worker线程安全退出相关信号
 	bWorkerNeedExit = false;
@@ -147,7 +153,6 @@ void NetProcessJUCEVersionAudioProcessor::releaseResources()
 	prepareModelInputSample.reserve(lMaxSliceLengthSampleNumber);
 	modelOutputJobList.clear();
 	modelOutputJobList.reserve(8);
-	free(fPrefixBuffer);
 	// 当子线程还在运行时，这个锁是锁上的，此时主线程还不能退出
 	// 主线程通过将退出信号发给子线程，等待子线程安全退出后，释放锁，主线程再退出
 	mWorkerSafeExit.lock();
@@ -330,6 +335,7 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					}
 				}
 				modelInputJobList.push_back(inputJobStruct);
+				modelInputJobListLock.exit();
 				std::vector<float> newprepareModelInputSample = std::vector<float>(prepareModelInputSample.begin() + prepareModelInputMatchHopSize, prepareModelInputSample.end());
 				newprepareModelInputSample.reserve(lMaxSliceLengthSampleNumber);
 				prepareModelInputSample = newprepareModelInputSample;
@@ -341,7 +347,6 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 						1.0f * newprepareModelInputSample.size() / getSampleRate() * 1000);
 					OutputDebugStringA(buff);
 				}
-				modelInputJobListLock.exit();
 			}
 		};
 		// 模型输出写到VST输出中
@@ -381,17 +386,9 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				}
 			}
 
-				
-			long lSilenceLength = currentBlockVector.size() - outputWriteCount;
 			// 入不敷出了，插入一个安全区
-			lSafeZoneSize = ceil(fSafeZoneLength * getSampleRate() / iHopSize) * iHopSize;
-
-				
-			JOB_STRUCT safeJob;
-			safeJob.modelOutputSampleVector = std::vector<float>(lSafeZoneSize);
 			safeJob.bornTimeStamp = juce::Time::currentTimeMillis();
 			modelOutputJobListLock.enter();
-			//modelOutputJobList.insert(modelOutputJobList.begin(), safeJob);
 			modelOutputJobList.push_back(safeJob);
 			modelOutputJobListLock.exit();
 
@@ -584,6 +581,7 @@ void NetProcessJUCEVersionAudioProcessor::setStateInformation (const void* data,
 			lRemainNeedSliceSampleNumber = lMaxSliceLengthSampleNumber;
 			fLowVolumeDetectTime = (float)xmlState->getDoubleAttribute("fLowVolumeDetectTime", 0.4);
 			fPrefixLength = (float)xmlState->getDoubleAttribute("fPrefixLength", 0.0);
+			lPrefixLengthSampleNumber = static_cast<long>(fPrefixLength * getSampleRate());
 			fPitchChange = (float)xmlState->getDoubleAttribute("fPitchChange", 1.0);
 			bRealTimeMode = (bool)xmlState->getBoolAttribute("bRealTimeMode", false);
 			bEnableDebug = (bool)xmlState->getBoolAttribute("bEnableDebug", false);
@@ -678,6 +676,7 @@ void NetProcessJUCEVersionAudioProcessor::loadConfig()
 	fCrossFadeLength = props["fCrossFadeLength"];
 	iHopSize = props["iHopSize"];
 	bRealTimeECO = props["bRealTimeECO"];
+	iDAWSampleRate = props["DAWSampleRate"];
 
 	roleList.clear();
 	auto jsonRoleList = props["roleList"];
@@ -713,6 +712,7 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
 		&modelOutputJobListLock,			// 模型输出队列锁
 
 		lCrossFadeLength,
+		&hanningWindow,
 
         &fPitchChange,						// 音调变化数值
         &bCalcPitchError,					// 启用音调误差检测

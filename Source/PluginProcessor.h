@@ -146,6 +146,7 @@ public:
 	// 最后一条模型输出音频的尾部，用于交叉淡化处理
 	float fCrossFadeLength;
 	long lCrossFadeLength;
+	std::vector<float> hanningWindow;
 
 	bool bCalcPitchError;
 	float fMaxSliceLength;
@@ -155,9 +156,11 @@ public:
 	long lRemainNeedSliceSampleNumber;
 	float fPitchChange;
 	int iHopSize;
+	int iDAWSampleRate;
+	JOB_STRUCT safeJob;
 
 	// 前导信号缓冲区
-	float* fPrefixBuffer;
+	std::vector<float> fPrefixBuffer;
 	long lPrefixBufferSize;
 	long lPrefixBufferPos;
 	float fPrefixLength;
