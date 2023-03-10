@@ -22,10 +22,10 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
 {
     setSize(400, 250);
     setResizable(false, false);
-    juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(L"SiHei_otf");
+    //juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(L"SiHei_otf");
 
     // UI
-    tToggleRealTimeMode.setButtonText(L"实时模式");
+    tToggleRealTimeMode.setButtonText(L"RealTimeMode");
     tToggleRealTimeMode.setToggleState(audioProcessor.bRealTimeMode, juce::dontSendNotification);
     tToggleRealTimeMode.onClick = [this] {
         auto val = tToggleRealTimeMode.getToggleState();
@@ -40,12 +40,12 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
             // off
             audioProcessor.fMaxSliceLengthForRealTimeMode = audioProcessor.fMaxSliceLength;
             sSliceSizeSlider.setValue(audioProcessor.fMaxSliceLengthForSentenceMode);
-            lDropDataLengthValLabel.setText(L"未检查", juce::dontSendNotification);
+            lDropDataLengthValLabel.setText(L"unCheck", juce::dontSendNotification);
         }
     };
     addAndMakeVisible(&tToggleRealTimeMode);
 
-    tToggleDebugMode.setButtonText(L"调试日志");
+    tToggleDebugMode.setButtonText(L"EnableDebug");
     tToggleDebugMode.setToggleState(audioProcessor.bEnableDebug, juce::dontSendNotification);
     tToggleDebugMode.onClick = [this] {
         auto val = tToggleDebugMode.getToggleState();
@@ -53,7 +53,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     };
     addAndMakeVisible(&tToggleDebugMode);
 
-    lSliceSizeLabel.setText(L"最长增量音频切片时长:", juce::dontSendNotification);
+    lSliceSizeLabel.setText(L"MaxSliceLength:", juce::dontSendNotification);
     sSliceSizeSlider.setSliderStyle(juce::Slider::LinearBar);
     sSliceSizeSlider.setRange(minMaxSliceLength, maxMaxSliceLength, 0.01);
     sSliceSizeSlider.setTextValueSuffix(" s");
@@ -62,7 +62,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     addAndMakeVisible(&lSliceSizeLabel);
     addAndMakeVisible(&sSliceSizeSlider);
 
-    lPitchChangeLabel.setText(L"变调:", juce::dontSendNotification);
+    lPitchChangeLabel.setText(L"PitchChange:", juce::dontSendNotification);
     sPitchChangeSlider.setSliderStyle(juce::Slider::LinearBar);
     sPitchChangeSlider.setRange(minPitchChange, maxPitchChange, 0.1);
     sPitchChangeSlider.setValue(audioProcessor.fPitchChange);
@@ -70,7 +70,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     addAndMakeVisible(&lPitchChangeLabel);
     addAndMakeVisible(&sPitchChangeSlider);
 
-    lMaxLowVolumeLengthLabel.setText(L"最长静音时长:", juce::dontSendNotification);
+    lMaxLowVolumeLengthLabel.setText(L"MaxLowVolumeLengt:", juce::dontSendNotification);
     sMaxLowVolumeLengthSlider.setSliderStyle(juce::Slider::LinearBar);
     sMaxLowVolumeLengthSlider.setRange(minLowVolumeDetectLength, maxLowVolumeDetectLength, 0.01);
     sMaxLowVolumeLengthSlider.setTextValueSuffix(" s");
@@ -80,7 +80,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     addAndMakeVisible(&sMaxLowVolumeLengthSlider);
 
    
-    lPrefixLengthLabel.setText(L"切片前Pad时长:", juce::dontSendNotification);
+    lPrefixLengthLabel.setText(L"PrefixLength:", juce::dontSendNotification);
     sPrefixLengthSlider.setSliderStyle(juce::Slider::LinearBar);
     sPrefixLengthSlider.setRange(minPrefixAudioLength, maxPrefixAudioLength, 0.01);
     sPrefixLengthSlider.setTextValueSuffix(" s");
@@ -89,7 +89,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     addAndMakeVisible(&lPrefixLengthLabel);
     addAndMakeVisible(&sPrefixLengthSlider);
 
-    lChangeRoleLabel.setText(L"切换角色:", juce::dontSendNotification);
+    lChangeRoleLabel.setText(L"ChangeServer:", juce::dontSendNotification);
     bChangeRoleButton.setButtonText(audioProcessor.roleList[audioProcessor.iSelectRoleIndex].sName);
     addAndMakeVisible(&lChangeRoleLabel);
     addAndMakeVisible(&bChangeRoleButton);
@@ -108,20 +108,20 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
         menu.showMenuAsync(juce::PopupMenu::Options{}.withTargetComponent(bChangeRoleButton));
     };
 
-    lServerUseTimeLabel.setText(L"算法耗时:", juce::dontSendNotification);
+    lServerUseTimeLabel.setText(L"ServerUseTime:", juce::dontSendNotification);
     lServerUseTimeValLabel.getTextValue().referTo(audioProcessor.vServerUseTime);
-    lServerUseTimeValLabel.setText(L"未检查", juce::dontSendNotification);
+    lServerUseTimeValLabel.setText(L"unCheck", juce::dontSendNotification);
     addAndMakeVisible(&lServerUseTimeLabel);
     addAndMakeVisible(&lServerUseTimeValLabel);
 
-    lDropDataLengthLabel.setText(L"丢弃数据时长:", juce::dontSendNotification);
+    lDropDataLengthLabel.setText(L"DropDataLength:", juce::dontSendNotification);
     lDropDataLengthValLabel.getTextValue().referTo(audioProcessor.vDropDataLength);
-    lDropDataLengthValLabel.setText(L"未检查", juce::dontSendNotification);
+    lDropDataLengthValLabel.setText(L"unCheck", juce::dontSendNotification);
     addAndMakeVisible(&lDropDataLengthLabel);
     addAndMakeVisible(&lDropDataLengthValLabel);
 
-    lVersionLabel.setText(L"版本号:", juce::dontSendNotification);
-    lVersionValLabel.setText(L"V3.2", juce::dontSendNotification);
+    lVersionLabel.setText(L"Version:", juce::dontSendNotification);
+    lVersionValLabel.setText(L"V3.3", juce::dontSendNotification);
     addAndMakeVisible(&lVersionLabel);
     addAndMakeVisible(&lVersionValLabel);
 }
