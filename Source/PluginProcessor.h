@@ -131,7 +131,6 @@ public:
 	double fRecordIdleTime;
 	int iNumberOfChanel;
 
-	bool bConfigLoadFinished = false;
 	bool bEnableDebug;
 
 	// 基于线程安全队列的模型入参缓冲区
