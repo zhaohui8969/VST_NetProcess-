@@ -631,10 +631,15 @@ void NetProcessJUCEVersionAudioProcessor::tryGetFromModelOutputJobList() {
 	}
 }
 
+using namespace juce;
 void NetProcessJUCEVersionAudioProcessor::loadConfig()
 {
+	// 获取插件安装目录
+	File pluginDir = File::getSpecialLocation(File::currentExecutableFile).getParentDirectory();
+	// 创建配置文件
+	File configFile = pluginDir.getChildFile("netProcessConfig.json");
+
 	std::wstring sDllPath = L"C:/Program Files/Common Files/VST3/NetProcessJUCEVersion/samplerate.dll";
-	std::string sJsonConfigFileName = "C:/Program Files/Common Files/VST3/NetProcessJUCEVersion/netProcessConfig.json";
 	
 	// default value
 	fMaxSliceLength = 5.0f;
@@ -661,45 +666,37 @@ void NetProcessJUCEVersionAudioProcessor::loadConfig()
 	}
 
 	// 读取JSON配置文件
-	std::ifstream t_pc_file(sJsonConfigFileName, std::ios::binary);
-	std::stringstream buffer_pc_file;
-	buffer_pc_file << t_pc_file.rdbuf();
+	FileInputStream configFileInStream(configFile);
+	juce::var jsonVar = juce::JSON::parse(configFileInStream);
+	auto& props = jsonVar.getDynamicObject()->getProperties();
+	bEnableSOVITSPreResample = props["bEnableSOVITSPreResample"];
+	iSOVITSModelInputSamplerate = props["iSOVITSModelInputSamplerate"];
+	bEnableHUBERTPreResample = props["bEnableHUBERTPreResample"];
+	iHUBERTInputSampleRate = props["iHUBERTInputSampleRate"];
+	fSampleVolumeWorkActiveVal = props["fSampleVolumeWorkActiveVal"];
+	fSafeZoneLength = props["fSafeZoneLength"];
+	fCrossFadeLength = props["fCrossFadeLength"];
+	iHopSize = props["iHopSize"];
+	bRealTimeECO = props["bRealTimeECO"];
 
-	juce::var jsonVar;
-	if (juce::JSON::parse(buffer_pc_file.str(), jsonVar).wasOk()) {
-		auto& props = jsonVar.getDynamicObject()->getProperties();
-		bEnableSOVITSPreResample = props["bEnableSOVITSPreResample"];
-		iSOVITSModelInputSamplerate = props["iSOVITSModelInputSamplerate"];
-		bEnableHUBERTPreResample = props["bEnableHUBERTPreResample"];
-		iHUBERTInputSampleRate = props["iHUBERTInputSampleRate"];
-		fSampleVolumeWorkActiveVal = props["fSampleVolumeWorkActiveVal"];
-		fSafeZoneLength = props["fSafeZoneLength"];
-		fCrossFadeLength = props["fCrossFadeLength"];
-		iHopSize = props["iHopSize"];
-		bRealTimeECO = props["bRealTimeECO"];
-
-		roleList.clear();
-		auto jsonRoleList = props["roleList"];
-		int iRoleSize = jsonRoleList.size();
-		for (int i = 0; i < iRoleSize; i++) {
-			auto& roleListI = jsonRoleList[i].getDynamicObject()->getProperties();
-			std::string apiUrl = roleListI["apiUrl"].toString().toStdString();
-			std::string name = roleListI["name"].toString().toStdString();
-			std::string speakId = roleListI["speakId"].toString().toStdString();
-			roleStruct role;
-			role.sSpeakId = speakId;
-			role.sName = name;
-			role.sApiUrl = apiUrl;
-			role.iHopSize = 512;
-			roleList.push_back(role);
-		}
-		if (iSelectRoleIndex + 1 > iRoleSize || iSelectRoleIndex < 0) {
-			iSelectRoleIndex = 0;
-		}
+	roleList.clear();
+	auto jsonRoleList = props["roleList"];
+	int iRoleSize = jsonRoleList.size();
+	for (int i = 0; i < iRoleSize; i++) {
+		auto& roleListI = jsonRoleList[i].getDynamicObject()->getProperties();
+		std::string apiUrl = roleListI["apiUrl"].toString().toStdString();
+		std::string name = roleListI["name"].toString().toStdString();
+		std::string speakId = roleListI["speakId"].toString().toStdString();
+		roleStruct role;
+		role.sSpeakId = speakId;
+		role.sName = name;
+		role.sApiUrl = apiUrl;
+		role.iHopSize = 512;
+		roleList.push_back(role);
 	}
-	else {
-		OutputDebugStringA("config load Error!");
-	};
+	if (iSelectRoleIndex + 1 > iRoleSize || iSelectRoleIndex < 0) {
+		iSelectRoleIndex = 0;
+	}
 }
 
 void NetProcessJUCEVersionAudioProcessor::runWorker()
