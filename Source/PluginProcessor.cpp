@@ -315,9 +315,10 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				inputJobStruct.bRealTimeModel = true;
 				long prepareModelInputMatchHopSize = floor(1.0 * prepareModelInputSample.size() / iHopSize) * iHopSize;
 				auto prepareModelInputMatchHopSample = std::vector<float>(prepareModelInputSample.begin(), prepareModelInputSample.begin() + prepareModelInputMatchHopSize);
+				long remainSampleSize = prepareModelInputSample.size() - prepareModelInputMatchHopSize;
 				inputJobStruct.lPrefixLength = lPrefixLengthSampleNumberNow;
 				inputJobStruct.modelInputSampleVector = prepareModelInputMatchHopSample;
-				inputJobStruct.bornTimeStamp = juce::Time::currentTimeMillis();
+				inputJobStruct.bornTimeStamp = juce::Time::currentTimeMillis() - 1.0f * remainSampleSize / getSampleRate();
 				if (bVolumeDetectFine) {
 					inputJobStruct.jobType = JOB_WORK;
 				}
@@ -356,18 +357,18 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 		// 一直输出，直到没有数据可用，或者当前chunk写满
 		bool bNeedOutput = bHasMoreData && outputWriteCount != currentBlockVector.size();
 		while (bNeedOutput) {
-			long lCanReadSize = min(modelOutputJob.modelOutputSampleVector.size(), currentBlockVector.size() - outputWriteCount);
-			for (int i = 0; i < lCanReadSize; i++)
-			{
-				double currentSample = modelOutputJob.modelOutputSampleVector[i];
-				inputOutputL[outputWriteCount] = static_cast<float>(currentSample);
-				if (bHasRightChanel) {
-					inputOutputR[outputWriteCount] = static_cast<float>(currentSample);
-				};
-				outputWriteCount++;
-			}
-			// 删除已经使用过的数据
-			modelOutputJob.modelOutputSampleVector = std::vector<float>(modelOutputJob.modelOutputSampleVector.begin() + lCanReadSize, modelOutputJob.modelOutputSampleVector.end());
+				long lCanReadSize = min(modelOutputJob.modelOutputSampleVector.size(), currentBlockVector.size() - outputWriteCount);
+				for (int i = 0; i < lCanReadSize; i++)
+				{
+					double currentSample = modelOutputJob.modelOutputSampleVector[i];
+					inputOutputL[outputWriteCount] = static_cast<float>(currentSample);
+					if (bHasRightChanel) {
+						inputOutputR[outputWriteCount] = static_cast<float>(currentSample);
+					};
+					outputWriteCount++;
+				}
+				// 删除已经使用过的数据
+				modelOutputJob.modelOutputSampleVector = std::vector<float>(modelOutputJob.modelOutputSampleVector.begin() + lCanReadSize, modelOutputJob.modelOutputSampleVector.end());
 			tryGetFromModelOutputJobList();
 			bNeedOutput = bHasMoreData && outputWriteCount != currentBlockVector.size();
 		}
@@ -600,21 +601,22 @@ void NetProcessJUCEVersionAudioProcessor::tryGetFromModelOutputJobList() {
 	}
 	else {
 		// 当前chunk数据取完了，按照job里的时间戳可以计算出当前整体延迟
-		auto timeNow = juce::Time::currentTimeMillis();
-		auto latencySample = (timeNow - modelOutputJob.bornTimeStamp) * getSampleRate() / 1000;
-		if (latencySample > 9999999) {
-			latencySample = 0;
-		}
-		if (modelOutputJob.bRealTimeModel) {
-			latencySample += modelOutputJob.lSuffixlOverlap2;
-		}
-		setLatencySamples(latencySample);
 		if (modelOutputJobList.size() > 0) {
 			bHasMoreData = true;
 			modelOutputJobListLock.enter();
 			modelOutputJob = modelOutputJobList.at(0);
 			modelOutputJobList.erase(modelOutputJobList.begin());
 			modelOutputJobListLock.exit();
+			// 延迟计算，以及延迟补偿计算
+			auto timeNow = juce::Time::currentTimeMillis();
+			auto latencySample = (timeNow - modelOutputJob.bornTimeStamp) * getSampleRate() / 1000 + modelOutputJob.modelOutputSampleVector.size();
+			if (latencySample > 9999999) {
+				latencySample = 0;
+			}
+			if (modelOutputJob.bRealTimeModel) {
+				latencySample += modelOutputJob.lSuffixlOverlap2;
+			}
+			setLatencySamples(latencySample);
 			/*
 			if (bEnableDebug) {
 				snprintf(buff, sizeof(buff), "实时模式 - tryGetFromModelOutputJobList 当前job没数据，从list拿一个job\n");

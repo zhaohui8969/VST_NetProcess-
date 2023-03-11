@@ -47,6 +47,7 @@ typedef struct
 	long lPrefixLength;
 	std::vector<float> modelInputSampleVector;
 	std::vector<float> modelOutputSampleVector;
+	// 切片产生的时间，记录了这个切片最后一个样本的产生时间
 	juce::int64 bornTimeStamp;
 	// 输出中保留的部分，用于交叉淡化，在计算延迟的时候应当考虑这个值
 	long lSuffixlOverlap2;
@@ -157,7 +158,6 @@ public:
 	float fPitchChange;
 	int iHopSize;
 	int iDAWSampleRate;
-	JOB_STRUCT safeJob;
 
 	// 前导信号缓冲区
 	std::vector<float> fPrefixBuffer;
@@ -170,6 +170,7 @@ public:
 	// 安全区大小，当没有声音信号输出的时候，插入一个这么大的静音
 	float fSafeZoneLength;
 	long lSafeZoneSize;
+	JOB_STRUCT safeJob;
 
 	// JSON配置
 	std::vector<roleStruct> roleList;
