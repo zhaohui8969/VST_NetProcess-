@@ -55,9 +55,6 @@ typedef struct
 	long lSuffixlOverlap2;
 } JOB_STRUCT;
 
-
-typedef int(*FUNC_SRC_SIMPLE)(SRC_DATA* data, int converter_type, int channels);
-
 enum RECORD_STATE
 {
 	IDLE, WORK
@@ -151,7 +148,6 @@ public:
 	long lCrossFadeLength;
 	std::vector<float> hanningWindow;
 
-	bool bCalcPitchError;
 	float fMaxSliceLength;
 	float fMaxSliceLengthForRealTimeMode;
 	float fMaxSliceLengthForSentenceMode;
@@ -179,15 +175,8 @@ public:
 	int iSelectRoleIndex;
 
 	double fSampleVolumeWorkActiveVal;
-	FUNC_SRC_SIMPLE dllFuncSrcSimple;
 	// debug 
 	long lNoOutputCount;
-
-	// preReSamplerate
-	bool bEnableSOVITSPreResample;
-	int iSOVITSModelInputSamplerate;
-	bool bEnableHUBERTPreResample;
-	int iHUBERTInputSampleRate;
 
 	// ʵʱģʽ
 	bool bRealTimeMode;

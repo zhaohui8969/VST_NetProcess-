@@ -2,6 +2,7 @@
 #include "AudioFile.h"
 #include "httplib.h"
 #include "AudioWork.h"
+
 #define M_PI 3.14159265358979323846
 
 using namespace std::chrono;
@@ -10,32 +11,6 @@ long long func_get_timestamp() {
 	return (duration_cast<milliseconds>(system_clock::now().time_since_epoch())).count();
 }
 
-// 重采样
-int func_audio_resample(FUNC_SRC_SIMPLE dllFuncSrcSimple, float* fInBuffer, float* fOutBuffer, double src_ratio, long lInSize, long lOutSize) {
-	SRC_DATA data;
-	data.src_ratio = src_ratio;
-	data.input_frames = lInSize;
-	data.output_frames = lOutSize;
-	data.data_in = fInBuffer;
-	data.data_out = fOutBuffer;
-	int error = dllFuncSrcSimple(&data, SRC_SINC_FASTEST, 1);
-	return error;
-}
-
-// 重采样
-std::vector<float> func_audio_resample_vector_version(std::vector<float> inputSampleV, int srcSampleRate, int destSampleRate, FUNC_SRC_SIMPLE dllFuncSrcSimple) {
-	if (srcSampleRate == destSampleRate) {
-		return inputSampleV;
-	}
-	else {
-		double fScaleRate = 1.f * destSampleRate / srcSampleRate;
-		long lInputSize = inputSampleV.size();
-		long lOutSize = static_cast<long>(fScaleRate * lInputSize);
-		float* fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * lOutSize));
-		func_audio_resample(dllFuncSrcSimple, inputSampleV.data(), fReSampleOutBuffer, fScaleRate, lInputSize, lOutSize);
-		return std::vector<float>(fReSampleOutBuffer, fReSampleOutBuffer + lOutSize);
-	}
-}
 
 // bool值序列化为字符串
 std::string func_bool_to_string(bool bVal) {
@@ -91,16 +66,9 @@ void func_do_voice_transfer_worker(
 	std::vector<float>* hanningWindow,
 
 	float* fPitchChange,					// 音调变化数值
-	bool* bCalcPitchError,					// 启用音调误差检测
 
 	std::vector<roleStruct> roleStructList,	// 配置的可用音色列表
 	int* iSelectRoleIndex,					// 选择的角色ID
-	FUNC_SRC_SIMPLE dllFuncSrcSimple,		// DLL内部SrcSimple方法
-
-	bool* bEnableSOVITSPreResample,			// 启用SOVITS模型入参音频重采样预处理
-	int iSOVITSModelInputSamplerate,		// SOVITS模型入参采样率
-	bool* bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
-	int iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
 	bool* bEnableDebug,						// 占位符，启用DEBUG输出
 	juce::Value vServerUseTime,				// UI变量，显示服务调用耗时
@@ -119,9 +87,6 @@ void func_do_voice_transfer_worker(
 	char sSOVITSSamplerateBuff[100];
 	char cPitchBuff[100];
 	char cSafePrefixPadLength[100];
-	std::string sHUBERTSampleBuffer;
-	std::string sCalcPitchError;
-	std::string sEnablePreResample;
 	std::vector<float> vModelInputSampleBufferVector;
 	std::vector<float> currentVoiceVector;
 	int currentVoiceSampleNumber = 0;
@@ -199,61 +164,11 @@ void func_do_voice_transfer_worker(
 					AudioFile<double>::AudioBuffer modelInputAudioBuffer;
 					modelInputAudioBuffer.resize(iNumberOfChanel);
 
-					if (*bEnableSOVITSPreResample) {
-						// 提前对音频重采样，C++重采样比Python端快
-						dSOVITSInputSamplerate = iSOVITSModelInputSamplerate;
-
-						// SOVITS输入音频重采样
-						auto ReSampleOutputVector = func_audio_resample_vector_version(vModelInputSampleBufferVector, dProjectSampleRate, iSOVITSModelInputSamplerate, dllFuncSrcSimple);
-						long iResampleNumbers = ReSampleOutputVector.size();
-
-						snprintf(sSOVITSSamplerateBuff, sizeof(sSOVITSSamplerateBuff), "%d", iSOVITSModelInputSamplerate);
-						modelInputAudioBuffer[0].resize(iResampleNumbers);
-						for (int i = 0; i < ReSampleOutputVector.size(); i++) {
-							modelInputAudioBuffer[0][i] = ReSampleOutputVector[i];
-						}
-
-						if (*bEnableHUBERTPreResample) {
-							// HUBERT输入音频重采样
-							auto ReSampleOutputVector = func_audio_resample_vector_version(vModelInputSampleBufferVector, dProjectSampleRate, iHUBERTInputSampleRate, dllFuncSrcSimple);
-							long iResampleNumbers = ReSampleOutputVector.size();
-
-							AudioFile<double>::AudioBuffer HUBERTModelInputAudioBuffer;
-							HUBERTModelInputAudioBuffer.resize(iNumberOfChanel);
-							HUBERTModelInputAudioBuffer[0].resize(iResampleNumbers);
-							for (int i = 0; i < iResampleNumbers; i++) {
-								HUBERTModelInputAudioBuffer[0][i] = ReSampleOutputVector[i];
-							}
-
-							AudioFile<double> HUBERTAudioFile;
-							HUBERTAudioFile.shouldLogErrorsToConsole(false);
-							HUBERTAudioFile.setAudioBuffer(HUBERTModelInputAudioBuffer);
-							HUBERTAudioFile.setAudioBufferSize(iNumberOfChanel, static_cast<int>(HUBERTModelInputAudioBuffer[0].size()));
-							HUBERTAudioFile.setBitDepth(24);
-							HUBERTAudioFile.setSampleRate(iHUBERTInputSampleRate);
-
-							// 保存音频文件到内存
-							std::vector<uint8_t> vHUBERTModelInputMemoryBuffer;
-							HUBERTAudioFile.saveToWaveMemory(&vHUBERTModelInputMemoryBuffer);
-
-							// 从内存读取数据
-							auto vHUBERTModelInputData = vHUBERTModelInputMemoryBuffer.data();
-							std::string sHUBERTModelInputString(vHUBERTModelInputData, vHUBERTModelInputData + vHUBERTModelInputMemoryBuffer.size());
-							sHUBERTSampleBuffer = sHUBERTModelInputString;
-						}
-						else {
-							sHUBERTSampleBuffer = "";
-						}
-					}
-					else {
-						// 未开启预处理重采样，音频原样发送
-						sHUBERTSampleBuffer = "";
-						dSOVITSInputSamplerate = dProjectSampleRate;
-						snprintf(sSOVITSSamplerateBuff, sizeof(sSOVITSSamplerateBuff), "%f", dProjectSampleRate);
-						modelInputAudioBuffer[0].resize(vModelInputSampleBufferVector.size());
-						for (int i = 0; i < vModelInputSampleBufferVector.size(); i++) {
-							modelInputAudioBuffer[0][i] = vModelInputSampleBufferVector[i];
-						}
+					dSOVITSInputSamplerate = dProjectSampleRate;
+					snprintf(sSOVITSSamplerateBuff, sizeof(sSOVITSSamplerateBuff), "%f", dProjectSampleRate);
+					modelInputAudioBuffer[0].resize(vModelInputSampleBufferVector.size());
+					for (int i = 0; i < vModelInputSampleBufferVector.size(); i++) {
+						modelInputAudioBuffer[0][i] = vModelInputSampleBufferVector[i];
 					}
 
 					long iModelInputNumSamples = static_cast<long>(modelInputAudioBuffer[0].size());
@@ -298,18 +213,13 @@ void func_do_voice_transfer_worker(
 					// 准备HTTP请求参数
 					snprintf(cPitchBuff, sizeof(cPitchBuff), "%f", *fPitchChange);
 					snprintf(cSafePrefixPadLength, sizeof(cSafePrefixPadLength), "%f", 1.0 * lOverlap3 / dProjectSampleRate);
-					sCalcPitchError = func_bool_to_string(*bCalcPitchError);
-					sEnablePreResample = func_bool_to_string(*bEnableSOVITSPreResample);
 					httplib::MultipartFormDataItems items = {
 						{ "sSpeakId", roleStruct.sSpeakId, "", ""},
 						{ "sName", roleStruct.sName, "", ""},
 						{ "fPitchChange", cPitchBuff, "", ""},
 						{ "fSafePrefixPadLength", cSafePrefixPadLength, "", ""},
 						{ "sampleRate", sSOVITSSamplerateBuff, "", ""},
-						{ "bCalcPitchError", sCalcPitchError.c_str(), "", ""},
-						{ "bEnablePreResample", sEnablePreResample.c_str(), "", ""},
 						{ "sample", sModelInputString, "sample.wav", "audio/x-wav"},
-						{ "hubert_sample", sHUBERTSampleBuffer, "hubert_sample.wav", "audio/x-wav"},
 					};
 					/*if (*bEnableDebug) {
 						OutputDebugStringA("算法模型\n");
@@ -341,15 +251,8 @@ void func_do_voice_transfer_worker(
 						// int bitDepth = tmpAudioFile.getBitDepth();
 
 						std::vector<double> fOriginAudioBuffer = tmpAudioFile.samples[0];
-						std::vector<float> currentVoiceVectorUnResample(fOriginAudioBuffer.begin(), fOriginAudioBuffer.end());
-
-						// 音频重采样
-						currentVoiceVector = func_audio_resample_vector_version(currentVoiceVectorUnResample, sampleRate, dProjectSampleRate, dllFuncSrcSimple);
+						currentVoiceVector = std::vector<float>(fOriginAudioBuffer.begin(), fOriginAudioBuffer.end());
 						currentVoiceSampleNumber = currentVoiceVector.size();
-						/*if (*bEnableDebug) {
-							snprintf(buff, sizeof(buff), "currentVoiceSampleNumber:%d\n", currentVoiceSampleNumber);
-							OutputDebugStringA(buff);
-						}*/
 					}
 					else {
 						// 出现错误准备相等长度的静音输出

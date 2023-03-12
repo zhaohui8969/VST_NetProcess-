@@ -19,16 +19,9 @@ void func_do_voice_transfer_worker(
 	std::vector<float>* hanningWindow,
 
 	float* fPitchChange,					// 音调变化数值
-	bool* bCalcPitchError,					// 启用音调误差检测
 
 	std::vector<roleStruct> roleStructList,	// 配置的可用音色列表
 	int* iSelectRoleIndex,					// 选择的角色ID
-	FUNC_SRC_SIMPLE dllFuncSrcSimple,		// DLL内部SrcSimple方法
-
-	bool* bEnableSOVITSPreResample,			// 启用SOVITS模型入参音频重采样预处理
-	int iSOVITSModelInputSamplerate,		// SOVITS模型入参采样率
-	bool* bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
-	int iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
 	bool* bEnableDebug,						// 占位符，启用DEBUG输出
 	juce::Value vServerUseTime,				// UI变量，显示服务调用耗时

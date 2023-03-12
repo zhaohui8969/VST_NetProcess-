@@ -646,8 +646,6 @@ void NetProcessJUCEVersionAudioProcessor::loadConfig()
 	// 创建配置文件
 	File configFile = pluginDir.getChildFile("netProcessConfig.json");
 
-	std::wstring sDllPath = L"C:/Program Files/Common Files/VST3/NetProcessJUCEVersion/samplerate.dll";
-	
 	// default value
 	fMaxSliceLength = 5.0f;
 	fMaxSliceLengthForRealTimeMode = fMaxSliceLength;
@@ -664,22 +662,10 @@ void NetProcessJUCEVersionAudioProcessor::loadConfig()
 	fCrossFadeLength = 0.f;
 	iHopSize = 512;
 
-	auto dllClient = LoadLibraryW(sDllPath.c_str());
-	if (dllClient != NULL) {
-		dllFuncSrcSimple = (FUNC_SRC_SIMPLE)GetProcAddress(dllClient, "src_simple");
-	}
-	else {
-		OutputDebugStringA("samplerate.dll load Error!");
-	}
-
 	// 读取JSON配置文件
 	FileInputStream configFileInStream(configFile);
 	juce::var jsonVar = juce::JSON::parse(configFileInStream);
 	auto& props = jsonVar.getDynamicObject()->getProperties();
-	bEnableSOVITSPreResample = props["bEnableSOVITSPreResample"];
-	iSOVITSModelInputSamplerate = props["iSOVITSModelInputSamplerate"];
-	bEnableHUBERTPreResample = props["bEnableHUBERTPreResample"];
-	iHUBERTInputSampleRate = props["iHUBERTInputSampleRate"];
 	fSampleVolumeWorkActiveVal = props["fSampleVolumeWorkActiveVal"];
 	fSafeZoneLength = props["fSafeZoneLength"];
 	fCrossFadeLength = props["fCrossFadeLength"];
@@ -724,16 +710,9 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
 		&hanningWindow,
 
         &fPitchChange,						// 音调变化数值
-        &bCalcPitchError,					// 启用音调误差检测
 
         roleList,							// 配置的可用音色列表
         &iSelectRoleIndex,					// 选择的角色ID
-        dllFuncSrcSimple,					// DLL内部SrcSimple方法
-
-        &bEnableSOVITSPreResample,			// 启用SOVITS模型入参音频重采样预处理
-        iSOVITSModelInputSamplerate,		// SOVITS模型入参采样率
-        &bEnableHUBERTPreResample,			// 启用HUBERT模型入参音频重采样预处理
-        iHUBERTInputSampleRate,				// HUBERT模型入参采样率
 
 		&bEnableDebug,						// 占位符，启用DEBUG输出
 		vServerUseTime,						// UI变量，显示服务调用耗时
