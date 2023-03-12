@@ -113,7 +113,8 @@ void func_do_voice_transfer_worker(
 		modelInputJobListLock->exit();
 		lPrefixLength = jobStruct.lPrefixLength;
 		bRealTimeModel = jobStruct.bRealTimeModel;
-		currentVoiceSampleNumber = jobStruct.modelInputSampleVector.size();
+		vModelInputSampleBufferVector = jobStruct.modelInputSampleVector;
+		currentVoiceSampleNumber = vModelInputSampleBufferVector.size();
 
 		iHopSize = 512;
 		long lOverlap1 = lPrefixLength;
@@ -142,10 +143,8 @@ void func_do_voice_transfer_worker(
 				for (int i = 0;i < lPrefixLength; i++) {
 					currentVoiceVector[i] = lastOutputVoiceSample[lastOutputVoiceSample.size() - lPrefixLength + i];
 				}
-				vModelInputSampleBufferVector = jobStruct.modelInputSampleVector;
 			}
 			else {
-				vModelInputSampleBufferVector = jobStruct.modelInputSampleVector;
 				if (*bEnableDebug) {
 					snprintf(buff, sizeof(buff), "模型输入样本数:%lld，时长 : %.1fms\n", vModelInputSampleBufferVector.size(), 1.0f * vModelInputSampleBufferVector.size() / dProjectSampleRate * 1000);
 					OutputDebugStringA(buff);
@@ -210,7 +209,7 @@ void func_do_voice_transfer_worker(
 					// 准备HTTP请求参数
 					snprintf(cPitchBuff, sizeof(cPitchBuff), "%f", *fPitchChange);
 					snprintf(cSafePrefixPadLength, sizeof(cSafePrefixPadLength), "%f", 1.0 * lOverlap3 / dProjectSampleRate);
-					snprintf(cSampleRate, sizeof(cSampleRate), "%ld", dProjectSampleRate);
+					snprintf(cSampleRate, sizeof(cSampleRate), "%f", dProjectSampleRate);
 					httplib::MultipartFormDataItems items = {
 						{ "sSpeakId", roleStruct.sSpeakId, "", ""},
 						{ "sName", roleStruct.sName, "", ""},
