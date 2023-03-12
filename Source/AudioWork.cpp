@@ -10,20 +10,9 @@ long long func_get_timestamp() {
 	return (duration_cast<milliseconds>(system_clock::now().time_since_epoch())).count();
 }
 
-// ÖØ²ÉÑù
-int func_audio_resample(FUNC_SRC_SIMPLE dllFuncSrcSimple, float* fInBuffer, float* fOutBuffer, double src_ratio, long lInSize, long lOutSize) {
-	SRC_DATA data;
-	data.src_ratio = src_ratio;
-	data.input_frames = lInSize;
-	data.output_frames = lOutSize;
-	data.data_in = fInBuffer;
-	data.data_out = fOutBuffer;
-	int error = dllFuncSrcSimple(&data, SRC_SINC_FASTEST, 1);
-	return error;
-}
 
-// ÖØ²ÉÑù
-std::vector<float> func_audio_resample_vector_version(std::vector<float> inputSampleV, int srcSampleRate, int destSampleRate, FUNC_SRC_SIMPLE dllFuncSrcSimple) {
+// é‡é‡‡æ ·
+std::vector<float> func_audio_resample_vector_version(std::vector<float> inputSampleV, int srcSampleRate, int destSampleRate) {
 	if (srcSampleRate == destSampleRate) {
 		return inputSampleV;
 	}
@@ -32,12 +21,16 @@ std::vector<float> func_audio_resample_vector_version(std::vector<float> inputSa
 		long lInputSize = inputSampleV.size();
 		long lOutSize = static_cast<long>(fScaleRate * lInputSize);
 		float* fReSampleOutBuffer = (float*)(std::malloc(sizeof(float) * lOutSize));
-		func_audio_resample(dllFuncSrcSimple, inputSampleV.data(), fReSampleOutBuffer, fScaleRate, lInputSize, lOutSize);
+        std::cout << "Resample " << srcSampleRate << " " << destSampleRate << " " << lInputSize << " " << lOutSize << std::endl;
+        auto sinc = new juce::WindowedSincInterpolator();
+        sinc->reset();
+        sinc->process(fScaleRate, inputSampleV.data(), fReSampleOutBuffer, lOutSize, lInputSize, 0);
+        
 		return std::vector<float>(fReSampleOutBuffer, fReSampleOutBuffer + lOutSize);
 	}
 }
 
-// boolÖµĞòÁĞ»¯Îª×Ö·û´®
+// boolå€¼åºåˆ—åŒ–ä¸ºå­—ç¬¦ä¸²
 std::string func_bool_to_string(bool bVal) {
 	if (bVal) {
 		return "true";
@@ -76,39 +69,38 @@ vector<float> hanning_crossfade(const vector<float>& x1, const vector<float>& x2
 }
 
 
-// ½øĞĞÉùÒô´¦Àí£¬½ÏÎªºÄÊ±£¬ÔÚµ¥¶ÀµÄÏß³ÌÀï½øĞĞ£¬±ÜÃâÖ÷Ïß³Ì¿¨¶Ù±¬Òô
+// è¿›è¡Œå£°éŸ³å¤„ç†ï¼Œè¾ƒä¸ºè€—æ—¶ï¼Œåœ¨å•ç‹¬çš„çº¿ç¨‹é‡Œè¿›è¡Œï¼Œé¿å…ä¸»çº¿ç¨‹å¡é¡¿çˆ†éŸ³
 void func_do_voice_transfer_worker(
-	int iNumberOfChanel,					// Í¨µÀÊıÁ¿
-	double dProjectSampleRate,				// ÏîÄ¿²ÉÑùÂÊ
+	int iNumberOfChanel,					// é€šé“æ•°é‡
+	double dProjectSampleRate,				// é¡¹ç›®é‡‡æ ·ç‡
 
-	std::vector<JOB_STRUCT>* modelInputJobList, // Ä£ĞÍÊäÈë¶ÓÁĞ
-	juce::CriticalSection* modelInputJobListLock,		// Ä£ĞÍÊäÈë¶ÓÁĞËø
+	std::vector<JOB_STRUCT>* modelInputJobList, // æ¨¡å‹è¾“å…¥é˜Ÿåˆ—
+	juce::CriticalSection* modelInputJobListLock,		// æ¨¡å‹è¾“å…¥é˜Ÿåˆ—é”
 
-	std::vector<JOB_STRUCT>* modelOutputJobList, // Ä£ĞÍÊä³ö¶ÓÁĞ
-	juce::CriticalSection* modelOutputJobListLock,		// Ä£ĞÍÊä³ö¶ÓÁĞËø
+	std::vector<JOB_STRUCT>* modelOutputJobList, // æ¨¡å‹è¾“å‡ºé˜Ÿåˆ—
+	juce::CriticalSection* modelOutputJobListLock,		// æ¨¡å‹è¾“å‡ºé˜Ÿåˆ—é”
 
 	long lCrossFadeLength,
 	std::vector<float>* hanningWindow,
 
-	float* fPitchChange,					// Òôµ÷±ä»¯ÊıÖµ
-	bool* bCalcPitchError,					// ÆôÓÃÒôµ÷Îó²î¼ì²â
+	float* fPitchChange,					// éŸ³è°ƒå˜åŒ–æ•°å€¼
+	bool* bCalcPitchError,					// å¯ç”¨éŸ³è°ƒè¯¯å·®æ£€æµ‹
 
-	std::vector<roleStruct> roleStructList,	// ÅäÖÃµÄ¿ÉÓÃÒôÉ«ÁĞ±í
-	int* iSelectRoleIndex,					// Ñ¡ÔñµÄ½ÇÉ«ID
-	FUNC_SRC_SIMPLE dllFuncSrcSimple,		// DLLÄÚ²¿SrcSimple·½·¨
+	std::vector<roleStruct> roleStructList,	// é…ç½®çš„å¯ç”¨éŸ³è‰²åˆ—è¡¨
+	int* iSelectRoleIndex,					// é€‰æ‹©çš„è§’è‰²ID
 
-	bool* bEnableSOVITSPreResample,			// ÆôÓÃSOVITSÄ£ĞÍÈë²ÎÒôÆµÖØ²ÉÑùÔ¤´¦Àí
-	int iSOVITSModelInputSamplerate,		// SOVITSÄ£ĞÍÈë²Î²ÉÑùÂÊ
-	bool* bEnableHUBERTPreResample,			// ÆôÓÃHUBERTÄ£ĞÍÈë²ÎÒôÆµÖØ²ÉÑùÔ¤´¦Àí
-	int iHUBERTInputSampleRate,				// HUBERTÄ£ĞÍÈë²Î²ÉÑùÂÊ
+	bool* bEnableSOVITSPreResample,			// å¯ç”¨SOVITSæ¨¡å‹å…¥å‚éŸ³é¢‘é‡é‡‡æ ·é¢„å¤„ç†
+	int iSOVITSModelInputSamplerate,		// SOVITSæ¨¡å‹å…¥å‚é‡‡æ ·ç‡
+	bool* bEnableHUBERTPreResample,			// å¯ç”¨HUBERTæ¨¡å‹å…¥å‚éŸ³é¢‘é‡é‡‡æ ·é¢„å¤„ç†
+	int iHUBERTInputSampleRate,				// HUBERTæ¨¡å‹å…¥å‚é‡‡æ ·ç‡
 
-	bool* bEnableDebug,						// Õ¼Î»·û£¬ÆôÓÃDEBUGÊä³ö
-	juce::Value vServerUseTime,				// UI±äÁ¿£¬ÏÔÊ¾·şÎñµ÷ÓÃºÄÊ±
+	bool* bEnableDebug,						// å ä½ç¬¦ï¼Œå¯ç”¨DEBUGè¾“å‡º
+	juce::Value vServerUseTime,				// UIå˜é‡ï¼Œæ˜¾ç¤ºæœåŠ¡è°ƒç”¨è€—æ—¶
 	float *fServerUseTime,
-	juce::Value vDropDataLength,			// UI±äÁ¿£¬ÏÔÊ¾ÊµÊ±Ä£Ê½ÏÂ¶ªÆúµÄÒôÆµÊı¾İ³¤¶È
+	juce::Value vDropDataLength,			// UIå˜é‡ï¼Œæ˜¾ç¤ºå®æ—¶æ¨¡å¼ä¸‹ä¸¢å¼ƒçš„éŸ³é¢‘æ•°æ®é•¿åº¦
 
-	bool* bWorkerNeedExit,					// Õ¼Î»·û£¬±íÊ¾workerÏß³ÌĞèÒªÍË³ö
-	std::mutex* mWorkerSafeExit				// »¥³âËø£¬±íÊ¾workerÏß³ÌÒÑ¾­°²È«ÍË³ö
+	bool* bWorkerNeedExit,					// å ä½ç¬¦ï¼Œè¡¨ç¤ºworkerçº¿ç¨‹éœ€è¦é€€å‡º
+	std::mutex* mWorkerSafeExit				// äº’æ–¥é”ï¼Œè¡¨ç¤ºworkerçº¿ç¨‹å·²ç»å®‰å…¨é€€å‡º
 ) {
 	char buff[100];
 	long long tTime1;
@@ -131,13 +123,13 @@ void func_do_voice_transfer_worker(
 	long lPrefixLength;
 	bool bRealTimeModel;
 
-	// ×îºóÒ»ÌõÄ£ĞÍÊä³öÒôÆµ£¬ÓÃÓÚ½»²æµ­»¯´¦Àí
+	// æœ€åä¸€æ¡æ¨¡å‹è¾“å‡ºéŸ³é¢‘ï¼Œç”¨äºäº¤å‰æ·¡åŒ–å¤„ç†
 	std::vector<float> lastOutputVoiceSample(44100 * 120);
 	std::vector<float> lastOutputVoiceSampleForCrossFadeVector;
 
 	mWorkerSafeExit->lock();
 	while (!*bWorkerNeedExit) {
-		// ÂÖÑµ¼ì²é±êÖ¾Î»
+		// è½®è®­æ£€æŸ¥æ ‡å¿—ä½
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		modelInputJobListLock->enter();
 		auto queueSize = modelInputJobList->size();
@@ -158,10 +150,6 @@ void func_do_voice_transfer_worker(
 		float fOverlap2 = 1.0 * lOverlap2 / dProjectSampleRate;
 		float fOverlap3 = 1.0 * lOverlap3 / dProjectSampleRate;
 
-		/*if (*bEnableDebug) {
-			snprintf(buff, sizeof(buff), "queueSize:%lld\n", queueSize);
-			OutputDebugStringA(buff);
-		}*/
 		if (queueSize > 0) {
 			tStart = func_get_timestamp();
 			tTime1 = tStart;
@@ -169,7 +157,7 @@ void func_do_voice_transfer_worker(
 			//iHopSize = roleStruct.iHopSize;
 
 			if (jobStruct.jobType == JOB_EMPTY) {
-				// Õâ¸öÊäÈë¿éÖĞÔöÁ¿²¿·ÖÊÇ¾²ÒôÊı¾İ£¬ÎŞĞèµ÷ÓÃÄ£ĞÍ£¬Ö±½ÓÓÃÉÏÒ»´ÎÊä³öµÄÉùÒô
+				// è¿™ä¸ªè¾“å…¥å—ä¸­å¢é‡éƒ¨åˆ†æ˜¯é™éŸ³æ•°æ®ï¼Œæ— éœ€è°ƒç”¨æ¨¡å‹ï¼Œç›´æ¥ç”¨ä¸Šä¸€æ¬¡è¾“å‡ºçš„å£°éŸ³
 				currentVoiceVector.clear();
 				for (int i = 0; i < currentVoiceSampleNumber; i++) {
 					currentVoiceVector.push_back(0.f);
@@ -183,19 +171,19 @@ void func_do_voice_transfer_worker(
 				vModelInputSampleBufferVector = jobStruct.modelInputSampleVector;
 
 				if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "Ä£ĞÍÊäÈëÑù±¾Êı:%lld£¬Ê±³¤ : %.1fms\n", vModelInputSampleBufferVector.size(), 1.0f * vModelInputSampleBufferVector.size() / dProjectSampleRate * 1000);
-					OutputDebugStringA(buff);
+					snprintf(buff, sizeof(buff), "æ¨¡å‹è¾“å…¥æ ·æœ¬æ•°:%lldï¼Œæ—¶é•¿ : %.1fms\n", vModelInputSampleBufferVector.size(), 1.0f * vModelInputSampleBufferVector.size() / dProjectSampleRate * 1000);
+					std::cout << buff;
 				}
 
 				AudioFile<double>::AudioBuffer modelInputAudioBuffer;
 				modelInputAudioBuffer.resize(iNumberOfChanel);
 
 				if (*bEnableSOVITSPreResample) {
-					// ÌáÇ°¶ÔÒôÆµÖØ²ÉÑù£¬C++ÖØ²ÉÑù±ÈPython¶Ë¿ì
+					// æå‰å¯¹éŸ³é¢‘é‡é‡‡æ ·ï¼ŒC++é‡é‡‡æ ·æ¯”Pythonç«¯å¿«
 					dSOVITSInputSamplerate = iSOVITSModelInputSamplerate;
 
-					// SOVITSÊäÈëÒôÆµÖØ²ÉÑù
-					auto ReSampleOutputVector = func_audio_resample_vector_version(vModelInputSampleBufferVector, dProjectSampleRate, iSOVITSModelInputSamplerate, dllFuncSrcSimple);
+					// SOVITSè¾“å…¥éŸ³é¢‘é‡é‡‡æ ·
+					auto ReSampleOutputVector = func_audio_resample_vector_version(vModelInputSampleBufferVector, dProjectSampleRate, iSOVITSModelInputSamplerate);
 					long iResampleNumbers = ReSampleOutputVector.size();
 
 					snprintf(sSOVITSSamplerateBuff, sizeof(sSOVITSSamplerateBuff), "%d", iSOVITSModelInputSamplerate);
@@ -205,8 +193,8 @@ void func_do_voice_transfer_worker(
 					}
 
 					if (*bEnableHUBERTPreResample) {
-						// HUBERTÊäÈëÒôÆµÖØ²ÉÑù
-						auto ReSampleOutputVector = func_audio_resample_vector_version(vModelInputSampleBufferVector, dProjectSampleRate, iHUBERTInputSampleRate, dllFuncSrcSimple);
+						// HUBERTè¾“å…¥éŸ³é¢‘é‡é‡‡æ ·
+						auto ReSampleOutputVector = func_audio_resample_vector_version(vModelInputSampleBufferVector, dProjectSampleRate, iHUBERTInputSampleRate);
 						long iResampleNumbers = ReSampleOutputVector.size();
 
 						AudioFile<double>::AudioBuffer HUBERTModelInputAudioBuffer;
@@ -223,11 +211,11 @@ void func_do_voice_transfer_worker(
 						HUBERTAudioFile.setBitDepth(24);
 						HUBERTAudioFile.setSampleRate(iHUBERTInputSampleRate);
 
-						// ±£´æÒôÆµÎÄ¼şµ½ÄÚ´æ
+						// ä¿å­˜éŸ³é¢‘æ–‡ä»¶åˆ°å†…å­˜
 						std::vector<uint8_t> vHUBERTModelInputMemoryBuffer;
 						HUBERTAudioFile.saveToWaveMemory(&vHUBERTModelInputMemoryBuffer);
 
-						// ´ÓÄÚ´æ¶ÁÈ¡Êı¾İ
+						// ä»å†…å­˜è¯»å–æ•°æ®
 						auto vHUBERTModelInputData = vHUBERTModelInputMemoryBuffer.data();
 						std::string sHUBERTModelInputString(vHUBERTModelInputData, vHUBERTModelInputData + vHUBERTModelInputMemoryBuffer.size());
 						sHUBERTSampleBuffer = sHUBERTModelInputString;
@@ -237,7 +225,7 @@ void func_do_voice_transfer_worker(
 					}
 				}
 				else {
-					// Î´¿ªÆôÔ¤´¦ÀíÖØ²ÉÑù£¬ÒôÆµÔ­Ñù·¢ËÍ
+					// æœªå¼€å¯é¢„å¤„ç†é‡é‡‡æ ·ï¼ŒéŸ³é¢‘åŸæ ·å‘é€
 					sHUBERTSampleBuffer = "";
 					dSOVITSInputSamplerate = dProjectSampleRate;
 					snprintf(sSOVITSSamplerateBuff, sizeof(sSOVITSSamplerateBuff), "%f", dProjectSampleRate);
@@ -253,40 +241,33 @@ void func_do_voice_transfer_worker(
 				audioFile.setAudioBuffer(modelInputAudioBuffer);
 				audioFile.setAudioBufferSize(iNumberOfChanel, iModelInputNumSamples);
 				audioFile.setBitDepth(24);
-				audioFile.setSampleRate(static_cast<UINT32>(dSOVITSInputSamplerate));
+				audioFile.setSampleRate(static_cast<uint32_t>(dSOVITSInputSamplerate));
 
 				tTime2 = func_get_timestamp();
 				tUseTime = tTime2 - tTime1;
-				/*if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "×¼±¸±£´æµ½ÒôÆµÎÄ¼şºÄÊ±:%lldms\n", tUseTime);
-					OutputDebugStringA(buff);
-				}*/
 				tTime1 = tTime2;
 
-				// ±£´æÒôÆµÎÄ¼şµ½ÄÚ´æ
+				// ä¿å­˜éŸ³é¢‘æ–‡ä»¶åˆ°å†…å­˜
 				std::vector<uint8_t> vModelInputMemoryBuffer;
 				audioFile.saveToWaveMemory(&vModelInputMemoryBuffer);
 
 				tTime2 = func_get_timestamp();
 				tUseTime = tTime2 - tTime1;
-				/*if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "±£´æµ½ÒôÆµÎÄ¼şºÄÊ±:%lldms\n", tUseTime);
-					OutputDebugStringA(buff);
-				}*/
 				tTime1 = tTime2;
 
-				// µ÷ÓÃAIÄ£ĞÍ½øĞĞÉùÒô´¦Àí
+				// è°ƒç”¨AIæ¨¡å‹è¿›è¡Œå£°éŸ³å¤„ç†
 				httplib::Client cli(roleStruct.sApiUrl);
+                std::cout << "è¯·æ±‚æœåŠ¡å™¨: " << roleStruct.sApiUrl << endl;
 
-				cli.set_connection_timeout(0, 1000000); // 300 milliseconds
-				cli.set_read_timeout(5, 0); // 5 seconds
-				cli.set_write_timeout(5, 0); // 5 seconds
+				cli.set_connection_timeout(60, 0); // 300 milliseconds
+				cli.set_read_timeout(60, 0); // 5 seconds
+				cli.set_write_timeout(60, 0); // 5 seconds
 
-				// ´ÓÄÚ´æ¶ÁÈ¡Êı¾İ
+				// ä»å†…å­˜è¯»å–æ•°æ®
 				auto vModelInputData = vModelInputMemoryBuffer.data();
 				std::string sModelInputString(vModelInputData, vModelInputData + vModelInputMemoryBuffer.size());
 
-				// ×¼±¸HTTPÇëÇó²ÎÊı
+				// å‡†å¤‡HTTPè¯·æ±‚å‚æ•°
 				snprintf(cPitchBuff, sizeof(cPitchBuff), "%f", *fPitchChange);
 				snprintf(cSafePrefixPadLength, sizeof(cSafePrefixPadLength), "%f", 1.0 * lOverlap3 / dProjectSampleRate);
 				sCalcPitchError = func_bool_to_string(*bCalcPitchError);
@@ -302,23 +283,17 @@ void func_do_voice_transfer_worker(
 					{ "sample", sModelInputString, "sample.wav", "audio/x-wav"},
 					{ "hubert_sample", sHUBERTSampleBuffer, "hubert_sample.wav", "audio/x-wav"},
 				};
-				/*if (*bEnableDebug) {
-					OutputDebugStringA("Ëã·¨Ä£ĞÍ\n");
-				}*/
 				auto res = cli.Post("/voiceChangeModel", items);
+                std::cout << "è¯·æ±‚ç»“æœ: " << res.error() << endl;
 
 				tTime2 = func_get_timestamp();
 				tUseTime = tTime2 - tTime1;
 				*fServerUseTime = tUseTime / 1000.0f;
 				vServerUseTime.setValue(juce::String(tUseTime) + "ms");
-				/*if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "µ÷ÓÃHTTP½Ó¿ÚºÄÊ±:%lldms\n", tUseTime);
-					OutputDebugStringA(buff);
-				}*/
 				tTime1 = tTime2;
 
 				if (res.error() == httplib::Error::Success && res->status == 200) {
-					// µ÷ÓÃ³É¹¦£¬¿ªÊ¼½«½á¹û·ÅÈëµ½ÁÙÊ±»º³åÇø£¬²¢Ìæ»»Êä³ö
+					// è°ƒç”¨æˆåŠŸï¼Œå¼€å§‹å°†ç»“æœæ”¾å…¥åˆ°ä¸´æ—¶ç¼“å†²åŒºï¼Œå¹¶æ›¿æ¢è¾“å‡º
 					std::string body = res->body;
 					std::vector<uint8_t> vModelOutputBuffer(body.begin(), body.end());
 
@@ -334,16 +309,12 @@ void func_do_voice_transfer_worker(
 					std::vector<double> fOriginAudioBuffer = tmpAudioFile.samples[0];
 					std::vector<float> currentVoiceVectorUnResample(fOriginAudioBuffer.begin(), fOriginAudioBuffer.end());
 
-					// ÒôÆµÖØ²ÉÑù
-					currentVoiceVector = func_audio_resample_vector_version(currentVoiceVectorUnResample, sampleRate, dProjectSampleRate, dllFuncSrcSimple);
+					// éŸ³é¢‘é‡é‡‡æ ·
+					currentVoiceVector = func_audio_resample_vector_version(currentVoiceVectorUnResample, sampleRate, dProjectSampleRate);
 					currentVoiceSampleNumber = currentVoiceVector.size();
-					/*if (*bEnableDebug) {
-						snprintf(buff, sizeof(buff), "currentVoiceSampleNumber:%d\n", currentVoiceSampleNumber);
-						OutputDebugStringA(buff);
-					}*/
 				}
 				else {
-					// ³öÏÖ´íÎó×¼±¸ÏàµÈ³¤¶ÈµÄ¾²ÒôÊä³ö
+					// å‡ºç°é”™è¯¯å‡†å¤‡ç›¸ç­‰é•¿åº¦çš„é™éŸ³è¾“å‡º
 					currentVoiceVector.clear();
 					for (int i = 0; i < jobStruct.modelInputSampleVector.size(); i++) {
 						currentVoiceVector.push_back(0.f);
@@ -351,15 +322,15 @@ void func_do_voice_transfer_worker(
 					currentVoiceSampleNumber = currentVoiceVector.size();
 					auto err = res.error();
 					if (*bEnableDebug) {
-						snprintf(buff, sizeof(buff), "Ëã·¨·şÎñ´íÎó:%d\n", err);
-						OutputDebugStringA(buff);
+						snprintf(buff, sizeof(buff), "ç®—æ³•æœåŠ¡é”™è¯¯:%d\n", err);
+						std::cout << buff;
 					}
 				}
 			};
 
 			if (*bEnableDebug) {
-				snprintf(buff, sizeof(buff), "Ä£ĞÍÊä³öÑù±¾Êı:%d£¬Ê±³¤ : %.1fms\n", currentVoiceSampleNumber, 1.0f * currentVoiceSampleNumber / dProjectSampleRate * 1000);
-				OutputDebugStringA(buff);
+				snprintf(buff, sizeof(buff), "æ¨¡å‹è¾“å‡ºæ ·æœ¬æ•°:%dï¼Œæ—¶é•¿ : %.1fms\n", currentVoiceSampleNumber, 1.0f * currentVoiceSampleNumber / dProjectSampleRate * 1000);
+				std::cout << buff;
 			}
 
 			if (currentVoiceSampleNumber < vModelInputSampleBufferVector.size()) {
@@ -370,8 +341,8 @@ void func_do_voice_transfer_worker(
 				currentVoiceSampleNumber = currentVoiceVector.size();
 
 				if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "Ä£ĞÍÊä³öÑù±¾Êı²»×ã£¬²¹³ä¾²Òô³¤¶È:%d£¬Ê±³¤ : %.0fms\n", padNumber, 1.0f * padNumber / dProjectSampleRate * 1000);
-					OutputDebugStringA(buff);
+					snprintf(buff, sizeof(buff), "æ¨¡å‹è¾“å‡ºæ ·æœ¬æ•°ä¸è¶³ï¼Œè¡¥å……é™éŸ³é•¿åº¦:%dï¼Œæ—¶é•¿ : %.0fms\n", padNumber, 1.0f * padNumber / dProjectSampleRate * 1000);
+					std::cout << buff;
 				}
 			}
 			else if (currentVoiceSampleNumber > vModelInputSampleBufferVector.size()) {
@@ -382,28 +353,28 @@ void func_do_voice_transfer_worker(
 				currentVoiceSampleNumber = currentVoiceVector.size();
 
 				if (*bEnableDebug) {
-					snprintf(buff, sizeof(buff), "Ä£ĞÍÊä³öÑù±¾Êı¹ı¶à£¬ÇĞ³ıÊ×²¿:%d£¬Ê±³¤ : %.0fms\n", removeNumber, 1.0f * removeNumber / dProjectSampleRate * 1000);
-					OutputDebugStringA(buff);
+					snprintf(buff, sizeof(buff), "æ¨¡å‹è¾“å‡ºæ ·æœ¬æ•°è¿‡å¤šï¼Œåˆ‡é™¤é¦–éƒ¨:%dï¼Œæ—¶é•¿ : %.0fms\n", removeNumber, 1.0f * removeNumber / dProjectSampleRate * 1000);
+					std::cout << buff;
 				}
 			}
 
-			// ½»²æµ­»¯£¬»º½âÇ°ºóÁ½¸öÒôÆµÏÎ½ÓµÄÆÆÒô
-			// ½»²æµ­»¯Ëã·¨
-			// ÉÏÒ»¸öÒôÆµÎªS1£¬µ±Ç°ÒôÆµÎªS2£¬ÖØºÏÊ±¼äÎªOverlap1£¬½»²æµ­»¯Ê±¼äÎªoverlap2£¬overlap3 = overlap1 - overlap2
-			// ÖØºÏ²¿·Ö×÷ÓÃÓĞÁ½¸ö£º1.Ê¹µÃÄ£ĞÍÄÜ»ñÈ¡µ½×ã¹»³¤µÄÊäÈë£¬²»»á³öÏÖÆæ¹ÖµÄÉùÒô£»2.ÖØµş²¿·ÖÓÃÀ´½»²æµ­»¯£¬±ÜÃâÆÆÒô
-			// S1µÄÎ²²¿overlap1²¿·ÖºÍS2µÄoverlap1²¿·ÖÊÇÄÜ¹»¶ÔÆëµÄ£¬È¡overlap1²¿·ÖÎ²²¿µÄoverlap2²¿·Ö×ö½»²æµ­»¯
-			// ´¦ÀíÂß¼­£º
-			// 1.ÉÏÒ»¸öÒôÆµS1£¬Ö»Ô¤ÁôÁËS1f²¿·Ö£¬´Ë²¿·ÖÎªS1µÄÎ²²¿overlap2³¤¶È
-			// 2.S1fÎªÁË±ÜÃâVST¿ÕÊä³ö£¬¿ÉÄÜÒÑ¾­Ô¤Ö§Ò»²¿·Ö£¬³ÆÖ®ÎªS1f_skip£¬ÎÒÃÇ½«S1fÇ°S1f_skip²¿·Ö¶ªµô£¬¶ªµôºóµÄS1f³¤¶ÈÎªlCrossFadeLength£¬×¢Òâ£º¶ªµôµÄ¹ı³Ì·¢ÉúÔÚprocessor.cppÖĞ
-			// 3.½«S2µÄÇ°overlap3²¿·ÖÌø¹ı£¬È»ºóÔÙÌø¹ıS1f_skip²¿·Ö£¬´ËÊ±S2µÄÊ£Óà²¿·ÖºÍS1fÊÇ¶ÔÆëµÄ£¬ÔÚ´Ë²¿·Ö×ö½»²æµ­»¯£¬S2Ê£Óà²¿·ÖS3bºÍ½»²æµ­»¯S3a²¿·Ö¹²Í¬×é³ÉÁËS3
-			// 4.S3Î²²¿overlap2²¿·ÖÔ¤ÁôÓÃ×÷ÏÂÒ»´Î½»²æµ­»¯£¬Ê£Óà²¿·ÖÖ±½ÓÊä³öµ½VSTÊä³ö
+			// äº¤å‰æ·¡åŒ–ï¼Œç¼“è§£å‰åä¸¤ä¸ªéŸ³é¢‘è¡”æ¥çš„ç ´éŸ³
+			// äº¤å‰æ·¡åŒ–ç®—æ³•
+			// ä¸Šä¸€ä¸ªéŸ³é¢‘ä¸ºS1ï¼Œå½“å‰éŸ³é¢‘ä¸ºS2ï¼Œé‡åˆæ—¶é—´ä¸ºOverlap1ï¼Œäº¤å‰æ·¡åŒ–æ—¶é—´ä¸ºoverlap2ï¼Œoverlap3 = overlap1 - overlap2
+			// é‡åˆéƒ¨åˆ†ä½œç”¨æœ‰ä¸¤ä¸ªï¼š1.ä½¿å¾—æ¨¡å‹èƒ½è·å–åˆ°è¶³å¤Ÿé•¿çš„è¾“å…¥ï¼Œä¸ä¼šå‡ºç°å¥‡æ€ªçš„å£°éŸ³ï¼›2.é‡å éƒ¨åˆ†ç”¨æ¥äº¤å‰æ·¡åŒ–ï¼Œé¿å…ç ´éŸ³
+			// S1çš„å°¾éƒ¨overlap1éƒ¨åˆ†å’ŒS2çš„overlap1éƒ¨åˆ†æ˜¯èƒ½å¤Ÿå¯¹é½çš„ï¼Œå–overlap1éƒ¨åˆ†å°¾éƒ¨çš„overlap2éƒ¨åˆ†åšäº¤å‰æ·¡åŒ–
+			// å¤„ç†é€»è¾‘ï¼š
+			// 1.ä¸Šä¸€ä¸ªéŸ³é¢‘S1ï¼Œåªé¢„ç•™äº†S1féƒ¨åˆ†ï¼Œæ­¤éƒ¨åˆ†ä¸ºS1çš„å°¾éƒ¨overlap2é•¿åº¦
+			// 2.S1fä¸ºäº†é¿å…VSTç©ºè¾“å‡ºï¼Œå¯èƒ½å·²ç»é¢„æ”¯ä¸€éƒ¨åˆ†ï¼Œç§°ä¹‹ä¸ºS1f_skipï¼Œæˆ‘ä»¬å°†S1få‰S1f_skipéƒ¨åˆ†ä¸¢æ‰ï¼Œä¸¢æ‰åçš„S1fé•¿åº¦ä¸ºlCrossFadeLengthï¼Œæ³¨æ„ï¼šä¸¢æ‰çš„è¿‡ç¨‹å‘ç”Ÿåœ¨processor.cppä¸­
+			// 3.å°†S2çš„å‰overlap3éƒ¨åˆ†è·³è¿‡ï¼Œç„¶åå†è·³è¿‡S1f_skipéƒ¨åˆ†ï¼Œæ­¤æ—¶S2çš„å‰©ä½™éƒ¨åˆ†å’ŒS1fæ˜¯å¯¹é½çš„ï¼Œåœ¨æ­¤éƒ¨åˆ†åšäº¤å‰æ·¡åŒ–ï¼ŒS2å‰©ä½™éƒ¨åˆ†S3bå’Œäº¤å‰æ·¡åŒ–S3aéƒ¨åˆ†å…±åŒç»„æˆäº†S3
+			// 4.S3å°¾éƒ¨overlap2éƒ¨åˆ†é¢„ç•™ç”¨ä½œä¸‹ä¸€æ¬¡äº¤å‰æ·¡åŒ–ï¼Œå‰©ä½™éƒ¨åˆ†ç›´æ¥è¾“å‡ºåˆ°VSTè¾“å‡º
 			
 			std::vector<float> processedSampleVector = currentVoiceVector;
 			
 			if (bRealTimeModel && lPrefixLength> iHopSize) {
 				lastOutputVoiceSampleForCrossFadeVector = std::vector<float>(lastOutputVoiceSample.end() - lCrossFadeLength, lastOutputVoiceSample.end());
 
-				// ¶Ôs1fÕë¶Ôhop×ö¶ÔÆë£¬´ÓÊ×²¿ĞŞ¼ôËü£¬ĞŞ¼ô´óĞ¡ÎªS1f_skip_more_skip
+				// å¯¹s1fé’ˆå¯¹hopåšå¯¹é½ï¼Œä»é¦–éƒ¨ä¿®å‰ªå®ƒï¼Œä¿®å‰ªå¤§å°ä¸ºS1f_skip_more_skip
 				//auto s1fMatchHopSize = floor(1.0 * s1f.size() / iHopSize) * iHopSize;
 				//int S1f_skip_more_skip = s1f.size() - s1fMatchHopSize;
 				//S1f_skip += S1f_skip_more_skip;
@@ -424,25 +395,25 @@ void func_do_voice_transfer_worker(
 				if (*bEnableDebug) {
 					snprintf(buff, sizeof(buff), "fOverlap1:%.0fms\tfOverlap2:%.0fms\tfOverlap3:%.0fms\tlCrossFadeLength:%d\n",
 						fOverlap1 * 1000, fOverlap2 * 1000, fOverlap3 * 1000, lCrossFadeLength);
-					OutputDebugStringA(buff);
+					std::cout << buff;
 				}
 			};
 			int processedSampleNumber = processedSampleVector.size();
 			int outputSampleNumber = processedSampleNumber - lOverlap2;
 
 			/*
-			// ´ÓĞ´Ö¸Õë±ê¼ÇµÄ»º³åÇøÎ»ÖÃ¿ªÊ¼Ğ´ÈëĞÂµÄÒôÆµÊı¾İ
+			// ä»å†™æŒ‡é’ˆæ ‡è®°çš„ç¼“å†²åŒºä½ç½®å¼€å§‹å†™å…¥æ–°çš„éŸ³é¢‘æ•°æ®
 			long lTmpModelOutputSampleBufferWritePos = *lModelOutputSampleBufferWritePos;
-			// Ô¤ÁôÒ»²¿·ÖÊı¾İÓÃ×÷½»²æµ­»¯£¨²»Ğ´ÈëÊµÊ±Êä³ö£©£¬³¤¶ÈÎªoverlap2
+			// é¢„ç•™ä¸€éƒ¨åˆ†æ•°æ®ç”¨ä½œäº¤å‰æ·¡åŒ–ï¼ˆä¸å†™å…¥å®æ—¶è¾“å‡ºï¼‰ï¼Œé•¿åº¦ä¸ºoverlap2
 			for (int i = 0; i < outputSampleNumber; i++) {
-				// ×¢Òâ£¬ÒòÎªÊä³ö»º³åÇøÓ¦µ±¾¡¿ÉÄÜµÄ´ó£¬ËùÒÔ´Ë´¦²»¿¼ÂÇĞ´Ö¸Õë×·ÉÏ¶ÁÖ¸ÕëµÄÇé¿ö
+				// æ³¨æ„ï¼Œå› ä¸ºè¾“å‡ºç¼“å†²åŒºåº”å½“å°½å¯èƒ½çš„å¤§ï¼Œæ‰€ä»¥æ­¤å¤„ä¸è€ƒè™‘å†™æŒ‡é’ˆè¿½ä¸Šè¯»æŒ‡é’ˆçš„æƒ…å†µ
 				fModeulOutputSampleBuffer[lTmpModelOutputSampleBufferWritePos++] = processedSampleVector.at(i);
 				if (lTmpModelOutputSampleBufferWritePos == lModelOutputBufferSize) {
 					lTmpModelOutputSampleBufferWritePos = 0;
 				}
 			};
 
-			// ½«Ğ´Ö¸ÕëÖ¸ÏòĞÂµÄÎ»ÖÃ
+			// å°†å†™æŒ‡é’ˆæŒ‡å‘æ–°çš„ä½ç½®
 			*lModelOutputSampleBufferWritePos = lTmpModelOutputSampleBufferWritePos;
 			*/
 
@@ -452,22 +423,22 @@ void func_do_voice_transfer_worker(
 			modelOutputJobList->push_back(jobStruct);
 			modelOutputJobListLock->exit();
 
-			// ±£Áôµ±Ç°¾ä×ÓµÄÊä³ö£¬¹©ºóĞø½»²æµ­»¯Á÷³ÌÊ¹ÓÃ
+			// ä¿ç•™å½“å‰å¥å­çš„è¾“å‡ºï¼Œä¾›åç»­äº¤å‰æ·¡åŒ–æµç¨‹ä½¿ç”¨
 			lastOutputVoiceSample = currentVoiceVector;
 
 			if (*bEnableDebug) {
-				snprintf(buff, sizeof(buff), "Êä³öÑù±¾Êı:%d£¬Ê±³¤:%.1fms£¬±£ÁôÓÃÓÚµ­»¯Ñù±¾Êı£º%d£¬Ê±³¤:%.1fms\n", 
+				snprintf(buff, sizeof(buff), "è¾“å‡ºæ ·æœ¬æ•°:%dï¼Œæ—¶é•¿:%.1fmsï¼Œä¿ç•™ç”¨äºæ·¡åŒ–æ ·æœ¬æ•°ï¼š%dï¼Œæ—¶é•¿:%.1fms\n", 
 					outputSampleNumber,
 					1.0f * outputSampleNumber / dProjectSampleRate * 1000,
 					lOverlap2, 
 					1.0f * lOverlap2 / dProjectSampleRate * 1000);
-				OutputDebugStringA(buff);
+				std::cout << buff;
 			}
 
 			tUseTime = func_get_timestamp() - tStart;
 			if (*bEnableDebug) {
-				snprintf(buff, sizeof(buff), "¸Ã´ÎwokerÂÖÑµ×ÜºÄÊ±:%lldms\n", tUseTime);
-				OutputDebugStringA(buff);
+				snprintf(buff, sizeof(buff), "è¯¥æ¬¡wokerè½®è®­æ€»è€—æ—¶:%lldms\n", tUseTime);
+				std::cout << buff;
 			}
 		}
 	}

@@ -13,6 +13,3 @@
 #define maxDropSuffixAudioLength 1.f
 #define minDropSuffixAudioLength 0.f
 #define defaultSelectRole 0
-
-
-std::string sJsonConfigFileName = "C:/temp/vst/netProcessConfig.json";

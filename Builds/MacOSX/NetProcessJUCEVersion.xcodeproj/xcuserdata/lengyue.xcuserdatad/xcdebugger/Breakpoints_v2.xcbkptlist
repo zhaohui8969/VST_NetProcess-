@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "7552E810-09D0-45AC-937B-3AC22B2B2E52"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "85322863-0283-4565-8A5F-887563C92DCB"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../Source/AudioWork.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "260"
+            endingLineNumber = "260"
+            landmarkName = "func_do_voice_transfer_worker(iNumberOfChanel, dProjectSampleRate, modelInputJobList, modelInputJobListLock, modelOutputJobList, modelOutputJobListLock, lCrossFadeLength, hanningWindow, fPitchChange, bCalcPitchError, roleStructList, iSelectRoleIndex, bEnableSOVITSPreResample, iSOVITSModelInputSamplerate, bEnableHUBERTPreResample, iHUBERTInputSampleRate, bEnableDebug, vServerUseTime, fServerUseTime, vDropDataLength, bWorkerNeedExit, mWorkerSafeExit)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "86AE827D-2B67-4A78-8675-AB4A88189EA2"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../Source/AudioWork.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "261"
+            endingLineNumber = "261"
+            landmarkName = "func_do_voice_transfer_worker(iNumberOfChanel, dProjectSampleRate, modelInputJobList, modelInputJobListLock, modelOutputJobList, modelOutputJobListLock, lCrossFadeLength, hanningWindow, fPitchChange, bCalcPitchError, roleStructList, iSelectRoleIndex, bEnableSOVITSPreResample, iSOVITSModelInputSamplerate, bEnableHUBERTPreResample, iHUBERTInputSampleRate, bEnableDebug, vServerUseTime, fServerUseTime, vDropDataLength, bWorkerNeedExit, mWorkerSafeExit)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "33F6EB97-FACA-42E8-A504-16B67B7FABE1"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../Source/AudioWork.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "264"
+            endingLineNumber = "264"
+            landmarkName = "func_do_voice_transfer_worker(iNumberOfChanel, dProjectSampleRate, modelInputJobList, modelInputJobListLock, modelOutputJobList, modelOutputJobListLock, lCrossFadeLength, hanningWindow, fPitchChange, bCalcPitchError, roleStructList, iSelectRoleIndex, bEnableSOVITSPreResample, iSOVITSModelInputSamplerate, bEnableHUBERTPreResample, iHUBERTInputSampleRate, bEnableDebug, vServerUseTime, fServerUseTime, vDropDataLength, bWorkerNeedExit, mWorkerSafeExit)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5133D72B-9D35-493B-94B8-8F7D4541B7A6"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../Source/AudioWork.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "265"
+            endingLineNumber = "265"
+            landmarkName = "func_do_voice_transfer_worker(iNumberOfChanel, dProjectSampleRate, modelInputJobList, modelInputJobListLock, modelOutputJobList, modelOutputJobListLock, lCrossFadeLength, hanningWindow, fPitchChange, bCalcPitchError, roleStructList, iSelectRoleIndex, bEnableSOVITSPreResample, iSOVITSModelInputSamplerate, bEnableHUBERTPreResample, iHUBERTInputSampleRate, bEnableDebug, vServerUseTime, fServerUseTime, vDropDataLength, bWorkerNeedExit, mWorkerSafeExit)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "478389EF-EDBD-4FA3-A858-A80A27BC48AA"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../Source/AudioWork.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "263"
+            endingLineNumber = "263"
+            landmarkName = "func_do_voice_transfer_worker(iNumberOfChanel, dProjectSampleRate, modelInputJobList, modelInputJobListLock, modelOutputJobList, modelOutputJobListLock, lCrossFadeLength, hanningWindow, fPitchChange, bCalcPitchError, roleStructList, iSelectRoleIndex, bEnableSOVITSPreResample, iSOVITSModelInputSamplerate, bEnableHUBERTPreResample, iHUBERTInputSampleRate, bEnableDebug, vServerUseTime, fServerUseTime, vDropDataLength, bWorkerNeedExit, mWorkerSafeExit)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>

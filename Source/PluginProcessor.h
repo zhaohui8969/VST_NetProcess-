@@ -37,18 +37,18 @@ enum JOB_TYPE
 	JOB_EMPTY, JOB_WORK
 };
 
-// Ò»¸öÇĞÆ¬µÄ²ÎÊı
+// ä¸€ä¸ªåˆ‡ç‰‡çš„å‚æ•°
 typedef struct
 {
 	JOB_TYPE jobType;
-	// Õ¼Î»·û£¬ÊµÊ±Ä£Ê½
+	// å ä½ç¬¦ï¼Œå®æ—¶æ¨¡å¼
 	bool bRealTimeModel;
-	// Ç°µ¼»º³åÇøÊ±³¤(s)
+	// å‰å¯¼ç¼“å†²åŒºæ—¶é•¿(s)
 	long lPrefixLength;
 	std::vector<float> modelInputSampleVector;
 	std::vector<float> modelOutputSampleVector;
 	juce::int64 bornTimeStamp;
-	// Êä³öÖĞ±£ÁôµÄ²¿·Ö£¬ÓÃÓÚ½»²æµ­»¯£¬ÔÚ¼ÆËãÑÓ³ÙµÄÊ±ºòÓ¦µ±¿¼ÂÇÕâ¸öÖµ
+	// è¾“å‡ºä¸­ä¿ç•™çš„éƒ¨åˆ†ï¼Œç”¨äºäº¤å‰æ·¡åŒ–ï¼Œåœ¨è®¡ç®—å»¶è¿Ÿçš„æ—¶å€™åº”å½“è€ƒè™‘è¿™ä¸ªå€¼
 	long lSuffixlOverlap2;
 } JOB_STRUCT;
 
@@ -62,11 +62,11 @@ enum RECORD_STATE
 
 struct roleStruct {
 
-	// ½ÇÉ«ID
+	// è§’è‰²ID
 	std::string sSpeakId;
-	// ½ÇÉ«Ãû³Æ
+	// è§’è‰²åç§°
 	std::string sName;
-	// ·şÎñURL
+	// æœåŠ¡URL
 	std::string sApiUrl;
 	// hop size
 	int iHopSize;
@@ -124,7 +124,7 @@ public:
 	void clearState();
 	void tryGetFromModelOutputJobList();
 
-	// ÓÃÀ´±£´æÈÕÖ¾
+	// ç”¨æ¥ä¿å­˜æ—¥å¿—
 	char buff[100];
 
 	RECORD_STATE kRecordState;
@@ -133,7 +133,7 @@ public:
 
 	bool bEnableDebug;
 
-	// »ùÓÚÏß³Ì°²È«¶ÓÁĞµÄÄ£ĞÍÈë²Î»º³åÇø
+	// åŸºäºçº¿ç¨‹å®‰å…¨é˜Ÿåˆ—çš„æ¨¡å‹å…¥å‚ç¼“å†²åŒº
 	std::vector<JOB_STRUCT> modelInputJobList;
 	std::vector<float> prepareModelInputSample;
 	juce::CriticalSection modelInputJobListLock;
@@ -143,7 +143,7 @@ public:
 	juce::CriticalSection modelOutputJobListLock;
 	bool bHasMoreData;
 		
-	// ×îºóÒ»ÌõÄ£ĞÍÊä³öÒôÆµµÄÎ²²¿£¬ÓÃÓÚ½»²æµ­»¯´¦Àí
+	// æœ€åä¸€æ¡æ¨¡å‹è¾“å‡ºéŸ³é¢‘çš„å°¾éƒ¨ï¼Œç”¨äºäº¤å‰æ·¡åŒ–å¤„ç†
 	float fCrossFadeLength;
 	long lCrossFadeLength;
 	std::vector<float> hanningWindow;
@@ -159,7 +159,7 @@ public:
 	int iDAWSampleRate;
 	JOB_STRUCT safeJob;
 
-	// Ç°µ¼ĞÅºÅ»º³åÇø
+	// å‰å¯¼ä¿¡å·ç¼“å†²åŒº
 	std::vector<float> fPrefixBuffer;
 	long lPrefixBufferSize;
 	long lPrefixBufferPos;
@@ -167,16 +167,15 @@ public:
 	long lPrefixLengthSampleNumber;
 	float fDropSuffixLength;
 	
-	// °²È«Çø´óĞ¡£¬µ±Ã»ÓĞÉùÒôĞÅºÅÊä³öµÄÊ±ºò£¬²åÈëÒ»¸öÕâÃ´´óµÄ¾²Òô
+	// å®‰å…¨åŒºå¤§å°ï¼Œå½“æ²¡æœ‰å£°éŸ³ä¿¡å·è¾“å‡ºçš„æ—¶å€™ï¼Œæ’å…¥ä¸€ä¸ªè¿™ä¹ˆå¤§çš„é™éŸ³
 	float fSafeZoneLength;
 	long lSafeZoneSize;
 
-	// JSONÅäÖÃ
+	// JSONé…ç½®
 	std::vector<roleStruct> roleList;
 	int iSelectRoleIndex;
 
 	double fSampleVolumeWorkActiveVal;
-	FUNC_SRC_SIMPLE dllFuncSrcSimple;
 	// debug 
 	long lNoOutputCount;
 
@@ -186,15 +185,15 @@ public:
 	bool bEnableHUBERTPreResample;
 	int iHUBERTInputSampleRate;
 
-	// ÊµÊ±Ä£Ê½
+	// å®æ—¶æ¨¡å¼
 	bool bRealTimeMode;
 	bool bRealTimeECO;
 
-	// ÒôÁ¿¼ì²â
+	// éŸ³é‡æ£€æµ‹
 	bool bVolumeDetectFine;
 	float fLowVolumeDetectTime;
 
-	// ¹¤×÷Ïß³Ì×´Ì¬
+	// å·¥ä½œçº¿ç¨‹çŠ¶æ€
 	bool workStart;
 	std::mutex mWorkerSafeExit;
 	bool bWorkerNeedExit;
@@ -202,7 +201,7 @@ public:
 	// Model state
 	juce::Value vServerUseTime;
 	float fServerUseTime;
-	// ÊµÊ±Ä£Ê½ÏÂ¶ªÆúµÄÒôÆµÊı¾İ³¤¶È
+	// å®æ—¶æ¨¡å¼ä¸‹ä¸¢å¼ƒçš„éŸ³é¢‘æ•°æ®é•¿åº¦
 	juce::Value vDropDataLength;
 
 private:

@@ -23,7 +23,6 @@ void func_do_voice_transfer_worker(
 
 	std::vector<roleStruct> roleStructList,	// 配置的可用音色列表
 	int* iSelectRoleIndex,					// 选择的角色ID
-	FUNC_SRC_SIMPLE dllFuncSrcSimple,		// DLL内部SrcSimple方法
 
 	bool* bEnableSOVITSPreResample,			// 启用SOVITS模型入参音频重采样预处理
 	int iSOVITSModelInputSamplerate,		// SOVITS模型入参采样率

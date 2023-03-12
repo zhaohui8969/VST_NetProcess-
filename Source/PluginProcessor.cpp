@@ -8,7 +8,6 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include <Windows.h>
 #include <fstream>
 #include "AudioWork.h"
 using namespace std::chrono;
@@ -28,14 +27,14 @@ NetProcessJUCEVersionAudioProcessor::NetProcessJUCEVersionAudioProcessor()
 {
 	loadConfig();
 	
-	// °²È«»º³åÇø
+	// å®‰å…¨ç¼“å†²åŒº
 	lSafeZoneSize = ceil(fSafeZoneLength * iDAWSampleRate / iHopSize) * iHopSize;
 	safeJob.modelOutputSampleVector = std::vector<float>(lSafeZoneSize);
 
-	// Ç°µ¼»º³åÇø»º´æ³õÊ¼»¯
-	// ×¼±¸20sµÄ»º³åÇø
+	// å‰å¯¼ç¼“å†²åŒºç¼“å­˜åˆå§‹åŒ–
+	// å‡†å¤‡20sçš„ç¼“å†²åŒº
 	lPrefixBufferSize = static_cast<long>(20.0f * iDAWSampleRate);
-	// Ç°µ¼»º³å³¤¶È
+	// å‰å¯¼ç¼“å†²é•¿åº¦
 	fPrefixBuffer = std::vector<float>(lPrefixBufferSize);
 	lPrefixBufferPos = 0;
 
@@ -112,6 +111,8 @@ void NetProcessJUCEVersionAudioProcessor::changeProgramName (int index, const ju
 //==============================================================================
 void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    std::cout << "DAW sample rate: " << sampleRate << std::endl;
+    
 	iNumberOfChanel = 1;
 	lNoOutputCount = 0;
 	fServerUseTime = 0.f;
@@ -120,10 +121,10 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 
 	lPrefixLengthSampleNumber = static_cast<long>(fPrefixLength * iDAWSampleRate);
 
-	// workerÏß³Ì°²È«ÍË³öÏà¹ØĞÅºÅ
+	// workerçº¿ç¨‹å®‰å…¨é€€å‡ºç›¸å…³ä¿¡å·
 	bWorkerNeedExit = false;
 	kRecordState = IDLE;
-	// todo µ¥Àı
+	// todo å•ä¾‹
 	workStart = false;
 	if (!workStart) {
 		runWorker();
@@ -133,7 +134,7 @@ void NetProcessJUCEVersionAudioProcessor::prepareToPlay (double sampleRate, int 
 
 void NetProcessJUCEVersionAudioProcessor::clearState()
 {
-	// Çå³ıÇ°µ¼»º³åºÍ¾ÉµÄÄ£ĞÍÊäÈë»º³åÇø
+	// æ¸…é™¤å‰å¯¼ç¼“å†²å’Œæ—§çš„æ¨¡å‹è¾“å…¥ç¼“å†²åŒº
 	JOB_STRUCT inputJobStruct;
 	modelOutputJob = inputJobStruct;
 	modelOutputJob.modelOutputSampleVector = std::vector<float>();
@@ -153,8 +154,8 @@ void NetProcessJUCEVersionAudioProcessor::releaseResources()
 	prepareModelInputSample.reserve(lMaxSliceLengthSampleNumber);
 	modelOutputJobList.clear();
 	modelOutputJobList.reserve(8);
-	// µ±×ÓÏß³Ì»¹ÔÚÔËĞĞÊ±£¬Õâ¸öËøÊÇËøÉÏµÄ£¬´ËÊ±Ö÷Ïß³Ì»¹²»ÄÜÍË³ö
-	// Ö÷Ïß³ÌÍ¨¹ı½«ÍË³öĞÅºÅ·¢¸ø×ÓÏß³Ì£¬µÈ´ı×ÓÏß³Ì°²È«ÍË³öºó£¬ÊÍ·ÅËø£¬Ö÷Ïß³ÌÔÙÍË³ö
+	// å½“å­çº¿ç¨‹è¿˜åœ¨è¿è¡Œæ—¶ï¼Œè¿™ä¸ªé”æ˜¯é”ä¸Šçš„ï¼Œæ­¤æ—¶ä¸»çº¿ç¨‹è¿˜ä¸èƒ½é€€å‡º
+	// ä¸»çº¿ç¨‹é€šè¿‡å°†é€€å‡ºä¿¡å·å‘ç»™å­çº¿ç¨‹ï¼Œç­‰å¾…å­çº¿ç¨‹å®‰å…¨é€€å‡ºåï¼Œé‡Šæ”¾é”ï¼Œä¸»çº¿ç¨‹å†é€€å‡º
 	mWorkerSafeExit.lock();
 	mWorkerSafeExit.unlock();
 }
@@ -220,29 +221,29 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 
 
 	if (bRealTimeModeNow) {
-		// ÊµÊ±Ä£Ê½
+		// å®æ—¶æ¨¡å¼
 		if (kRecordState == IDLE) {
-			// µ±Ç°ÊÇ¿ÕÏĞ×´Ì¬
+			// å½“å‰æ˜¯ç©ºé—²çŠ¶æ€
 			/*if (bEnableDebug) {
-				OutputDebugStringA("ÇĞ»»µ½¹¤×÷×´Ì¬");
+				OutputDebugStringA("åˆ‡æ¢åˆ°å·¥ä½œçŠ¶æ€");
 			}*/
 			kRecordState = WORK;
 
-			// ´ÓIDLEÇĞ»»µ½WORD£¬±íÊ¾ĞèÒªÒ»¶ÎĞÂµÄÄ£ĞÍÊäÈë
-			// ½«Ç°µ¼»º³åÇøµÄÊı¾İĞ´Èëµ½Ä£ĞÍÈë²Î»º³åÇøÖĞ
-			// ´ÓÇ°µ¼»º³åÇøµ±Ç°Î»ÖÃÏòÇ°Ñ°ÕÒlPrefixLengthSampleNumber¸öÊı¾İ
+			// ä»IDLEåˆ‡æ¢åˆ°WORDï¼Œè¡¨ç¤ºéœ€è¦ä¸€æ®µæ–°çš„æ¨¡å‹è¾“å…¥
+			// å°†å‰å¯¼ç¼“å†²åŒºçš„æ•°æ®å†™å…¥åˆ°æ¨¡å‹å…¥å‚ç¼“å†²åŒºä¸­
+			// ä»å‰å¯¼ç¼“å†²åŒºå½“å‰ä½ç½®å‘å‰å¯»æ‰¾lPrefixLengthSampleNumberä¸ªæ•°æ®
 			std::vector<float> prefixSampleVector(lPrefixLengthSampleNumberNow);
 			int prefixSampleVectorWritePos = 0;
 			int readPosStart = lPrefixBufferPos - lPrefixLengthSampleNumberNow;
 			int readPosEnd = lPrefixBufferPos;
 			if (readPosStart >= 0) {
-				// ³¡¾°1£º[.....start......end...]£¬Ö±½Ó´ÓÖĞ¼ä¶ÁÈ¡ĞèÒªµÄÊı¾İ
+				// åœºæ™¯1ï¼š[.....start......end...]ï¼Œç›´æ¥ä»ä¸­é—´è¯»å–éœ€è¦çš„æ•°æ®
 				for (int i = readPosStart; i < readPosEnd; i++) {
 					prefixSampleVector[prefixSampleVectorWritePos++] = fPrefixBuffer[i];
 				}
 			}
 			else {
-				// ³¡¾°2£º[.....end......start...]£¬ĞèÒª´ÓÑ­»·»º³åÇøÎ²²¿»ñÈ¡Ò»Ğ©Êı¾İ£¬È»ºóÔÙ´ÓÍ·²¿¶ÁÈ¡Ò»Ğ©Êı¾İ
+				// åœºæ™¯2ï¼š[.....end......start...]ï¼Œéœ€è¦ä»å¾ªç¯ç¼“å†²åŒºå°¾éƒ¨è·å–ä¸€äº›æ•°æ®ï¼Œç„¶åå†ä»å¤´éƒ¨è¯»å–ä¸€äº›æ•°æ®
 				readPosStart = lPrefixBufferSize + readPosStart;
 				for (int i = readPosStart; i < lPrefixBufferSize; i++) {
 					prefixSampleVector[prefixSampleVectorWritePos++] = fPrefixBuffer[i];
@@ -253,51 +254,52 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			};
 
 			if (bEnableDebug) {
-				snprintf(buff, sizeof(buff), "ÊµÊ±Ä£Ê½ - Ç°µ¼»º³åÇø´óĞ¡:%lld£¬Ê±³¤:%.1fms\n", prefixSampleVector.size(), 1.0 * prefixSampleVector.size() / getSampleRate() * 1000);
-				OutputDebugStringA(buff);
+				snprintf(buff, sizeof(buff), "å®æ—¶æ¨¡å¼ - å‰å¯¼ç¼“å†²åŒºå¤§å°:%lldï¼Œæ—¶é•¿:%.1fms\n", prefixSampleVector.size(), 1.0 * prefixSampleVector.size() / getSampleRate() * 1000);
+				// OutputDebugStringA(buff);
+				std::cout << buff;
 			}
 
 			for (int i = 0; i < prefixSampleVector.size(); i++) {
 				prepareModelInputSample.push_back(prefixSampleVector[i]);
 			}
 
-			// ½«µ±Ç°µÄÒôÆµÊı¾İĞ´Èëµ½Ä£ĞÍÊäÈë»º³åÇøÖĞ
+			// å°†å½“å‰çš„éŸ³é¢‘æ•°æ®å†™å…¥åˆ°æ¨¡å‹è¾“å…¥ç¼“å†²åŒºä¸­
 			for (int i = 0; i < currentBlockVector.size(); i++) {
 				prepareModelInputSample.push_back(currentBlockVector[i]);
 				lRemainNeedSliceSampleNumber--;
 			};
 		}
 		else {
-			// µ±Ç°ÊÇ¹¤×÷×´Ì¬
-			// Ö»ĞèÒª³ÖĞø½«µ±Ç°µÄÒôÆµÊı¾İĞ´Èëµ½Ä£ĞÍÈë²Î»º³åÇøÖĞ
+			// å½“å‰æ˜¯å·¥ä½œçŠ¶æ€
+			// åªéœ€è¦æŒç»­å°†å½“å‰çš„éŸ³é¢‘æ•°æ®å†™å…¥åˆ°æ¨¡å‹å…¥å‚ç¼“å†²åŒºä¸­
 			for (int i = 0; i < currentBlockVector.size(); i++) {
 				prepareModelInputSample.push_back(currentBlockVector[i]);
 				lRemainNeedSliceSampleNumber--;
 			}
 
-			// ÅĞ¶ÏÊÇ·ñĞèÒªÍË³ö¹¤×÷×´Ì¬
+			// åˆ¤æ–­æ˜¯å¦éœ€è¦é€€å‡ºå·¥ä½œçŠ¶æ€
 			bool bExitWorkState = false;
 
-			// ÍË³öÌõ¼ş1£º¶ÓÁĞ´ïµ½Ò»¶¨µÄ´óĞ¡
+			// é€€å‡ºæ¡ä»¶1ï¼šé˜Ÿåˆ—è¾¾åˆ°ä¸€å®šçš„å¤§å°
 			if (lRemainNeedSliceSampleNumber <= 0) {
 				bExitWorkState = true;
 				/*if (bEnableDebug) {
-					OutputDebugStringA("¶ÓÁĞ´óĞ¡´ïµ½Ô¤ÆÚ£¬Ö±½Óµ÷ÓÃÄ£ĞÍ\n");
+					OutputDebugStringA("é˜Ÿåˆ—å¤§å°è¾¾åˆ°é¢„æœŸï¼Œç›´æ¥è°ƒç”¨æ¨¡å‹\n");
 				}*/
 			}
 
 			if (bExitWorkState) {
-				// ĞèÒªÍË³ö¹¤×÷×´Ì¬
-				// 1.Ä£ĞÍÊäÈë¶ÓÁĞ¼ÓËø
-				// 2.½«µ±Ç°×¼±¸µÄÄ£ĞÍÊäÈë·ÅÈë¶ÓÁĞ
-				// 3.×¼±¸Ò»¸öĞÂµÄÄ£ĞÍÊäÈë¹©ÏÂÒ»´ÎÊ¹ÓÃ
-				// 4.ÉèÖÃ±ê¼ÇÎ»£¬¹©Ïû·ÑÕß¼ì²é
-				// 5.Ä£ĞÍÊäÈë¶ÓÁĞËøÊÍ·Å
-				// ÒôÁ¿¼ì²é£¬Èç¹ûÕûÌåÊÇ¾²Òô£¬Ôò²»ĞèÒª¾­¹ıÄ£ĞÍ´¦ÀíÊ²Ã´£¬Ö±½ÓÊä³ö¾²Òô£¬±ÜÃâ¾²Òô½øÈëÄ£ĞÍºóÊä³öÆæ¹ÖµÄÉùÒô
+				// éœ€è¦é€€å‡ºå·¥ä½œçŠ¶æ€
+				// 1.æ¨¡å‹è¾“å…¥é˜Ÿåˆ—åŠ é”
+				// 2.å°†å½“å‰å‡†å¤‡çš„æ¨¡å‹è¾“å…¥æ”¾å…¥é˜Ÿåˆ—
+				// 3.å‡†å¤‡ä¸€ä¸ªæ–°çš„æ¨¡å‹è¾“å…¥ä¾›ä¸‹ä¸€æ¬¡ä½¿ç”¨
+				// 4.è®¾ç½®æ ‡è®°ä½ï¼Œä¾›æ¶ˆè´¹è€…æ£€æŸ¥
+				// 5.æ¨¡å‹è¾“å…¥é˜Ÿåˆ—é”é‡Šæ”¾
+				// éŸ³é‡æ£€æŸ¥ï¼Œå¦‚æœæ•´ä½“æ˜¯é™éŸ³ï¼Œåˆ™ä¸éœ€è¦ç»è¿‡æ¨¡å‹å¤„ç†ä»€ä¹ˆï¼Œç›´æ¥è¾“å‡ºé™éŸ³ï¼Œé¿å…é™éŸ³è¿›å…¥æ¨¡å‹åè¾“å‡ºå¥‡æ€ªçš„å£°éŸ³
 				if (bRealTimeECO) {
 					double fSampleMax = -9999;
 					for (juce::int32 i = 0; i < currentBlockVector.size(); i++) {
-						// »ñÈ¡µ±Ç°¿éµÄ×î´óÒôÁ¿
+						// è·å–å½“å‰å—çš„æœ€å¤§éŸ³é‡
 						float fCurrentSample = currentBlockVector[i];
 						float fSampleAbs = std::abs(fCurrentSample);
 						if (fSampleAbs > fSampleMax) {
@@ -310,7 +312,7 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					bVolumeDetectFine = true;
 				}
 
-				// ×¼±¸Ä£ĞÍËùĞèÈë²Î
+				// å‡†å¤‡æ¨¡å‹æ‰€éœ€å…¥å‚
 				JOB_STRUCT inputJobStruct;
 				inputJobStruct.bRealTimeModel = true;
 				long prepareModelInputMatchHopSize = floor(1.0 * prepareModelInputSample.size() / iHopSize) * iHopSize;
@@ -325,13 +327,14 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 					inputJobStruct.jobType = JOB_EMPTY;
 				}
 				modelInputJobListLock.enter();
-				// ¶ÔÓÚÊµÊ±Ä£Ê½£¬Î´´¦ÀíµÄÊı¾İ»ıÀÛµ½Ò»¶¨Á¿µÄÊ±ºò£¬¿ÉÒÔ¶ªÆú
+				// å¯¹äºå®æ—¶æ¨¡å¼ï¼Œæœªå¤„ç†çš„æ•°æ®ç§¯ç´¯åˆ°ä¸€å®šé‡çš„æ—¶å€™ï¼Œå¯ä»¥ä¸¢å¼ƒ
 				auto dropModelInputJobListSize = modelInputJobList.size();
 				if (dropModelInputJobListSize > 1) {
 					modelInputJobList.clear();
 					if (bEnableDebug) {
-						snprintf(buff, sizeof(buff), "¶ÔÓÚÊµÊ±Ä£Ê½£¬¾ÉÊı¾İ»¹Î´´¦ÀíµÄ¿ÉÒÔÖ±½Ó¶ªµô:%lld\n", dropModelInputJobListSize);
-						OutputDebugStringA(buff);
+						snprintf(buff, sizeof(buff), "å¯¹äºå®æ—¶æ¨¡å¼ï¼Œæ—§æ•°æ®è¿˜æœªå¤„ç†çš„å¯ä»¥ç›´æ¥ä¸¢æ‰:%lld\n", dropModelInputJobListSize);
+						// OutputDebugStringA(buff);
+						std::cout << buff;
 					}
 				}
 				modelInputJobList.push_back(inputJobStruct);
@@ -342,21 +345,23 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				kRecordState = IDLE;
 				lRemainNeedSliceSampleNumber = lMaxSliceLengthSampleNumber - newprepareModelInputSample.size();
 				if (bEnableDebug) {
-					snprintf(buff, sizeof(buff), "ÊµÊ±Ä£Ê½ - ÒòÎªÖ¡¶ÔÆë£¬Áô¸øÏÂ´Î´¦ÀíµÄÊı¾İ£º:%lld Ê±³¤£º%.0fms\n", 
+					snprintf(buff, sizeof(buff), "å®æ—¶æ¨¡å¼ - å› ä¸ºå¸§å¯¹é½ï¼Œç•™ç»™ä¸‹æ¬¡å¤„ç†çš„æ•°æ®ï¼š:%lld æ—¶é•¿ï¼š%.0fms\n", 
 						newprepareModelInputSample.size(),
 						1.0f * newprepareModelInputSample.size() / getSampleRate() * 1000);
-					OutputDebugStringA(buff);
+					// OutputDebugStringA(buff);
+					std::cout << buff;
 				}
 			}
 		};
-		// Ä£ĞÍÊä³öĞ´µ½VSTÊä³öÖĞ
+		// æ¨¡å‹è¾“å‡ºå†™åˆ°VSTè¾“å‡ºä¸­
 		tryGetFromModelOutputJobList();
 
 		int outputWriteCount = 0;
-		// Ò»Ö±Êä³ö£¬Ö±µ½Ã»ÓĞÊı¾İ¿ÉÓÃ£¬»òÕßµ±Ç°chunkĞ´Âú
+		// ä¸€ç›´è¾“å‡ºï¼Œç›´åˆ°æ²¡æœ‰æ•°æ®å¯ç”¨ï¼Œæˆ–è€…å½“å‰chunkå†™æ»¡
 		bool bNeedOutput = bHasMoreData && outputWriteCount != currentBlockVector.size();
 		while (bNeedOutput) {
-			long lCanReadSize = min(modelOutputJob.modelOutputSampleVector.size(), currentBlockVector.size() - outputWriteCount);
+			// long lCanReadSize = min(modelOutputJob.modelOutputSampleVector.size(), currentBlockVector.size() - outputWriteCount);
+			long lCanReadSize = modelOutputJob.modelOutputSampleVector.size() < currentBlockVector.size() - outputWriteCount ? modelOutputJob.modelOutputSampleVector.size() : currentBlockVector.size() - outputWriteCount;
 			for (int i = 0; i < lCanReadSize; i++)
 			{
 				double currentSample = modelOutputJob.modelOutputSampleVector[i];
@@ -366,16 +371,16 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				};
 				outputWriteCount++;
 			}
-			// É¾³ıÒÑ¾­Ê¹ÓÃ¹ıµÄÊı¾İ
+			// åˆ é™¤å·²ç»ä½¿ç”¨è¿‡çš„æ•°æ®
 			modelOutputJob.modelOutputSampleVector = std::vector<float>(modelOutputJob.modelOutputSampleVector.begin() + lCanReadSize, modelOutputJob.modelOutputSampleVector.end());
 			tryGetFromModelOutputJobList();
 			bNeedOutput = bHasMoreData && outputWriteCount != currentBlockVector.size();
 		}
 
-		// ÅĞ¶Ïµ±Ç°ÊÇ·ñÓĞ¿ÕÊä³ö
+		// åˆ¤æ–­å½“å‰æ˜¯å¦æœ‰ç©ºè¾“å‡º
 		bool hasEmptyBlock = outputWriteCount != currentBlockVector.size();
 		if (hasEmptyBlock) {
-			// Êä³ö¾²Òô
+			// è¾“å‡ºé™éŸ³
 			lNoOutputCount += 1;
 			dropCount = 0;
 			for (juce::int32 i = outputWriteCount; i < currentBlockVector.size(); i++) {
@@ -386,29 +391,30 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				}
 			}
 
-			// Èë²»·ó³öÁË£¬²åÈëÒ»¸ö°²È«Çø
+			// å…¥ä¸æ•·å‡ºäº†ï¼Œæ’å…¥ä¸€ä¸ªå®‰å…¨åŒº
 			safeJob.bornTimeStamp = juce::Time::currentTimeMillis();
 			modelOutputJobListLock.enter();
 			modelOutputJobList.push_back(safeJob);
 			modelOutputJobListLock.exit();
 
 			if (bEnableDebug) {
-				snprintf(buff, sizeof(buff), "ÊµÊ±Ä£Ê½ - Êä³ö»º³å¿Õ£¬´ÎÊı:%ld£¬¿Õ°×Êı¾İÁ¿£º%d£¬Ê±³¤: %.1fms£¬²åÈë°²È«Çø£º%dÊ±³¤:%.0fms\n",
+				snprintf(buff, sizeof(buff), "å®æ—¶æ¨¡å¼ - è¾“å‡ºç¼“å†²ç©ºï¼Œæ¬¡æ•°:%ldï¼Œç©ºç™½æ•°æ®é‡ï¼š%dï¼Œæ—¶é•¿: %.1fmsï¼Œæ’å…¥å®‰å…¨åŒºï¼š%dæ—¶é•¿:%.0fms\n",
 					lNoOutputCount,
 					dropCount,
 					1.0f * dropCount / getSampleRate() * 1000,
 					lSafeZoneSize,
 					1.0 * lSafeZoneSize / getSampleRate() * 1000);
-				OutputDebugStringA(buff);
+				// OutputDebugStringA(buff);
+				std::cout << buff;
 			}
 		}
 	}
 	else {
-		// ·Ö¾äÄ£Ê½
-		// ÒôÁ¿¼ì²é
+		// åˆ†å¥æ¨¡å¼
+		// éŸ³é‡æ£€æŸ¥
 		double fSampleMax = -9999;
 		for (juce::int32 i = 0; i < currentBlockVector.size(); i++) {
-			// »ñÈ¡µ±Ç°¿éµÄ×î´óÒôÁ¿
+			// è·å–å½“å‰å—çš„æœ€å¤§éŸ³é‡
 			float fCurrentSample = currentBlockVector[i];
 			float fSampleAbs = std::abs(fCurrentSample);
 			if (fSampleAbs > fSampleMax) {
@@ -421,19 +427,19 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 		} else {
 			fRecordIdleTime += 1.f * currentBlockVector.size() / getSampleRate();
 			/*if (bEnableDebug) {
-				snprintf(buff, sizeof(buff), "µ±Ç°ÀÛ»ı¿ÕÏĞÊ±¼ä:%f\n", fRecordIdleTime);
+				snprintf(buff, sizeof(buff), "å½“å‰ç´¯ç§¯ç©ºé—²æ—¶é—´:%f\n", fRecordIdleTime);
 				OutputDebugStringA(buff);
 			}*/
 		}
 		if (kRecordState == IDLE) {
 			if (bVolumeDetectFine) {
-				// µ±Ç°ÊÇ¿ÕÏĞ×´Ì¬
+				// å½“å‰æ˜¯ç©ºé—²çŠ¶æ€
 				/*if (bEnableDebug) {
-					OutputDebugStringA("ÇĞ»»µ½¹¤×÷×´Ì¬");
+					OutputDebugStringA("åˆ‡æ¢åˆ°å·¥ä½œçŠ¶æ€");
 				}*/
 				kRecordState = WORK;
 
-				// ½«µ±Ç°µÄÒôÆµÊı¾İĞ´Èëµ½Ä£ĞÍÊäÈë»º³åÇøÖĞ
+				// å°†å½“å‰çš„éŸ³é¢‘æ•°æ®å†™å…¥åˆ°æ¨¡å‹è¾“å…¥ç¼“å†²åŒºä¸­
 				for (int i = 0; i < currentBlockVector.size(); i++) {
 					prepareModelInputSample.push_back(currentBlockVector[i]);
 					lRemainNeedSliceSampleNumber--;
@@ -441,39 +447,39 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			}
 		}
 		else {
-			// µ±Ç°ÊÇ¹¤×÷×´Ì¬
-			// Ö»ĞèÒª³ÖĞø½«µ±Ç°µÄÒôÆµÊı¾İĞ´Èëµ½Ä£ĞÍÈë²Î»º³åÇøÖĞ
+			// å½“å‰æ˜¯å·¥ä½œçŠ¶æ€
+			// åªéœ€è¦æŒç»­å°†å½“å‰çš„éŸ³é¢‘æ•°æ®å†™å…¥åˆ°æ¨¡å‹å…¥å‚ç¼“å†²åŒºä¸­
 			for (int i = 0; i < currentBlockVector.size(); i++) {
 				prepareModelInputSample.push_back(currentBlockVector[i]);
 				lRemainNeedSliceSampleNumber--;
 			}
 
-			// ÅĞ¶ÏÊÇ·ñĞèÒªÍË³ö¹¤×÷×´Ì¬
+			// åˆ¤æ–­æ˜¯å¦éœ€è¦é€€å‡ºå·¥ä½œçŠ¶æ€
 			bool bExitWorkState = false;
 
-			// ÍË³öÌõ¼ş1£ºÒôÁ¿¹ıĞ¡ÇÒ³ÖĞø³¬¹ıÒ»¶¨Ê±¼ä
+			// é€€å‡ºæ¡ä»¶1ï¼šéŸ³é‡è¿‡å°ä¸”æŒç»­è¶…è¿‡ä¸€å®šæ—¶é—´
 			if (fRecordIdleTime >= fLowVolumeDetectTime) {
 				bExitWorkState = true;
 				/*if (bEnableDebug) {
-					OutputDebugStringA("ÒôÁ¿¹ıĞ¡ÇÒ³ÖĞø³¬¹ıÒ»¶¨Ê±¼ä£¬Ö±½Óµ÷ÓÃÄ£ĞÍ\n");
+					OutputDebugStringA("éŸ³é‡è¿‡å°ä¸”æŒç»­è¶…è¿‡ä¸€å®šæ—¶é—´ï¼Œç›´æ¥è°ƒç”¨æ¨¡å‹\n");
 				}*/
 			}
 
-			// ÍË³öÌõ¼ş2£º¶ÓÁĞ´ïµ½Ò»¶¨µÄ´óĞ¡
+			// é€€å‡ºæ¡ä»¶2ï¼šé˜Ÿåˆ—è¾¾åˆ°ä¸€å®šçš„å¤§å°
 			if (lRemainNeedSliceSampleNumber <= 0) {
 				bExitWorkState = true;
 				/*if (bEnableDebug) {
-					OutputDebugStringA("¶ÓÁĞ´óĞ¡´ïµ½Ô¤ÆÚ£¬Ö±½Óµ÷ÓÃÄ£ĞÍ\n");
+					OutputDebugStringA("é˜Ÿåˆ—å¤§å°è¾¾åˆ°é¢„æœŸï¼Œç›´æ¥è°ƒç”¨æ¨¡å‹\n");
 				}*/
 			}
 
 			if (bExitWorkState) {
-				// ĞèÒªÍË³ö¹¤×÷×´Ì¬
-				// 1.Ä£ĞÍÊäÈë¶ÓÁĞ¼ÓËø
-				// 2.½«µ±Ç°×¼±¸µÄÄ£ĞÍÊäÈë·ÅÈë¶ÓÁĞ
-				// 3.×¼±¸Ò»¸öĞÂµÄÄ£ĞÍÊäÈë¹©ÏÂÒ»´ÎÊ¹ÓÃ
-				// 4.ÉèÖÃ±ê¼ÇÎ»£¬¹©Ïû·ÑÕß¼ì²é
-				// 5.Ä£ĞÍÊäÈë¶ÓÁĞËøÊÍ·Å
+				// éœ€è¦é€€å‡ºå·¥ä½œçŠ¶æ€
+				// 1.æ¨¡å‹è¾“å…¥é˜Ÿåˆ—åŠ é”
+				// 2.å°†å½“å‰å‡†å¤‡çš„æ¨¡å‹è¾“å…¥æ”¾å…¥é˜Ÿåˆ—
+				// 3.å‡†å¤‡ä¸€ä¸ªæ–°çš„æ¨¡å‹è¾“å…¥ä¾›ä¸‹ä¸€æ¬¡ä½¿ç”¨
+				// 4.è®¾ç½®æ ‡è®°ä½ï¼Œä¾›æ¶ˆè´¹è€…æ£€æŸ¥
+				// 5.æ¨¡å‹è¾“å…¥é˜Ÿåˆ—é”é‡Šæ”¾
 				std::vector<float> newprepareModelInputSample;
 				JOB_STRUCT jobStruct;
 				jobStruct.jobType = JOB_WORK;
@@ -489,14 +495,15 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			}
 		};
 
-		// Ä£ĞÍÊä³öĞ´µ½VSTÊä³öÖĞ
+		// æ¨¡å‹è¾“å‡ºå†™åˆ°VSTè¾“å‡ºä¸­
 		tryGetFromModelOutputJobList();
 
 		int outputWriteCount = 0;
-		// Ò»Ö±Êä³ö£¬Ö±µ½Ã»ÓĞÊı¾İ¿ÉÓÃ£¬»òÕßµ±Ç°chunkĞ´Âú
+		// ä¸€ç›´è¾“å‡ºï¼Œç›´åˆ°æ²¡æœ‰æ•°æ®å¯ç”¨ï¼Œæˆ–è€…å½“å‰chunkå†™æ»¡
 		bool bNeedOutput = bHasMoreData && outputWriteCount != currentBlockVector.size();
 		while (bNeedOutput) {
-			long lCanReadSize = min(modelOutputJob.modelOutputSampleVector.size(), currentBlockVector.size() - outputWriteCount);
+			// long lCanReadSize = min(modelOutputJob.modelOutputSampleVector.size(), currentBlockVector.size() - outputWriteCount);
+			long lCanReadSize = (modelOutputJob.modelOutputSampleVector.size() < currentBlockVector.size() - outputWriteCount) ? modelOutputJob.modelOutputSampleVector.size() : currentBlockVector.size() - outputWriteCount;
 			for (int i = 0; i < lCanReadSize; i++)
 			{
 				double currentSample = modelOutputJob.modelOutputSampleVector[i];
@@ -506,23 +513,24 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				};
 				outputWriteCount++;
 			}
-			// É¾³ıÒÑ¾­Ê¹ÓÃ¹ıµÄÊı¾İ
+			// åˆ é™¤å·²ç»ä½¿ç”¨è¿‡çš„æ•°æ®
 			modelOutputJob.modelOutputSampleVector = std::vector<float>(modelOutputJob.modelOutputSampleVector.begin() + lCanReadSize, modelOutputJob.modelOutputSampleVector.end());
 			tryGetFromModelOutputJobList();
 			bNeedOutput = bHasMoreData && outputWriteCount != currentBlockVector.size();
 		}
 
-		// ÅĞ¶Ïµ±Ç°ÊÇ·ñÓĞ¿ÕÊä³ö
+		// åˆ¤æ–­å½“å‰æ˜¯å¦æœ‰ç©ºè¾“å‡º
 		bool hasEmptyBlock = outputWriteCount != currentBlockVector.size();
 		if (hasEmptyBlock) {
-			// ÎŞÊı¾İ¿ÉÒÔÈ¡ÁË£¬Êä³ö¾²Òô
+			// æ— æ•°æ®å¯ä»¥å–äº†ï¼Œè¾“å‡ºé™éŸ³
 			lNoOutputCount += 1;
 			if (bEnableDebug) {
-				snprintf(buff, sizeof(buff), "!!!!!!!!!!!!!!!!!!!!!!!·Ö¾äÄ£Ê½-Êä³ö»º³å¿Õ:%ld\n", lNoOutputCount);
-				OutputDebugStringA(buff);
+				snprintf(buff, sizeof(buff), "!!!!!!!!!!!!!!!!!!!!!!!åˆ†å¥æ¨¡å¼-è¾“å‡ºç¼“å†²ç©º:%ld\n", lNoOutputCount);
+				// OutputDebugStringA(buff);
+				std::cout << buff;
 			}
 			for (juce::int32 i = outputWriteCount; i < processerSampleBlockSize; i++) {
-				// ¶ÔÊä³ö¾²Òô
+				// å¯¹è¾“å‡ºé™éŸ³
 				inputOutputL[i] = 0.0000000001f;
 				if (bHasRightChanel) {
 					inputOutputR[i] = 0.0000000001f;
@@ -531,7 +539,7 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 		}
 	};
 
-	// ½«µ±Ç°µÄÒôÆµÊı¾İĞ´Èëµ½Ç°µ¼»º³åÇøÖĞ£¬¹©ÏÂÒ»´ÎÊ¹ÓÃ
+	// å°†å½“å‰çš„éŸ³é¢‘æ•°æ®å†™å…¥åˆ°å‰å¯¼ç¼“å†²åŒºä¸­ï¼Œä¾›ä¸‹ä¸€æ¬¡ä½¿ç”¨
 	for (int i = 0; i < currentBlockVector.size(); i++) {
 		fPrefixBuffer[lPrefixBufferPos++] = currentBlockVector[i];
 		if (lPrefixBufferPos == lPrefixBufferSize) {
@@ -594,12 +602,12 @@ void NetProcessJUCEVersionAudioProcessor::tryGetFromModelOutputJobList() {
 		bHasMoreData = true;
 		/*
 		if (bEnableDebug) {
-			snprintf(buff, sizeof(buff), "ÊµÊ±Ä£Ê½ - tryGetFromModelOutputJobList µ±Ç°job»¹ÓĞÊı¾İ\n");
+			snprintf(buff, sizeof(buff), "å®æ—¶æ¨¡å¼ - tryGetFromModelOutputJobList å½“å‰jobè¿˜æœ‰æ•°æ®\n");
 			OutputDebugStringA(buff);
 		}*/
 	}
 	else {
-		// µ±Ç°chunkÊı¾İÈ¡ÍêÁË£¬°´ÕÕjobÀïµÄÊ±¼ä´Á¿ÉÒÔ¼ÆËã³öµ±Ç°ÕûÌåÑÓ³Ù
+		// å½“å‰chunkæ•°æ®å–å®Œäº†ï¼ŒæŒ‰ç…§jobé‡Œçš„æ—¶é—´æˆ³å¯ä»¥è®¡ç®—å‡ºå½“å‰æ•´ä½“å»¶è¿Ÿ
 		auto timeNow = juce::Time::currentTimeMillis();
 		auto latencySample = (timeNow - modelOutputJob.bornTimeStamp) * getSampleRate() / 1000;
 		if (modelOutputJob.bRealTimeModel) {
@@ -614,7 +622,7 @@ void NetProcessJUCEVersionAudioProcessor::tryGetFromModelOutputJobList() {
 			modelOutputJobListLock.exit();
 			/*
 			if (bEnableDebug) {
-				snprintf(buff, sizeof(buff), "ÊµÊ±Ä£Ê½ - tryGetFromModelOutputJobList µ±Ç°jobÃ»Êı¾İ£¬´ÓlistÄÃÒ»¸öjob\n");
+				snprintf(buff, sizeof(buff), "å®æ—¶æ¨¡å¼ - tryGetFromModelOutputJobList å½“å‰jobæ²¡æ•°æ®ï¼Œä»listæ‹¿ä¸€ä¸ªjob\n");
 				OutputDebugStringA(buff);
 			}*/
 		}
@@ -622,7 +630,7 @@ void NetProcessJUCEVersionAudioProcessor::tryGetFromModelOutputJobList() {
 			bHasMoreData = false;
 			/*
 			if (bEnableDebug) {
-				snprintf(buff, sizeof(buff), "ÊµÊ±Ä£Ê½ - tryGetFromModelOutputJobList µ±Ç°jobÎŞÊı¾İ£¬List¿Õ\n");
+				snprintf(buff, sizeof(buff), "å®æ—¶æ¨¡å¼ - tryGetFromModelOutputJobList å½“å‰jobæ— æ•°æ®ï¼ŒListç©º\n");
 				OutputDebugStringA(buff);
 			}*/
 		}
@@ -632,13 +640,13 @@ void NetProcessJUCEVersionAudioProcessor::tryGetFromModelOutputJobList() {
 using namespace juce;
 void NetProcessJUCEVersionAudioProcessor::loadConfig()
 {
-	// »ñÈ¡²å¼ş°²×°Ä¿Â¼
-	File pluginDir = File::getSpecialLocation(File::currentExecutableFile).getParentDirectory();
-	// ´´½¨ÅäÖÃÎÄ¼ş
-	File configFile = pluginDir.getChildFile("netProcessConfig.json");
+	// è·å–æ’ä»¶å®‰è£…ç›®å½•
+	// File pluginDir = File::getSpecialLocation(File::currentExecutableFile).getParentDirectory();
+	// åˆ›å»ºé…ç½®æ–‡ä»¶
+	// File configFile = pluginDir.getChildFile("netProcessConfig.json");
+	// /Volumes/Data/OpenSourceProjects/VST_NetProcess-/netProcessConfig.json
+	File configFile = File("/Volumes/Data/OpenSourceProjects/VST_NetProcess-/netProcessConfig.json");
 
-	std::wstring sDllPath = L"C:/Program Files/Common Files/VST3/NetProcessJUCEVersion/samplerate.dll";
-	
 	// default value
 	fMaxSliceLength = 5.0f;
 	fMaxSliceLengthForRealTimeMode = fMaxSliceLength;
@@ -648,22 +656,14 @@ void NetProcessJUCEVersionAudioProcessor::loadConfig()
 	lMaxSliceLengthSampleNumber = static_cast<long>(getSampleRate() * fMaxSliceLength);
 	lRemainNeedSliceSampleNumber = lMaxSliceLengthSampleNumber;
 	fPitchChange = 0.0f;
-	bRealTimeMode = false;
-	bEnableDebug = false;
+	bRealTimeMode = true;
+	bEnableDebug = true;
 	iSelectRoleIndex = 0;
 	fSafeZoneLength = 0.05f;
 	fCrossFadeLength = 0.f;
 	iHopSize = 512;
 
-	auto dllClient = LoadLibraryW(sDllPath.c_str());
-	if (dllClient != NULL) {
-		dllFuncSrcSimple = (FUNC_SRC_SIMPLE)GetProcAddress(dllClient, "src_simple");
-	}
-	else {
-		OutputDebugStringA("samplerate.dll load Error!");
-	}
-
-	// ¶ÁÈ¡JSONÅäÖÃÎÄ¼ş
+	// è¯»å–JSONé…ç½®æ–‡ä»¶
 	FileInputStream configFileInStream(configFile);
 	juce::var jsonVar = juce::JSON::parse(configFileInStream);
 	auto& props = jsonVar.getDynamicObject()->getProperties();
@@ -700,42 +700,39 @@ void NetProcessJUCEVersionAudioProcessor::loadConfig()
 
 void NetProcessJUCEVersionAudioProcessor::runWorker()
 {
-    // Æô¶¯WorkerÏß³Ì
-    std::thread(func_do_voice_transfer_worker,
-        iNumberOfChanel,					// Í¨µÀÊıÁ¿
-        getSampleRate(),		            // ÏîÄ¿²ÉÑùÂÊ
+    // å¯åŠ¨Workerçº¿ç¨‹
+      std::thread(func_do_voice_transfer_worker,
+          iNumberOfChanel,					// é€šé“æ•°é‡
+          getSampleRate(),		            // é¡¹ç›®é‡‡æ ·ç‡
 
-		&modelInputJobList,					// Ä£ĞÍÊäÈë¶ÓÁĞ
-		&modelInputJobListLock,			// Ä£ĞÍÊäÈë¶ÓÁĞËø
+	  	&modelInputJobList,					// æ¨¡å‹è¾“å…¥é˜Ÿåˆ—
+	  	&modelInputJobListLock,			// æ¨¡å‹è¾“å…¥é˜Ÿåˆ—é”
 
-		&modelOutputJobList,				// Ä£ĞÍÊä³ö¶ÓÁĞ
-		&modelOutputJobListLock,			// Ä£ĞÍÊä³ö¶ÓÁĞËø
+	  	&modelOutputJobList,				// æ¨¡å‹è¾“å‡ºé˜Ÿåˆ—
+	  	&modelOutputJobListLock,			// æ¨¡å‹è¾“å‡ºé˜Ÿåˆ—é”
 
-		lCrossFadeLength,
-		&hanningWindow,
+	  	lCrossFadeLength,
+	  	&hanningWindow,
 
-        &fPitchChange,						// Òôµ÷±ä»¯ÊıÖµ
-        &bCalcPitchError,					// ÆôÓÃÒôµ÷Îó²î¼ì²â
+          &fPitchChange,						// éŸ³è°ƒå˜åŒ–æ•°å€¼
+          &bCalcPitchError,					// å¯ç”¨éŸ³è°ƒè¯¯å·®æ£€æµ‹
 
-        roleList,							// ÅäÖÃµÄ¿ÉÓÃÒôÉ«ÁĞ±í
-        &iSelectRoleIndex,					// Ñ¡ÔñµÄ½ÇÉ«ID
-        dllFuncSrcSimple,					// DLLÄÚ²¿SrcSimple·½·¨
+          roleList,							// é…ç½®çš„å¯ç”¨éŸ³è‰²åˆ—è¡¨
+          &iSelectRoleIndex,					// é€‰æ‹©çš„è§’è‰²ID
 
-        &bEnableSOVITSPreResample,			// ÆôÓÃSOVITSÄ£ĞÍÈë²ÎÒôÆµÖØ²ÉÑùÔ¤´¦Àí
-        iSOVITSModelInputSamplerate,		// SOVITSÄ£ĞÍÈë²Î²ÉÑùÂÊ
-        &bEnableHUBERTPreResample,			// ÆôÓÃHUBERTÄ£ĞÍÈë²ÎÒôÆµÖØ²ÉÑùÔ¤´¦Àí
-        iHUBERTInputSampleRate,				// HUBERTÄ£ĞÍÈë²Î²ÉÑùÂÊ
+          &bEnableSOVITSPreResample,			// å¯ç”¨SOVITSæ¨¡å‹å…¥å‚éŸ³é¢‘é‡é‡‡æ ·é¢„å¤„ç†
+          iSOVITSModelInputSamplerate,		// SOVITSæ¨¡å‹å…¥å‚é‡‡æ ·ç‡
+          &bEnableHUBERTPreResample,			// å¯ç”¨HUBERTæ¨¡å‹å…¥å‚éŸ³é¢‘é‡é‡‡æ ·é¢„å¤„ç†
+          iHUBERTInputSampleRate,				// HUBERTæ¨¡å‹å…¥å‚é‡‡æ ·ç‡
 
-		&bEnableDebug,						// Õ¼Î»·û£¬ÆôÓÃDEBUGÊä³ö
-		vServerUseTime,						// UI±äÁ¿£¬ÏÔÊ¾·şÎñµ÷ÓÃºÄÊ±
-		&fServerUseTime,
-		vDropDataLength,					// UI±äÁ¿£¬ÏÔÊ¾ÊµÊ±Ä£Ê½ÏÂ¶ªÆúµÄÒôÆµÊı¾İ³¤¶È
+	  	&bEnableDebug,						// å ä½ç¬¦ï¼Œå¯ç”¨DEBUGè¾“å‡º
+	  	vServerUseTime,						// UIå˜é‡ï¼Œæ˜¾ç¤ºæœåŠ¡è°ƒç”¨è€—æ—¶
+	  	&fServerUseTime,
+	  	vDropDataLength,					// UIå˜é‡ï¼Œæ˜¾ç¤ºå®æ—¶æ¨¡å¼ä¸‹ä¸¢å¼ƒçš„éŸ³é¢‘æ•°æ®é•¿åº¦
 
-        &bWorkerNeedExit,					// Õ¼Î»·û£¬±íÊ¾workerÏß³ÌĞèÒªÍË³ö
-        &mWorkerSafeExit					// »¥³âËø£¬±íÊ¾workerÏß³ÌÒÑ¾­°²È«ÍË³ö
-    ).detach();
-
-
+          &bWorkerNeedExit,					// å ä½ç¬¦ï¼Œè¡¨ç¤ºworkerçº¿ç¨‹éœ€è¦é€€å‡º
+          &mWorkerSafeExit					// äº’æ–¥é”ï¼Œè¡¨ç¤ºworkerçº¿ç¨‹å·²ç»å®‰å…¨é€€å‡º
+      ).detach();
 }
 
 //==============================================================================
