@@ -51,8 +51,8 @@ private:
     juce::TextButton bChangeRoleButton;
     juce::Label lServerUseTimeLabel;
     juce::Label lServerUseTimeValLabel;
-    juce::Label lDropDataLengthLabel;
-    juce::Label lDropDataLengthValLabel;
+    juce::Label lAllUseTimeLabel;
+    juce::Label lAllUseTimeValLabel;
     juce::Label lVersionLabel;
     juce::Label lVersionValLabel;
 

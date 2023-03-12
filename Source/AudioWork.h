@@ -33,7 +33,6 @@ void func_do_voice_transfer_worker(
 	bool* bEnableDebug,						// 占位符，启用DEBUG输出
 	juce::Value vServerUseTime,				// UI变量，显示服务调用耗时
 	float *fServerUseTime,
-	juce::Value vDropDataLength,			// UI变量，显示实时模式下丢弃的音频数据长度
 
 	bool* bWorkerNeedExit,					// 占位符，表示worker线程需要退出
 	std::mutex* mWorkerSafeExit				// 互斥锁，表示worker线程已经安全退出

@@ -40,7 +40,7 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
             // off
             audioProcessor.fMaxSliceLengthForRealTimeMode = audioProcessor.fMaxSliceLength;
             sSliceSizeSlider.setValue(audioProcessor.fMaxSliceLengthForSentenceMode);
-            lDropDataLengthValLabel.setText(L"unCheck", juce::dontSendNotification);
+            audioProcessor.vAllUseTime.setValue(L"unCheck");
         }
     };
     addAndMakeVisible(&tToggleRealTimeMode);
@@ -79,7 +79,6 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     addAndMakeVisible(&lMaxLowVolumeLengthLabel);
     addAndMakeVisible(&sMaxLowVolumeLengthSlider);
 
-   
     lPrefixLengthLabel.setText(L"PrefixLength:", juce::dontSendNotification);
     sPrefixLengthSlider.setSliderStyle(juce::Slider::LinearBar);
     sPrefixLengthSlider.setRange(minPrefixAudioLength, maxPrefixAudioLength, 0.01);
@@ -114,11 +113,11 @@ NetProcessJUCEVersionAudioProcessorEditor::NetProcessJUCEVersionAudioProcessorEd
     addAndMakeVisible(&lServerUseTimeLabel);
     addAndMakeVisible(&lServerUseTimeValLabel);
 
-    lDropDataLengthLabel.setText(L"DropDataLength:", juce::dontSendNotification);
-    lDropDataLengthValLabel.getTextValue().referTo(audioProcessor.vDropDataLength);
-    lDropDataLengthValLabel.setText(L"unCheck", juce::dontSendNotification);
-    addAndMakeVisible(&lDropDataLengthLabel);
-    addAndMakeVisible(&lDropDataLengthValLabel);
+    lAllUseTimeLabel.setText(L"AllUseTime:", juce::dontSendNotification);
+    lAllUseTimeValLabel.getTextValue().referTo(audioProcessor.vAllUseTime);
+    lAllUseTimeValLabel.setText(L"unCheck", juce::dontSendNotification);
+    addAndMakeVisible(&lAllUseTimeLabel);
+    addAndMakeVisible(&lAllUseTimeValLabel);
 
     lVersionLabel.setText(L"Version:", juce::dontSendNotification);
     lVersionValLabel.setText(L"V3.3", juce::dontSendNotification);
@@ -208,11 +207,11 @@ void NetProcessJUCEVersionAudioProcessorEditor::resized()
     auto serverUseTimeLabelValArea = serverUseTimeArea;
     lServerUseTimeValLabel.setBounds(serverUseTimeLabelValArea);
 
-    auto DropDataLengthArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
-    auto DropDataLengthLabelArea = DropDataLengthArea.removeFromLeft(ilabelColumnWidth);
-    lDropDataLengthLabel.setBounds(DropDataLengthLabelArea);
-    auto DropDataLengthLabelValArea = DropDataLengthArea;
-    lDropDataLengthValLabel.setBounds(DropDataLengthLabelValArea);
+    auto allUseTimeArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
+    auto allUseTimeLabelArea = allUseTimeArea.removeFromLeft(ilabelColumnWidth);
+    lAllUseTimeLabel.setBounds(allUseTimeLabelArea);
+    auto allUseTimeLabelValArea = allUseTimeArea;
+    lAllUseTimeValLabel.setBounds(allUseTimeLabelValArea);
 
     auto VersionArea = localArea.removeFromTop(iRowHeight + iRowMargin * 2).reduced(iRowMargin, 0);
     auto VersionLabelArea = VersionArea.removeFromLeft(ilabelColumnWidth);

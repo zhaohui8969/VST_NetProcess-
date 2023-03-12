@@ -318,7 +318,8 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 				long remainSampleSize = prepareModelInputSample.size() - prepareModelInputMatchHopSize;
 				inputJobStruct.lPrefixLength = lPrefixLengthSampleNumberNow;
 				inputJobStruct.modelInputSampleVector = prepareModelInputMatchHopSample;
-				inputJobStruct.bornTimeStamp = juce::Time::currentTimeMillis() - 1.0f * remainSampleSize / getSampleRate();
+				inputJobStruct.lNewDataLength = prepareModelInputMatchHopSize - lPrefixLengthSampleNumberNow;
+				inputJobStruct.bornTimeStamp = juce::Time::currentTimeMillis() - 1.0f * inputJobStruct.lNewDataLength / getSampleRate();
 				if (bVolumeDetectFine) {
 					inputJobStruct.jobType = JOB_WORK;
 				}
@@ -388,7 +389,7 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 			}
 
 			// 入不敷出了，插入一个安全区
-			safeJob.bornTimeStamp = juce::Time::currentTimeMillis();
+			safeJob.bornTimeStamp = juce::Time::currentTimeMillis() - 1.0 * lSafeZoneSize / getSampleRate();
 			modelOutputJobListLock.enter();
 			modelOutputJobList.push_back(safeJob);
 			modelOutputJobListLock.exit();
@@ -406,6 +407,7 @@ void NetProcessJUCEVersionAudioProcessor::processBlock (juce::AudioBuffer<float>
 	}
 	else {
 		// 分句模式
+		vAllUseTime.setValue(L"unCheck");
 		// 音量检查
 		double fSampleMax = -9999;
 		for (juce::int32 i = 0; i < currentBlockVector.size(); i++) {
@@ -608,15 +610,17 @@ void NetProcessJUCEVersionAudioProcessor::tryGetFromModelOutputJobList() {
 			modelOutputJobList.erase(modelOutputJobList.begin());
 			modelOutputJobListLock.exit();
 			// 延迟计算，以及延迟补偿计算
-			auto timeNow = juce::Time::currentTimeMillis();
-			auto latencySample = (timeNow - modelOutputJob.bornTimeStamp) * getSampleRate() / 1000 + modelOutputJob.modelOutputSampleVector.size();
-			if (latencySample > 9999999) {
-				latencySample = 0;
+
+			if (modelOutputJob.jobType == JOB_EMPTY) {
+				vAllUseTime.setValue(juce::String(L"0ms"));
 			}
-			if (modelOutputJob.bRealTimeModel) {
-				latencySample += modelOutputJob.lSuffixlOverlap2;
+			else if (modelOutputJob.bRealTimeModel) {
+				auto timeNow = juce::Time::currentTimeMillis();
+				long fAllUseTime = timeNow - modelOutputJob.bornTimeStamp;
+				fAllUseTime += lCrossFadeLength / getSampleRate();
+				vAllUseTime.setValue(juce::String(fAllUseTime) + "ms");
 			}
-			setLatencySamples(latencySample);
+
 			/*
 			if (bEnableDebug) {
 				snprintf(buff, sizeof(buff), "实时模式 - tryGetFromModelOutputJobList 当前job没数据，从list拿一个job\n");
@@ -734,7 +738,6 @@ void NetProcessJUCEVersionAudioProcessor::runWorker()
 		&bEnableDebug,						// 占位符，启用DEBUG输出
 		vServerUseTime,						// UI变量，显示服务调用耗时
 		&fServerUseTime,
-		vDropDataLength,					// UI变量，显示实时模式下丢弃的音频数据长度
 
         &bWorkerNeedExit,					// 占位符，表示worker线程需要退出
         &mWorkerSafeExit					// 互斥锁，表示worker线程已经安全退出

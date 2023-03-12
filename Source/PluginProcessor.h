@@ -43,8 +43,10 @@ typedef struct
 	JOB_TYPE jobType;
 	// 占位符，实时模式
 	bool bRealTimeModel;
-	// 前导缓冲区时长(s)
+	// 前导缓冲区大小
 	long lPrefixLength;
+	// 增量数据大小
+	long lNewDataLength;
 	std::vector<float> modelInputSampleVector;
 	std::vector<float> modelOutputSampleVector;
 	// 切片产生的时间，记录了这个切片最后一个样本的产生时间
@@ -203,6 +205,8 @@ public:
 	// Model state
 	juce::Value vServerUseTime;
 	float fServerUseTime;
+	juce::Value vAllUseTime;
+	float fAllUseTime;
 	// 实时模式下丢弃的音频数据长度
 	juce::Value vDropDataLength;
 
