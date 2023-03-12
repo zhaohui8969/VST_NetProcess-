@@ -83,10 +83,9 @@ void func_do_voice_transfer_worker(
 	long long tUseTime;
 	long long tStart;
 
-	double dSOVITSInputSamplerate;
-	char sSOVITSSamplerateBuff[100];
 	char cPitchBuff[100];
 	char cSafePrefixPadLength[100];
+	char cSampleRate[100];
 	std::vector<float> vModelInputSampleBufferVector;
 	std::vector<float> currentVoiceVector;
 	int currentVoiceSampleNumber = 0;
@@ -164,8 +163,6 @@ void func_do_voice_transfer_worker(
 					AudioFile<double>::AudioBuffer modelInputAudioBuffer;
 					modelInputAudioBuffer.resize(iNumberOfChanel);
 
-					dSOVITSInputSamplerate = dProjectSampleRate;
-					snprintf(sSOVITSSamplerateBuff, sizeof(sSOVITSSamplerateBuff), "%f", dProjectSampleRate);
 					modelInputAudioBuffer[0].resize(vModelInputSampleBufferVector.size());
 					for (int i = 0; i < vModelInputSampleBufferVector.size(); i++) {
 						modelInputAudioBuffer[0][i] = vModelInputSampleBufferVector[i];
@@ -177,7 +174,7 @@ void func_do_voice_transfer_worker(
 					audioFile.setAudioBuffer(modelInputAudioBuffer);
 					audioFile.setAudioBufferSize(iNumberOfChanel, iModelInputNumSamples);
 					audioFile.setBitDepth(24);
-					audioFile.setSampleRate(static_cast<UINT32>(dSOVITSInputSamplerate));
+					audioFile.setSampleRate(static_cast<UINT32>(dProjectSampleRate));
 
 					tTime2 = func_get_timestamp();
 					tUseTime = tTime2 - tTime1;
@@ -213,12 +210,13 @@ void func_do_voice_transfer_worker(
 					// 准备HTTP请求参数
 					snprintf(cPitchBuff, sizeof(cPitchBuff), "%f", *fPitchChange);
 					snprintf(cSafePrefixPadLength, sizeof(cSafePrefixPadLength), "%f", 1.0 * lOverlap3 / dProjectSampleRate);
+					snprintf(cSampleRate, sizeof(cSampleRate), "%ld", dProjectSampleRate);
 					httplib::MultipartFormDataItems items = {
 						{ "sSpeakId", roleStruct.sSpeakId, "", ""},
 						{ "sName", roleStruct.sName, "", ""},
 						{ "fPitchChange", cPitchBuff, "", ""},
 						{ "fSafePrefixPadLength", cSafePrefixPadLength, "", ""},
-						{ "sampleRate", sSOVITSSamplerateBuff, "", ""},
+						{ "sampleRate", cSampleRate, "", ""},
 						{ "sample", sModelInputString, "sample.wav", "audio/x-wav"},
 					};
 					/*if (*bEnableDebug) {
